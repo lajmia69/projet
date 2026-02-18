@@ -1,43 +1,40 @@
-import _ from 'lodash';
-import { PartialDeep } from 'type-fest';
 import { Contact, ContactEmail, ContactPhoneNumber } from '../types';
 
-/**
- * The contact phone number model.
- */
-export const ContactPhoneModel = (data: PartialDeep<ContactPhoneNumber> | null): ContactPhoneNumber =>
-	_.defaults(data || {}, {
-		country: '',
-		phoneNumber: '',
-		label: ''
-	});
+export function ContactEmailModel(data: Partial<ContactEmail>): ContactEmail {
+	return { email: '', label: 'Home', ...data };
+}
 
-/**
- * The contact email model.
- */
-export const ContactEmailModel = (data: PartialDeep<ContactEmail> | null): ContactEmail =>
-	_.defaults(data || {}, {
-		email: '',
-		label: ''
-	});
+export function ContactPhoneModel(data: Partial<ContactPhoneNumber>): ContactPhoneNumber {
+	return { country: 'tn', phoneNumber: '', label: 'Mobile', ...data };
+}
 
-/**
- * The contact model.
- */
-const ContactModel = (data: PartialDeep<Contact>): Contact =>
-	_.defaults(data || {}, {
-		id: _.uniqueId(),
+function ContactModel(data: Partial<Contact>): Contact {
+	return {
+		id: '',
 		avatar: '',
 		background: '',
-		name: '',
-		emails: [],
-		phoneNumbers: [],
-		title: '',
-		company: '',
+		firstName: '',
+		lastName: '',
+		emails: [ContactEmailModel({})],
+		phoneNumbers: [ContactPhoneModel({})],
+		// Role
+		role: '',
+		// Tutor
+		tutorSubject: '',
+		tutorSchoolLevel: '',
+		tutorGrades: [],
+		tutorSections: [],
+		// Student
+		schoolLevel: '',
+		grade: null,
+		section: '',
+		// Misc
 		birthday: '',
 		address: '',
 		notes: '',
-		tags: []
-	});
+		tags: [],
+		...data
+	};
+}
 
 export default ContactModel;
