@@ -15,8 +15,16 @@ const SEC_COLORS: Record<string, string> = {
 };
 
 const ROLE_CONFIG = {
-	tutor:   { label: 'Tutor',   from: '#6366f1', to: '#3b82f6', icon: 'lucide:book-open-check' },
-	student: { label: 'Student', from: '#ec4899', to: '#f43f5e', icon: 'lucide:graduation-cap'  }
+	super_admin: { label: 'Super Admin', from: '#dc2626', to: '#7f1d1d', icon: 'lucide:shield-admin' },
+	content_admin: { label: 'Content Admin', from: '#2563eb', to: '#1e40af', icon: 'lucide:file-check' },
+	member_admin: { label: 'Member Admin', from: '#7c3aed', to: '#5b21b6', icon: 'lucide:users-cog' },
+	studio_admin: { label: 'Studio Admin', from: '#f97316', to: '#c2410c', icon: 'lucide:video-cog' },
+	radio_content_creator: { label: 'Radio Creator', from: '#06b6d4', to: '#0369a1', icon: 'lucide:radio' },
+	broadcast_content_creator: { label: 'Broadcast Creator', from: '#ec4899', to: '#be185d', icon: 'lucide:tv' },
+	culture_content_creator: { label: 'Culture Creator', from: '#f59e0b', to: '#d97706', icon: 'lucide:palette' },
+	lesson_content_creator: { label: 'Lesson Creator', from: '#8b5cf6', to: '#6d28d9', icon: 'lucide:book-open' },
+	member: { label: 'Member', from: '#22c55e', to: '#16a34a', icon: 'lucide:user' },
+	studio_staff: { label: 'Studio Staff', from: '#06b6d4', to: '#0891b2', icon: 'lucide:users' }
 } as const;
 
 function ContactListItem({ contact, index = 0 }: Props) {
@@ -26,20 +34,10 @@ function ContactListItem({ contact, index = 0 }: Props) {
 	const fullName = contactFullName(contact);
 	const initials = [contact.firstName, contact.lastName].filter(Boolean).map((n) => n![0]).join('').toUpperCase() || '?';
 
-	// Student
-	const schoolLevel = (contact.schoolLevel ?? '') as any;
-	const placementLabel = role === 'student'
-		? studentPlacementLabel(schoolLevel, contact.grade, contact.section)
-		: null;
-	const sectionColor = contact.section ? SEC_COLORS[contact.section] : null;
-
-	// Tutor
-	const tutorSlotCount = (contact.tutorGrades ?? []).length;
-
 	const primaryEmail = contact.emails?.find((e) => e.email)?.email;
 	const primaryPhone = contact.phoneNumbers?.find((p) => p.phoneNumber)?.phoneNumber;
 
-	const accentColor = sectionColor ?? roleConfig?.from ?? '#64748b';
+	const accentColor = roleConfig?.from ?? '#64748b';
 
 	return (
 		<motion.div
@@ -108,18 +106,6 @@ function ContactListItem({ contact, index = 0 }: Props) {
 						</div>
 
 						{/* Subtitle */}
-						{role === 'student' && placementLabel && (
-							<div className="flex items-center gap-1.5">
-								{sectionColor && <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: sectionColor }} />}
-								<Typography className="text-xs font-medium" color="text.secondary">{placementLabel}</Typography>
-							</div>
-						)}
-						{role === 'tutor' && (
-							<Typography className="text-xs" color="text.secondary">
-								{contact.tutorSubject && <><span className="font-semibold" style={{ color: roleConfig?.from }}>{contact.tutorSubject}</span>{tutorSlotCount > 0 && ' · '}</>}
-								{tutorSlotCount > 0 && <>{tutorSlotCount} grade level{tutorSlotCount !== 1 ? 's' : ''}</>}
-							</Typography>
-						)}
 
 						{/* Email / phone */}
 						<div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">

@@ -13,7 +13,19 @@ export type ContactEmail = {
 
 // ─── Role ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'tutor' | 'student' | '';
+export type UserRole = 
+	| 'super_admin'
+	| 'content_admin'
+	| 'member_admin'
+	| 'studio_admin'
+	| 'radio_content_creator'
+	| 'broadcast_content_creator'
+	| 'culture_content_creator'
+	| 'lesson_content_creator'
+	| 'member'
+	| 'studio_staff'
+	| '';
+
 export type SchoolLevel = 'primary' | 'secondary' | '';
 
 // ─── Secondary sections per grade ────────────────────────────────────────────
@@ -124,7 +136,34 @@ export type AccumulatorType = Record<string, GroupedContacts>;
 
 // ─── Display helpers ──────────────────────────────────────────────────────────
 
-export const ROLE_LABELS: Record<UserRole, string> = { '': '', tutor: 'Tutor', student: 'Student' };
+export const ROLE_LABELS: Record<UserRole, string> = {
+	'': '',
+	super_admin: 'Super Admin',
+	content_admin: 'Content Admin',
+	member_admin: 'Member Admin',
+	studio_admin: 'Studio Admin',
+	radio_content_creator: 'Radio Content Creator',
+	broadcast_content_creator: 'Broadcast Content Creator',
+	culture_content_creator: 'Culture Content Creator',
+	lesson_content_creator: 'Lesson Content Creator',
+	member: 'Member',
+	studio_staff: 'Studio Staff'
+};
+
+/** Get available roles for creating/assigning users based on current user's role */
+export function getAvailableRoles(currentUserRole: UserRole | null | undefined): UserRole[] {
+	// Super admin can assign all roles
+	if (currentUserRole === 'super_admin') {
+		return [...Object.keys(ROLE_LABELS).filter(r => r !== '') as UserRole[]];
+	}
+	// Members cannot add anyone
+	if (currentUserRole === 'member') {
+		return [];
+	}
+	// All other roles (admins, creators, staff) can only add members
+	return ['member'];
+}
+
 export const SCHOOL_LEVEL_LABELS: Record<SchoolLevel, string> = { '': '', primary: 'Primary', secondary: 'Secondary' };
 
 export function studentPlacementLabel(

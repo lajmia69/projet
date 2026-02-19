@@ -40,8 +40,10 @@ import {
 	sectionsForGrades,
 	TUTOR_SUBJECTS,
 	TutorSubject,
-	contactFullName
+	contactFullName,
+	ROLE_LABELS,
 } from '../../api/types';
+
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
@@ -52,7 +54,7 @@ const schema = z.object({
 	lastName: z.string().min(1, { message: 'Last name is required' }),
 	emails: z.array(z.object({ email: z.string().min(1), label: z.string().optional() })),
 	phoneNumber: z.string().optional(),
-	role: z.enum(['tutor', 'student', '']).optional(),
+	role: z.enum(['super_admin', 'content_admin', 'member_admin', 'studio_admin', 'radio_content_creator', 'broadcast_content_creator', 'culture_content_creator', 'lesson_content_creator', 'member', 'studio_staff', '']).optional(),
 	// Tutor
 	tutorSubject: z.string().optional(),
 	tutorSchoolLevel: z.enum(['primary', 'secondary', '']).optional(),
@@ -286,14 +288,10 @@ function ContactForm({ isNew }: ContactFormProps) {
 	const { isValid, dirtyFields, errors } = formState;
 	const form = watch();
 
-	const role            = (watch('role') ?? '') as UserRole;
-	const tutorSchoolLvl  = (watch('tutorSchoolLevel') ?? '') as SchoolLevel;
-	const tutorGrades     = watch('tutorGrades') ?? [];
-	const tutorSections   = watch('tutorSections') ?? [];
-	const tutorSubject    = watch('tutorSubject') ?? '';
-	const schoolLevel     = (watch('schoolLevel') ?? '') as SchoolLevel;
-	const grade           = watch('grade');
-	const section         = watch('section') ?? '';
+	const role = (watch('role') ?? '') as UserRole;
+
+	// Get all available roles from ROLE_LABELS (excluding empty string)
+	const allRoles = Object.keys(ROLE_LABELS).filter(r => r !== '') as UserRole[];
 
 	useEffect(() => {
 		if (isNew) reset(ContactModel({}));
@@ -321,30 +319,11 @@ function ContactForm({ isNew }: ContactFormProps) {
 		// eslint-disable-next-line
 	}, [form]);
 
+	// Toggle helpers
 	function handleRemoveContact() {
 		if (!contact) return;
 		deleteContact(contact.id, { onSuccess: () => navigate('/administration/accounts') });
 	}
-
-	// Toggle helpers
-	function toggleTutorGrade(g: number) {
-		const next = tutorGrades.includes(g) ? tutorGrades.filter((x) => x !== g) : [...tutorGrades, g];
-		setValue('tutorGrades', next, { shouldDirty: true });
-		// Remove sections no longer valid
-		if (tutorSchoolLvl === 'secondary') {
-			const validSecs = sectionsForGrades(next);
-			setValue('tutorSections', tutorSections.filter((s) => validSecs.includes(s)), { shouldDirty: true });
-		}
-	}
-	function toggleTutorSection(s: string) {
-		setValue(
-			'tutorSections',
-			tutorSections.includes(s) ? tutorSections.filter((x) => x !== s) : [...tutorSections, s],
-			{ shouldDirty: true }
-		);
-	}
-
-	const availableTutorSections = tutorSchoolLvl === 'secondary' ? sectionsForGrades(tutorGrades) : [];
 
 	const background = watch('background');
 	const firstName = watch('firstName');
@@ -414,249 +393,38 @@ function ContactForm({ isNew }: ContactFormProps) {
 					{/* ══ 1. ROLE ═══════════════════════════════════════════════ */}
 					<SectionHeader icon="lucide:user-cog" label="Role" />
 
-					<div className="mt-4 flex gap-4">
+				<div className="mt-4">
 						<Controller
 							control={control}
 							name="role"
-							render={({ field: { onChange, value } }) => (
-								<>
-									<RoleCard
-										value="tutor"
-										current={(value as UserRole) ?? ''}
-										icon="lucide:book-open-check"
-										label="Tutor"
-										description="Teaches students"
-										from="#6366f1"
-										to="#3b82f6"
-										onClick={() => { onChange('tutor'); setValue('schoolLevel', ''); setValue('grade', null); setValue('section', ''); }}
-									/>
-									<RoleCard
-										value="student"
-										current={(value as UserRole) ?? ''}
-										icon="lucide:graduation-cap"
-										label="Student"
-										description="Enrolled in school"
-										from="#ec4899"
-										to="#f43f5e"
-										onClick={() => { onChange('student'); setValue('tutorSchoolLevel', ''); setValue('tutorGrades', []); setValue('tutorSections', []); setValue('tutorSubject', ''); }}
-									/>
-								</>
+							render={({ field }) => (
+								<FormControl fullWidth>
+									<FormLabel sx={{ mb: 1, fontWeight: 700, fontSize: '0.8rem' }}>Select Role *</FormLabel>
+									<Select
+										{...field}
+										displayEmpty
+										variant="outlined"
+										sx={{ minHeight: 52 }}
+										startAdornment={
+											<InputAdornment position="start">
+												<FuseSvgIcon color="action" size={20}>lucide:user-cog</FuseSvgIcon>
+											</InputAdornment>
+										}
+										renderValue={(value) => {
+											if (!value) return <span style={{ color: 'var(--mui-palette-text-disabled)' }}>Select a role…</span>;
+											return ROLE_LABELS[value as UserRole] || value;
+										}}
+									>
+										{allRoles.map((r) => (
+											<MenuItem key={r} value={r}>
+												{ROLE_LABELS[r]}
+											</MenuItem>
+										))}
+									</Select>
+								</FormControl>
 							)}
 						/>
 					</div>
-
-					{/* ── TUTOR waterfall ───────────────────────────────────── */}
-					<AnimatePresence>
-						{role === 'tutor' && (
-							<motion.div
-								key="tutor-block"
-								initial={{ opacity: 0, height: 0, marginTop: 0 }}
-								animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
-								exit={{ opacity: 0, height: 0, marginTop: 0 }}
-								style={{ overflow: 'hidden' }}
-							>
-								<Box className="flex flex-col gap-5 rounded-2xl border p-5" sx={{ borderColor: 'divider', backgroundColor: 'background.default' }}>
-									{/* Tutor header */}
-									<div className="flex items-center gap-2">
-										<Box className="flex h-8 w-8 items-center justify-center rounded-xl" sx={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}>
-											<FuseSvgIcon className="text-white" size={16}>lucide:book-open-check</FuseSvgIcon>
-										</Box>
-										<Typography className="text-sm font-extrabold">Teaching Details</Typography>
-									</div>
-
-									{/* Subject */}
-									<FormControl className="w-full">
-										<FormLabel sx={{ mb: 1, fontWeight: 700, fontSize: '0.8rem' }}>Subject / Discipline</FormLabel>
-										<Controller
-											control={control}
-											name="tutorSubject"
-											render={({ field }) => (
-												<Select
-													{...field}
-													displayEmpty
-													variant="outlined"
-													sx={{ minHeight: 52 }}
-													startAdornment={
-														<InputAdornment position="start">
-															<FuseSvgIcon color="action" size={20}>lucide:book</FuseSvgIcon>
-														</InputAdornment>
-													}
-													renderValue={(v) => v || <span style={{ color: 'var(--mui-palette-text-disabled)' }}>Select a subject…</span>}
-												>
-													{TUTOR_SUBJECTS.map((s) => (
-														<MenuItem key={s} value={s}>{s}</MenuItem>
-													))}
-												</Select>
-											)}
-										/>
-									</FormControl>
-
-									{/* School level */}
-									<div>
-										<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-											School Level
-										</Typography>
-										<div className="flex gap-3">
-											{(['primary', 'secondary'] as SchoolLevel[]).map((lvl) => (
-												<LevelToggle
-													key={lvl}
-													label={lvl === 'primary' ? 'Primary' : 'Secondary'}
-													icon={lvl === 'primary' ? 'lucide:pencil-ruler' : 'lucide:school'}
-													subtitle={lvl === 'primary' ? 'Grades 1 – 9' : 'Years 1 – 4'}
-													selected={tutorSchoolLvl === lvl}
-													from={lvl === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-													to={lvl === 'primary' ? '#0284c7' : '#7c3aed'}
-													onClick={() => {
-														setValue('tutorSchoolLevel', lvl, { shouldDirty: true });
-														setValue('tutorGrades', []);
-														setValue('tutorSections', []);
-													}}
-												/>
-											))}
-										</div>
-									</div>
-
-									{/* Grade selector */}
-									<AnimatePresence>
-										{tutorSchoolLvl && (
-											<motion.div key={`tg-${tutorSchoolLvl}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													{tutorSchoolLvl === 'primary' ? 'Grades (select all that apply)' : 'Years (select all that apply)'}
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{(tutorSchoolLvl === 'primary' ? [1,2,3,4,5,6,7,8,9] : [1,2,3,4]).map((g) => (
-														<GradePill
-															key={g}
-															grade={g}
-															selected={tutorGrades.includes(g)}
-															multi
-															from={tutorSchoolLvl === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-															to={tutorSchoolLvl === 'primary' ? '#0284c7' : '#7c3aed'}
-															onClick={() => toggleTutorGrade(g)}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-
-									{/* Sections (secondary only) */}
-									<AnimatePresence>
-										{tutorSchoolLvl === 'secondary' && tutorGrades.length > 0 && availableTutorSections.length > 0 && (
-											<motion.div key="tsec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													Sections / Streams (select all that apply)
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{availableTutorSections.map((s) => (
-														<SpecChip
-															key={s}
-															label={s}
-															selected={tutorSections.includes(s)}
-															multi
-															onClick={() => toggleTutorSection(s)}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-								</Box>
-							</motion.div>
-						)}
-					</AnimatePresence>
-
-					{/* ── STUDENT waterfall ─────────────────────────────────── */}
-					<AnimatePresence>
-						{role === 'student' && (
-							<motion.div
-								key="student-block"
-								initial={{ opacity: 0, height: 0, marginTop: 0 }}
-								animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
-								exit={{ opacity: 0, height: 0, marginTop: 0 }}
-								style={{ overflow: 'hidden' }}
-							>
-								<Box className="flex flex-col gap-5 rounded-2xl border p-5" sx={{ borderColor: 'divider', backgroundColor: 'background.default' }}>
-									<div className="flex items-center gap-2">
-										<Box className="flex h-8 w-8 items-center justify-center rounded-xl" sx={{ background: 'linear-gradient(135deg, #ec4899, #f43f5e)' }}>
-											<FuseSvgIcon className="text-white" size={16}>lucide:graduation-cap</FuseSvgIcon>
-										</Box>
-										<Typography className="text-sm font-extrabold">Academic Placement</Typography>
-									</div>
-
-									{/* School level */}
-									<div>
-										<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">School Level</Typography>
-										<div className="flex gap-3">
-											{(['primary', 'secondary'] as SchoolLevel[]).map((lvl) => (
-												<LevelToggle
-													key={lvl}
-													label={lvl === 'primary' ? 'Primary' : 'Secondary'}
-													icon={lvl === 'primary' ? 'lucide:pencil-ruler' : 'lucide:school'}
-													subtitle={lvl === 'primary' ? 'Grades 1 – 9' : 'Years 1 – 4'}
-													selected={schoolLevel === lvl}
-													from={lvl === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-													to={lvl === 'primary' ? '#0284c7' : '#7c3aed'}
-													onClick={() => {
-														setValue('schoolLevel', lvl, { shouldDirty: true });
-														setValue('grade', null);
-														setValue('section', '');
-													}}
-												/>
-											))}
-										</div>
-									</div>
-
-									{/* Grade pills */}
-									<AnimatePresence>
-										{schoolLevel && (
-											<motion.div key={`sg-${schoolLevel}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													{schoolLevel === 'primary' ? 'Grade' : 'Year'}
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{(schoolLevel === 'primary' ? [1,2,3,4,5,6,7,8,9] : [1,2,3,4]).map((g) => (
-														<GradePill
-															key={g}
-															grade={g}
-															selected={grade === g}
-															from={schoolLevel === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-															to={schoolLevel === 'primary' ? '#0284c7' : '#7c3aed'}
-															onClick={() => { setValue('grade', g, { shouldDirty: true }); setValue('section', ''); }}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-
-									{/* Section chips (secondary only) */}
-									<AnimatePresence>
-										{schoolLevel === 'secondary' && grade && (SECONDARY_SECTIONS[grade] ?? []).length > 0 && (
-											<motion.div key={`ss-${grade}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													Section / Stream
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{(SECONDARY_SECTIONS[grade] ?? []).map((s) => (
-														<SpecChip
-															key={s}
-															label={s}
-															selected={section === s}
-															onClick={() => setValue('section', s, { shouldDirty: true })}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-								</Box>
-							</motion.div>
-						)}
-					</AnimatePresence>
-
-					<Divider className="my-7" />
-
 					{/* ══ 2. IDENTITY ═══════════════════════════════════════════ */}
 					<SectionHeader icon="lucide:user-round" label="Identity" />
 

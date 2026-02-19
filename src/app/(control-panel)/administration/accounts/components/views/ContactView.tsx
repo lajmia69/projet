@@ -90,36 +90,24 @@ function ContactView() {
 	if (!contact) return null;
 
 	const role = (contact.role ?? '') as UserRole;
-	const isTutor = role === 'tutor';
-	const isStudent = role === 'student';
 
 	const fullName = contactFullName(contact);
 	const initials = [contact.firstName, contact.lastName].filter(Boolean).map((n) => n![0]).join('').toUpperCase() || '?';
 
-	const roleBadge = {
-		tutor:   { label: 'Tutor',   from: '#6366f1', to: '#3b82f6', icon: 'lucide:book-open-check' },
-		student: { label: 'Student', from: '#ec4899', to: '#f43f5e', icon: 'lucide:graduation-cap' }
-	}[role] ?? null;
+	const roleBadgeConfig: Record<string, { label: string; from: string; to: string; icon: string }> = {
+		super_admin: { label: 'Super Admin', from: '#dc2626', to: '#7f1d1d', icon: 'lucide:shield-admin' },
+		content_admin: { label: 'Content Admin', from: '#2563eb', to: '#1e40af', icon: 'lucide:file-check' },
+		member_admin: { label: 'Member Admin', from: '#7c3aed', to: '#5b21b6', icon: 'lucide:users-cog' },
+		studio_admin: { label: 'Studio Admin', from: '#f97316', to: '#c2410c', icon: 'lucide:video-cog' },
+		radio_content_creator: { label: 'Radio Creator', from: '#06b6d4', to: '#0369a1', icon: 'lucide:radio' },
+		broadcast_content_creator: { label: 'Broadcast Creator', from: '#ec4899', to: '#be185d', icon: 'lucide:tv' },
+		culture_content_creator: { label: 'Culture Creator', from: '#f59e0b', to: '#d97706', icon: 'lucide:palette' },
+		lesson_content_creator: { label: 'Lesson Creator', from: '#8b5cf6', to: '#6d28d9', icon: 'lucide:book-open' },
+		member: { label: 'Member', from: '#22c55e', to: '#16a34a', icon: 'lucide:user' },
+		studio_staff: { label: 'Studio Staff', from: '#06b6d4', to: '#0891b2', icon: 'lucide:users' }
+	};
 
-	// Student
-	const schoolLevel = (contact.schoolLevel ?? '') as SchoolLevel;
-	const grade = contact.grade;
-	const section = contact.section ?? '';
-	const placementLabel = studentPlacementLabel(schoolLevel, grade, section);
-	const sectionColors = SEC_COLORS[section];
-
-	// Tutor
-	const tutorSchoolLevel = (contact.tutorSchoolLevel ?? '') as SchoolLevel;
-	const tutorGrades = contact.tutorGrades ?? [];
-	const tutorSections = contact.tutorSections ?? [];
-
-	// Group tutor grades by level for display
-	const tutorGradesBySection = tutorSchoolLevel === 'secondary'
-		? tutorGrades.map((g) => ({
-			grade: g,
-			sections: tutorSections.filter((s) => (SECONDARY_SECTIONS[g] ?? []).includes(s))
-		}))
-		: tutorGrades.map((g) => ({ grade: g, sections: [] }));
+	const roleBadge = roleBadgeConfig[role] ?? null;
 
 	const primaryEmail = contact.emails?.find((e) => e.email)?.email;
 	const primaryPhone = contact.phoneNumbers?.find((p) => p.phoneNumber)?.phoneNumber;
@@ -188,15 +176,6 @@ function ContactView() {
 								<Typography className="text-xs font-bold text-white">{roleBadge.label}</Typography>
 							</Box>
 						)}
-						{isTutor && contact.tutorSubject && (
-							<Box
-								className="mt-1.5 ml-1 inline-flex items-center gap-1.5 rounded-full border px-3 py-1"
-								sx={{ borderColor: 'divider', backgroundColor: 'action.hover' }}
-							>
-								<FuseSvgIcon size={12} color="action">lucide:book</FuseSvgIcon>
-								<Typography className="text-xs font-semibold" color="text.secondary">{contact.tutorSubject}</Typography>
-							</Box>
-						)}
 					</div>
 
 					{/* Quick actions */}
@@ -221,87 +200,6 @@ function ContactView() {
 						)}
 					</div>
 				</motion.div>
-
-				{/* ── Tutor card ── */}
-				{isTutor && (tutorGrades.length > 0 || contact.tutorSubject) && (
-					<SectionCard delay={0.1}>
-						<SectionHead icon="lucide:book-open-check" label="Teaching Assignments" gradient="linear-gradient(135deg, #6366f1, #3b82f6)" />
-						<div className="px-4 py-4 flex flex-col gap-4">
-							{contact.tutorSubject && (
-								<div className="flex items-center gap-2">
-									<Box className="flex h-8 w-8 items-center justify-center rounded-xl" sx={{ backgroundColor: 'action.selected' }}>
-										<FuseSvgIcon size={15} color="action">lucide:book</FuseSvgIcon>
-									</Box>
-									<div>
-										<Typography className="text-[10px] font-bold uppercase tracking-wider" color="text.disabled">Subject</Typography>
-										<Typography className="text-sm font-bold">{contact.tutorSubject}</Typography>
-									</div>
-								</div>
-							)}
-
-							{tutorGrades.length > 0 && (
-								<div>
-									<Typography className="mb-2 text-[10px] font-extrabold uppercase tracking-widest" color="text.disabled">
-										{tutorSchoolLevel === 'primary' ? 'Primary Grades' : 'Secondary Years'} · {tutorGrades.length} selected
-									</Typography>
-									<div className="flex flex-wrap gap-2">
-										{tutorGrades.sort((a,b) => a-b).map((g) => {
-											const secsForGrade = tutorSchoolLevel === 'secondary'
-												? tutorSections.filter((s) => (SECONDARY_SECTIONS[g] ?? []).includes(s))
-												: [];
-											return (
-												<div key={g}>
-													<Box
-														className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2"
-														sx={{ background: tutorSchoolLevel === 'primary' ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}
-													>
-														<Typography className="text-sm font-black text-white">{tutorSchoolLevel === 'primary' ? `Gr. ${g}` : `Yr. ${g}`}</Typography>
-													</Box>
-													{secsForGrade.map((s) => {
-														const c = SEC_COLORS[s];
-														return c ? (
-															<Box key={s} className="ml-1 inline-flex items-center gap-1 rounded-xl px-2.5 py-2" sx={{ backgroundColor: c.bg, color: c.text }}>
-																<span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: c.from }} />
-																<Typography className="text-xs font-semibold">{s}</Typography>
-															</Box>
-														) : null;
-													})}
-												</div>
-											);
-										})}
-									</div>
-								</div>
-							)}
-						</div>
-					</SectionCard>
-				)}
-
-				{/* ── Student placement card ── */}
-				{isStudent && placementLabel && (
-					<SectionCard delay={0.1}>
-						<SectionHead icon="lucide:graduation-cap" label="Academic Placement" gradient="linear-gradient(135deg, #ec4899, #f43f5e)" />
-						<div className="px-4 py-4 flex flex-wrap items-center gap-3">
-							<Box className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2" sx={{ backgroundColor: 'action.selected' }}>
-								<FuseSvgIcon size={14} color="action">{schoolLevel === 'primary' ? 'lucide:pencil-ruler' : 'lucide:school'}</FuseSvgIcon>
-								<Typography className="text-xs font-bold capitalize">{schoolLevel}</Typography>
-							</Box>
-							<FuseSvgIcon size={14} color="disabled">lucide:chevron-right</FuseSvgIcon>
-							<Box className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black text-white"
-								sx={{ background: schoolLevel === 'primary' ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : 'linear-gradient(135deg, #8b5cf6, #7c3aed)' }}>
-								{grade}
-							</Box>
-							{section && sectionColors && (
-								<>
-									<FuseSvgIcon size={14} color="disabled">lucide:chevron-right</FuseSvgIcon>
-									<Box className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2" sx={{ backgroundColor: sectionColors.bg, color: sectionColors.text }}>
-										<span className="h-2 w-2 rounded-full" style={{ backgroundColor: sectionColors.from }} />
-										<Typography className="text-sm font-bold">{section}</Typography>
-									</Box>
-								</>
-							)}
-						</div>
-					</SectionCard>
-				)}
 
 				{/* ── Contact details card ── */}
 				{(contact.emails?.some((e) => e.email) || contact.phoneNumbers?.some((p) => p.phoneNumber) || contact.address || contact.birthday) && (

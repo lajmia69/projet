@@ -9,29 +9,46 @@ import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import { useSearch } from '../../hooks/useSearch';
 import { useFilteredContacts } from '../../hooks/useFilteredContacts';
 import { useContactsList } from '../../api/hooks/contacts/useContactsList';
-import { useState } from 'react';
 
 const ROLE_CONFIG = {
-	tutor:   { label: 'Tutors',   from: '#6366f1', to: '#3b82f6', icon: 'lucide:book-open-check' },
-	student: { label: 'Students', from: '#ec4899', to: '#f43f5e', icon: 'lucide:graduation-cap'  }
+	super_admin: { label: 'Super Admins', from: '#dc2626', to: '#7f1d1d', icon: 'lucide:shield-admin' },
+	content_admin: { label: 'Content Admins', from: '#2563eb', to: '#1e40af', icon: 'lucide:file-check' },
+	member_admin: { label: 'Member Admins', from: '#7c3aed', to: '#5b21b6', icon: 'lucide:users-cog' },
+	studio_admin: { label: 'Studio Admins', from: '#f97316', to: '#c2410c', icon: 'lucide:video-cog' },
+	radio_content_creator: { label: 'Radio Creators', from: '#06b6d4', to: '#0369a1', icon: 'lucide:radio' },
+	broadcast_content_creator: { label: 'Broadcast Creators', from: '#ec4899', to: '#be185d', icon: 'lucide:tv' },
+	culture_content_creator: { label: 'Culture Creators', from: '#f59e0b', to: '#d97706', icon: 'lucide:palette' },
+	lesson_content_creator: { label: 'Lesson Creators', from: '#8b5cf6', to: '#6d28d9', icon: 'lucide:book-open' },
+	member: { label: 'Members', from: '#22c55e', to: '#16a34a', icon: 'lucide:user' },
+	studio_staff: { label: 'Studio Staff', from: '#06b6d4', to: '#0891b2', icon: 'lucide:users' }
 };
 
 function ContactsHeader() {
 	const { searchText, setSearchText } = useSearch();
 	const { data: filteredData } = useFilteredContacts();
 	const { data: allContacts } = useContactsList();
-	const [activeFilter, setActiveFilter] = useState<string | null>(null);
 
 	const total        = allContacts?.length ?? 0;
 	const filtered     = filteredData?.length ?? 0;
 	const isFiltering  = searchText.length > 0;
-	const tutorCount   = allContacts?.filter((c) => c.role === 'tutor').length ?? 0;
-	const studentCount = allContacts?.filter((c) => c.role === 'student').length ?? 0;
+
+	// Count roles
+	const roleCounts = {
+		super_admin: allContacts?.filter((c) => c.role === 'super_admin').length ?? 0,
+		content_admin: allContacts?.filter((c) => c.role === 'content_admin').length ?? 0,
+		member_admin: allContacts?.filter((c) => c.role === 'member_admin').length ?? 0,
+		studio_admin: allContacts?.filter((c) => c.role === 'studio_admin').length ?? 0,
+		radio_content_creator: allContacts?.filter((c) => c.role === 'radio_content_creator').length ?? 0,
+		broadcast_content_creator: allContacts?.filter((c) => c.role === 'broadcast_content_creator').length ?? 0,
+		culture_content_creator: allContacts?.filter((c) => c.role === 'culture_content_creator').length ?? 0,
+		lesson_content_creator: allContacts?.filter((c) => c.role === 'lesson_content_creator').length ?? 0,
+		member: allContacts?.filter((c) => c.role === 'member').length ?? 0,
+		studio_staff: allContacts?.filter((c) => c.role === 'studio_staff').length ?? 0
+	};
 
 	const statCards = [
 		{ label: 'Total',    value: total,        icon: 'lucide:users',           from: '#6366f1', to: '#3b82f6' },
-		{ label: 'Tutors',   value: tutorCount,   icon: 'lucide:book-open-check', from: '#6366f1', to: '#3b82f6' },
-		{ label: 'Students', value: studentCount, icon: 'lucide:graduation-cap',  from: '#ec4899', to: '#f43f5e' }
+		{ label: 'Admins',   value: roleCounts.super_admin + roleCounts.content_admin + roleCounts.member_admin + roleCounts.studio_admin, icon: 'lucide:shield-admin', from: '#dc2626', to: '#7f1d1d' }
 	];
 
 	return (
@@ -81,7 +98,7 @@ function ContactsHeader() {
 								<Typography className="text-xs text-white/60 mt-0.5">
 									{isFiltering
 										? `${filtered} of ${total} results`
-										: `${tutorCount} tutor${tutorCount !== 1 ? 's' : ''} · ${studentCount} student${studentCount !== 1 ? 's' : ''}`
+										: `${total} account${total !== 1 ? 's' : ''}`
 									}
 								</Typography>
 							</div>
@@ -208,13 +225,12 @@ function ContactsHeader() {
 						{/* All */}
 						<Box
 							component="button"
-							onClick={() => setActiveFilter(null)}
-							className="inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full px-3 text-[11px] font-bold transition-all"
+							className="inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-[11px] font-bold transition-all"
 							sx={{
-								backgroundColor: activeFilter === null ? 'secondary.main' : 'action.hover',
-								color: activeFilter === null ? 'secondary.contrastText' : 'text.secondary',
+								backgroundColor: 'action.select',
+								color: 'text.secondary',
 								border: '1px solid',
-								borderColor: activeFilter === null ? 'secondary.main' : 'divider',
+								borderColor: 'divider',
 								'&:hover': { borderColor: 'secondary.main' }
 							}}
 						>
@@ -222,39 +238,6 @@ function ContactsHeader() {
 						</Box>
 
 						{/* Tutor / Student chips */}
-						{(['tutor', 'student'] as const).map((r) => {
-							const cfg = ROLE_CONFIG[r];
-							const count = r === 'tutor' ? tutorCount : studentCount;
-							if (!count) return null;
-							return (
-								<Box
-									key={r}
-									component="button"
-									onClick={() => setActiveFilter(r === activeFilter ? null : r)}
-									className="inline-flex h-6 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-[11px] font-bold transition-all"
-									sx={{
-										backgroundColor: activeFilter === r ? cfg.from + '1a' : 'action.hover',
-										color: activeFilter === r ? cfg.from : 'text.secondary',
-										border: '1px solid',
-										borderColor: activeFilter === r ? cfg.from + '55' : 'divider',
-										'&:hover': { backgroundColor: cfg.from + '14', color: cfg.from }
-									}}
-								>
-									<FuseSvgIcon size={10}>{cfg.icon}</FuseSvgIcon>
-									{cfg.label}
-									<span
-										className="flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[9px] font-black"
-										style={{
-											backgroundColor: activeFilter === r ? cfg.from : 'rgba(0,0,0,0.08)',
-											color: activeFilter === r ? 'white' : 'inherit'
-										}}
-									>
-										{count}
-									</span>
-								</Box>
-							);
-						})}
-
 						{isFiltering && (
 							<motion.span
 								initial={{ opacity: 0 }}
