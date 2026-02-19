@@ -13,121 +13,54 @@ export type ContactEmail = {
 
 // ─── Role ────────────────────────────────────────────────────────────────────
 
-export type UserRole =
-	| 'contact'
-	| 'super_admin'
-	| 'content_admin'
-	| 'member_admin'
-	| 'studio_admin'
-	| 'radio_content_creator'
-	| 'broadcast_content_creator'
-	| 'culture_content_creator'
-	| 'lesson_content_creator'
-	| 'member'
-	| 'studio_staff'
-	| '';
+export type UserRole = 'tutor' | 'student' | '';
+export type SchoolLevel = 'primary' | 'secondary' | '';
 
-export const ALL_ROLES: UserRole[] = [
-	'contact',
-	'super_admin',
-	'content_admin',
-	'member_admin',
-	'studio_admin',
-	'radio_content_creator',
-	'broadcast_content_creator',
-	'culture_content_creator',
-	'lesson_content_creator',
-	'member',
-	'studio_staff'
-];
+// ─── Secondary sections per grade ────────────────────────────────────────────
 
-export type RoleConfig = {
-	label: string;
-	icon: string;
-	from: string;
-	to: string;
-	description: string;
+export const SECONDARY_SECTIONS: Record<number, string[]> = {
+	1: ['Generale', 'Sports'],
+	2: ['IT', 'Science', 'Economics', 'Letters', 'Sports'],
+	3: ['IT', 'Science', 'Maths', 'Economics', 'Letters', 'Technique', 'Sports'],
+	4: ['IT', 'Science', 'Maths', 'Economics', 'Letters', 'Technique', 'Sports']
 };
 
-export const ROLE_MAP: Record<Exclude<UserRole, ''>, RoleConfig> = {
-	contact: {
-		label: 'Contact',
-		icon: 'lucide:user',
-		from: '#64748b',
-		to: '#475569',
-		description: 'External contact'
-	},
-	super_admin: {
-		label: 'Super Admin',
-		icon: 'lucide:shield-check',
-		from: '#ef4444',
-		to: '#dc2626',
-		description: 'Full platform access'
-	},
-	content_admin: {
-		label: 'Content Admin',
-		icon: 'lucide:file-pen',
-		from: '#f97316',
-		to: '#ea580c',
-		description: 'Manages all content'
-	},
-	member_admin: {
-		label: 'Member Admin',
-		icon: 'lucide:users',
-		from: '#eab308',
-		to: '#ca8a04',
-		description: 'Manages members'
-	},
-	studio_admin: {
-		label: 'Studio Admin',
-		icon: 'lucide:mic-2',
-		from: '#22c55e',
-		to: '#16a34a',
-		description: 'Manages studio'
-	},
-	radio_content_creator: {
-		label: 'Radio Creator',
-		icon: 'lucide:radio',
-		from: '#06b6d4',
-		to: '#0891b2',
-		description: 'Creates radio content'
-	},
-	broadcast_content_creator: {
-		label: 'Broadcast Creator',
-		icon: 'lucide:tv-2',
-		from: '#3b82f6',
-		to: '#2563eb',
-		description: 'Creates broadcast content'
-	},
-	culture_content_creator: {
-		label: 'Culture Creator',
-		icon: 'lucide:landmark',
-		from: '#8b5cf6',
-		to: '#7c3aed',
-		description: 'Creates culture content'
-	},
-	lesson_content_creator: {
-		label: 'Lesson Creator',
-		icon: 'lucide:book-open',
-		from: '#ec4899',
-		to: '#db2777',
-		description: 'Creates lesson content'
-	},
-	member: {
-		label: 'Member',
-		icon: 'lucide:user-check',
-		from: '#10b981',
-		to: '#059669',
-		description: 'Platform member'
-	},
-	studio_staff: {
-		label: 'Studio Staff',
-		icon: 'lucide:headphones',
-		from: '#f59e0b',
-		to: '#d97706',
-		description: 'Studio team member'
-	}
-};
+/** Union of sections for a set of secondary grades */
+export function sectionsForGrades(grades: number[]): string[] {
+	const all: string[] = [];
+	grades.forEach((g) => {
+		(SECONDARY_SECTIONS[g] ?? []).forEach((s) => {
+			if (!all.includes(s)) all.push(s);
+		});
+	});
+	return all;
+}
+
+// ─── Tutor subject list ───────────────────────────────────────────────────────
+
+export const TUTOR_SUBJECTS = [
+	'Mathematics',
+	'Physics',
+	'Chemistry',
+	'Biology / Life Sciences',
+	'Science (General)',
+	'Arabic',
+	'French',
+	'English',
+	'History',
+	'Geography',
+	'Philosophy',
+	'Islamic Studies',
+	'Technology',
+	'IT / Computer Science',
+	'Economics',
+	'Accounting',
+	'Arts',
+	'Music',
+	'Other'
+] as const;
+
+export type TutorSubject = (typeof TUTOR_SUBJECTS)[number] | '';
 
 // ─── Contact type ─────────────────────────────────────────────────────────────
 
@@ -137,9 +70,25 @@ export type Contact = {
 	background?: string;
 	firstName: string;
 	lastName: string;
+	// computed helper (not stored separately)
 	emails?: ContactEmail[];
 	phoneNumbers?: ContactPhoneNumber[];
+
+	// Role
 	role?: UserRole;
+
+	// Tutor-specific
+	tutorSubject?: TutorSubject;
+	tutorSchoolLevel?: SchoolLevel;
+	tutorGrades?: number[];       // multi-select
+	tutorSections?: string[];     // multi-select (secondary only)
+
+	// Student-specific
+	schoolLevel?: SchoolLevel;
+	grade?: number | null;
+	section?: string;
+
+	// Shared
 	birthday?: string;
 	address?: string;
 	notes?: string;
@@ -172,3 +121,30 @@ export type GroupedContacts = {
 };
 
 export type AccumulatorType = Record<string, GroupedContacts>;
+
+// ─── Display helpers ──────────────────────────────────────────────────────────
+
+export const ROLE_LABELS: Record<UserRole, string> = { '': '', tutor: 'Tutor', student: 'Student' };
+export const SCHOOL_LEVEL_LABELS: Record<SchoolLevel, string> = { '': '', primary: 'Primary', secondary: 'Secondary' };
+
+export function studentPlacementLabel(
+	schoolLevel: SchoolLevel,
+	grade: number | null | undefined,
+	section: string | undefined
+): string {
+	if (!schoolLevel || !grade) return '';
+	if (schoolLevel === 'primary') return `Primary – Grade ${grade}`;
+	return `Secondary – Year ${grade}${section ? ` (${section})` : ''}`;
+}
+
+export function tutorAssignmentLabel(
+	schoolLevel: SchoolLevel,
+	grades: number[],
+	sections: string[]
+): string {
+	if (!schoolLevel || !grades.length) return '';
+	const lvl = schoolLevel === 'primary' ? 'Primary' : 'Secondary';
+	const gradeStr = grades.length === 1 ? `Grade ${grades[0]}` : `${grades.length} grades`;
+	const secStr = sections.length ? ` · ${sections.length} section${sections.length > 1 ? 's' : ''}` : '';
+	return `${lvl} – ${gradeStr}${secStr}`;
+}
