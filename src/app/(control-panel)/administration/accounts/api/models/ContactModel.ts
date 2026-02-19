@@ -17,18 +17,7 @@ function ContactModel(data: Partial<Contact>): Contact {
 		lastName: '',
 		emails: [ContactEmailModel({})],
 		phoneNumbers: [ContactPhoneModel({})],
-		// Role
 		role: '',
-		// Tutor
-		tutorSubject: '',
-		tutorSchoolLevel: '',
-		tutorGrades: [],
-		tutorSections: [],
-		// Student
-		schoolLevel: '',
-		grade: null,
-		section: '',
-		// Misc
 		birthday: '',
 		address: '',
 		notes: '',

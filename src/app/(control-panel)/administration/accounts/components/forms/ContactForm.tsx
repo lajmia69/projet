@@ -18,12 +18,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import useNavigate from '@fuse/hooks/useNavigate';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import InputAdornment from '@mui/material/InputAdornment';
 import { motion, AnimatePresence } from 'motion/react';
+import Tooltip from '@mui/material/Tooltip';
 
 import ContactEmailSelector from './email-selector/ContactEmailSelector';
 import ContactModel, { ContactEmailModel, ContactPhoneModel } from '../../api/models/ContactModel';
@@ -33,15 +32,7 @@ import { useUpdateContact } from '../../api/hooks/contacts/useUpdateContact';
 import { useDeleteContact } from '../../api/hooks/contacts/useDeleteContact';
 import { useSnackbar } from 'notistack';
 
-import {
-	UserRole,
-	SchoolLevel,
-	SECONDARY_SECTIONS,
-	sectionsForGrades,
-	TUTOR_SUBJECTS,
-	TutorSubject,
-	contactFullName
-} from '../../api/types';
+import { UserRole, ALL_ROLES, ROLE_MAP, contactFullName } from '../../api/types';
 
 // ─── Zod schema ───────────────────────────────────────────────────────────────
 
@@ -52,36 +43,13 @@ const schema = z.object({
 	lastName: z.string().min(1, { message: 'Last name is required' }),
 	emails: z.array(z.object({ email: z.string().min(1), label: z.string().optional() })),
 	phoneNumber: z.string().optional(),
-	role: z.enum(['tutor', 'student', '']).optional(),
-	// Tutor
-	tutorSubject: z.string().optional(),
-	tutorSchoolLevel: z.enum(['primary', 'secondary', '']).optional(),
-	tutorGrades: z.array(z.number()).optional(),
-	tutorSections: z.array(z.string()).optional(),
-	// Student
-	schoolLevel: z.enum(['primary', 'secondary', '']).optional(),
-	grade: z.number().nullable().optional(),
-	section: z.string().optional(),
-	// Extra
+	role: z.string().optional(),
 	birthday: z.string().optional(),
 	address: z.string().optional(),
 	notes: z.string().optional()
 });
 
 type FormType = z.infer<typeof schema>;
-
-// ─── Section color map ────────────────────────────────────────────────────────
-
-const SEC_COLORS: Record<string, { from: string; to: string; bg: string; text: string }> = {
-	Scientific: { from: '#6366f1', to: '#3b82f6', bg: '#eef2ff', text: '#4338ca' },
-	Letters:    { from: '#f59e0b', to: '#d97706', bg: '#fffbeb', text: '#b45309' },
-	Sports:     { from: '#22c55e', to: '#16a34a', bg: '#f0fdf4', text: '#15803d' },
-	IT:         { from: '#8b5cf6', to: '#7c3aed', bg: '#f5f3ff', text: '#6d28d9' },
-	Science:    { from: '#0ea5e9', to: '#0284c7', bg: '#f0f9ff', text: '#0369a1' },
-	Economics:  { from: '#ec4899', to: '#db2777', bg: '#fdf2f8', text: '#9d174d' },
-	Maths:      { from: '#ef4444', to: '#dc2626', bg: '#fff1f2', text: '#b91c1c' },
-	Technique:  { from: '#f97316', to: '#ea580c', bg: '#fff7ed', text: '#c2410c' }
-};
 
 // ─── Reusable primitives ──────────────────────────────────────────────────────
 
@@ -96,170 +64,57 @@ function SectionHeader({ icon, label }: { icon: string; label: string }) {
 	);
 }
 
-/** Large role toggle card */
+/** Compact role card for grid layout */
 interface RoleCardProps {
-	value: UserRole;
-	current: UserRole;
-	icon: string;
-	label: string;
-	description: string;
-	from: string;
-	to: string;
+	roleKey: Exclude<UserRole, ''>;
+	selected: boolean;
 	onClick: () => void;
 }
-function RoleCard({ value, current, icon, label, description, from, to, onClick }: RoleCardProps) {
-	const selected = current === value;
+function RoleCard({ roleKey, selected, onClick }: RoleCardProps) {
+	const cfg = ROLE_MAP[roleKey];
 	return (
-		<Box
-			component="button"
-			type="button"
-			onClick={onClick}
-			className="relative flex flex-1 cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-2xl border-2 p-6 text-center transition-all duration-200"
-			sx={{
-				borderColor: selected ? from : 'divider',
-				backgroundColor: selected ? from + '0e' : 'background.paper',
-				boxShadow: selected ? `0 0 0 3px ${from}2a` : 'none',
-				'&:hover': { borderColor: from, backgroundColor: from + '07' }
-			}}
-		>
+		<Tooltip title={cfg.description} arrow placement="top">
 			<Box
-				className="flex h-16 w-16 items-center justify-center rounded-2xl"
-				sx={{ background: selected ? `linear-gradient(135deg, ${from}, ${to})` : 'action.hover' }}
+				component="button"
+				type="button"
+				onClick={onClick}
+				className="relative flex cursor-pointer flex-col items-center gap-2 overflow-hidden rounded-xl border-2 p-3 text-center transition-all duration-150"
+				sx={{
+					borderColor: selected ? cfg.from : 'divider',
+					backgroundColor: selected ? cfg.from + '0e' : 'background.paper',
+					boxShadow: selected ? `0 0 0 3px ${cfg.from}2a` : 'none',
+					'&:hover': { borderColor: cfg.from, backgroundColor: cfg.from + '07' }
+				}}
 			>
-				<FuseSvgIcon sx={{ color: selected ? 'white' : 'text.secondary' }} size={32}>{icon}</FuseSvgIcon>
-			</Box>
-			<div>
-				<Typography className="text-base font-extrabold">{label}</Typography>
-				<Typography className="mt-0.5 text-xs" color="text.secondary">{description}</Typography>
-			</div>
-			<AnimatePresence>
-				{selected && (
-					<motion.div
-						initial={{ scale: 0, opacity: 0 }}
-						animate={{ scale: 1, opacity: 1 }}
-						exit={{ scale: 0, opacity: 0 }}
-						className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full"
-						style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
-					>
-						<FuseSvgIcon className="text-white" size={14}>lucide:check</FuseSvgIcon>
-					</motion.div>
-				)}
-			</AnimatePresence>
-		</Box>
-	);
-}
-
-/** Bigger school level toggle */
-interface LevelToggleProps {
-	label: string;
-	icon: string;
-	subtitle: string;
-	selected: boolean;
-	from: string;
-	to: string;
-	onClick: () => void;
-}
-function LevelToggle({ label, icon, subtitle, selected, from, to, onClick }: LevelToggleProps) {
-	return (
-		<Box
-			component="button"
-			type="button"
-			onClick={onClick}
-			className="flex flex-1 cursor-pointer items-center gap-3 rounded-xl border-2 px-4 py-3.5 transition-all duration-150"
-			sx={{
-				borderColor: selected ? from : 'divider',
-				backgroundColor: selected ? from + '0e' : 'background.paper',
-				color: selected ? from : 'text.secondary',
-				'&:hover': { borderColor: from, color: from }
-			}}
-		>
-			<Box
-				className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-				sx={{ background: selected ? `linear-gradient(135deg, ${from}, ${to})` : 'action.hover' }}
-			>
-				<FuseSvgIcon sx={{ color: selected ? 'white' : 'text.secondary' }} size={20}>{icon}</FuseSvgIcon>
-			</Box>
-			<div className="text-left">
-				<Typography className="text-sm font-bold leading-none">{label}</Typography>
-				<Typography className="mt-0.5 text-xs" color="text.secondary">{subtitle}</Typography>
-			</div>
-		</Box>
-	);
-}
-
-/** Large grade pill */
-interface GradePillProps {
-	grade: number;
-	selected: boolean;
-	multi?: boolean;
-	from: string;
-	to: string;
-	onClick: () => void;
-}
-function GradePill({ grade, selected, multi = false, from, to, onClick }: GradePillProps) {
-	return (
-		<Box
-			component="button"
-			type="button"
-			onClick={onClick}
-			className="relative flex h-14 w-14 cursor-pointer items-center justify-center rounded-2xl border-2 text-lg font-black transition-all duration-150"
-			sx={{
-				borderColor: selected ? from : 'divider',
-				background: selected ? `linear-gradient(135deg, ${from}, ${to})` : 'background.paper',
-				color: selected ? 'white' : 'text.secondary',
-				boxShadow: selected ? `0 4px 14px ${from}44` : 'none',
-				'&:hover': { borderColor: from, color: selected ? 'white' : from }
-			}}
-		>
-			{grade}
-			{multi && selected && (
 				<Box
-					className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full"
-					sx={{ background: `linear-gradient(135deg, ${from}, ${to})`, border: '2px solid', borderColor: 'background.paper' }}
+					className="flex h-10 w-10 items-center justify-center rounded-xl"
+					sx={{
+						background: selected
+							? `linear-gradient(135deg, ${cfg.from}, ${cfg.to})`
+							: 'action.hover'
+					}}
 				>
-					<FuseSvgIcon className="text-white" size={10}>lucide:check</FuseSvgIcon>
+					<FuseSvgIcon sx={{ color: selected ? 'white' : 'text.secondary' }} size={20}>
+						{cfg.icon}
+					</FuseSvgIcon>
 				</Box>
-			)}
-		</Box>
-	);
-}
+				<Typography className="text-xs font-bold leading-tight">{cfg.label}</Typography>
 
-/** Section / speciality chip */
-interface SpecChipProps {
-	label: string;
-	selected: boolean;
-	multi?: boolean;
-	onClick: () => void;
-}
-function SpecChip({ label, selected, multi = false, onClick }: SpecChipProps) {
-	const c = SEC_COLORS[label] ?? { from: '#64748b', to: '#475569', bg: '#f1f5f9', text: '#475569' };
-	return (
-		<Box
-			component="button"
-			type="button"
-			onClick={onClick}
-			className="inline-flex cursor-pointer items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-all duration-150"
-			sx={{
-				borderColor: selected ? c.from : 'divider',
-				backgroundColor: selected ? c.bg : 'background.paper',
-				color: selected ? c.text : 'text.secondary',
-				boxShadow: selected ? `0 2px 10px ${c.from}30` : 'none',
-				'&:hover': { borderColor: c.from, color: c.text, backgroundColor: c.bg }
-			}}
-		>
-			{selected && (
-				<Box
-					className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full"
-					sx={{ background: `linear-gradient(135deg, ${c.from}, ${c.to})` }}
-				>
-					<FuseSvgIcon className="text-white" size={11}>lucide:check</FuseSvgIcon>
-				</Box>
-			)}
-			{!selected && (
-				<span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: c.from, opacity: 0.5 }} />
-			)}
-			{label}
-		</Box>
+				<AnimatePresence>
+					{selected && (
+						<motion.div
+							initial={{ scale: 0, opacity: 0 }}
+							animate={{ scale: 1, opacity: 1 }}
+							exit={{ scale: 0, opacity: 0 }}
+							className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full"
+							style={{ background: `linear-gradient(135deg, ${cfg.from}, ${cfg.to})` }}
+						>
+							<FuseSvgIcon className="text-white" size={11}>lucide:check</FuseSvgIcon>
+						</motion.div>
+					)}
+				</AnimatePresence>
+			</Box>
+		</Tooltip>
 	);
 }
 
@@ -286,14 +141,7 @@ function ContactForm({ isNew }: ContactFormProps) {
 	const { isValid, dirtyFields, errors } = formState;
 	const form = watch();
 
-	const role            = (watch('role') ?? '') as UserRole;
-	const tutorSchoolLvl  = (watch('tutorSchoolLevel') ?? '') as SchoolLevel;
-	const tutorGrades     = watch('tutorGrades') ?? [];
-	const tutorSections   = watch('tutorSections') ?? [];
-	const tutorSubject    = watch('tutorSubject') ?? '';
-	const schoolLevel     = (watch('schoolLevel') ?? '') as SchoolLevel;
-	const grade           = watch('grade');
-	const section         = watch('section') ?? '';
+	const role = (watch('role') ?? '') as UserRole;
 
 	useEffect(() => {
 		if (isNew) reset(ContactModel({}));
@@ -325,26 +173,6 @@ function ContactForm({ isNew }: ContactFormProps) {
 		if (!contact) return;
 		deleteContact(contact.id, { onSuccess: () => navigate('/administration/accounts') });
 	}
-
-	// Toggle helpers
-	function toggleTutorGrade(g: number) {
-		const next = tutorGrades.includes(g) ? tutorGrades.filter((x) => x !== g) : [...tutorGrades, g];
-		setValue('tutorGrades', next, { shouldDirty: true });
-		// Remove sections no longer valid
-		if (tutorSchoolLvl === 'secondary') {
-			const validSecs = sectionsForGrades(next);
-			setValue('tutorSections', tutorSections.filter((s) => validSecs.includes(s)), { shouldDirty: true });
-		}
-	}
-	function toggleTutorSection(s: string) {
-		setValue(
-			'tutorSections',
-			tutorSections.includes(s) ? tutorSections.filter((x) => x !== s) : [...tutorSections, s],
-			{ shouldDirty: true }
-		);
-	}
-
-	const availableTutorSections = tutorSchoolLvl === 'secondary' ? sectionsForGrades(tutorGrades) : [];
 
 	const background = watch('background');
 	const firstName = watch('firstName');
@@ -414,242 +242,50 @@ function ContactForm({ isNew }: ContactFormProps) {
 					{/* ══ 1. ROLE ═══════════════════════════════════════════════ */}
 					<SectionHeader icon="lucide:user-cog" label="Role" />
 
-					<div className="mt-4 flex gap-4">
-						<Controller
-							control={control}
-							name="role"
-							render={({ field: { onChange, value } }) => (
-								<>
+					<Controller
+						control={control}
+						name="role"
+						render={({ field: { onChange, value } }) => (
+							<div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
+								{ALL_ROLES.map((r) => (
 									<RoleCard
-										value="tutor"
-										current={(value as UserRole) ?? ''}
-										icon="lucide:book-open-check"
-										label="Tutor"
-										description="Teaches students"
-										from="#6366f1"
-										to="#3b82f6"
-										onClick={() => { onChange('tutor'); setValue('schoolLevel', ''); setValue('grade', null); setValue('section', ''); }}
+										key={r}
+										roleKey={r as Exclude<UserRole, ''>}
+										selected={(value as UserRole) === r}
+										onClick={() => onChange(value === r ? '' : r)}
 									/>
-									<RoleCard
-										value="student"
-										current={(value as UserRole) ?? ''}
-										icon="lucide:graduation-cap"
-										label="Student"
-										description="Enrolled in school"
-										from="#ec4899"
-										to="#f43f5e"
-										onClick={() => { onChange('student'); setValue('tutorSchoolLevel', ''); setValue('tutorGrades', []); setValue('tutorSections', []); setValue('tutorSubject', ''); }}
-									/>
-								</>
-							)}
-						/>
-					</div>
-
-					{/* ── TUTOR waterfall ───────────────────────────────────── */}
-					<AnimatePresence>
-						{role === 'tutor' && (
-							<motion.div
-								key="tutor-block"
-								initial={{ opacity: 0, height: 0, marginTop: 0 }}
-								animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
-								exit={{ opacity: 0, height: 0, marginTop: 0 }}
-								style={{ overflow: 'hidden' }}
-							>
-								<Box className="flex flex-col gap-5 rounded-2xl border p-5" sx={{ borderColor: 'divider', backgroundColor: 'background.default' }}>
-									{/* Tutor header */}
-									<div className="flex items-center gap-2">
-										<Box className="flex h-8 w-8 items-center justify-center rounded-xl" sx={{ background: 'linear-gradient(135deg, #6366f1, #3b82f6)' }}>
-											<FuseSvgIcon className="text-white" size={16}>lucide:book-open-check</FuseSvgIcon>
-										</Box>
-										<Typography className="text-sm font-extrabold">Teaching Details</Typography>
-									</div>
-
-									{/* Subject */}
-									<FormControl className="w-full">
-										<FormLabel sx={{ mb: 1, fontWeight: 700, fontSize: '0.8rem' }}>Subject / Discipline</FormLabel>
-										<Controller
-											control={control}
-											name="tutorSubject"
-											render={({ field }) => (
-												<Select
-													{...field}
-													displayEmpty
-													variant="outlined"
-													sx={{ minHeight: 52 }}
-													startAdornment={
-														<InputAdornment position="start">
-															<FuseSvgIcon color="action" size={20}>lucide:book</FuseSvgIcon>
-														</InputAdornment>
-													}
-													renderValue={(v) => v || <span style={{ color: 'var(--mui-palette-text-disabled)' }}>Select a subject…</span>}
-												>
-													{TUTOR_SUBJECTS.map((s) => (
-														<MenuItem key={s} value={s}>{s}</MenuItem>
-													))}
-												</Select>
-											)}
-										/>
-									</FormControl>
-
-									{/* School level */}
-									<div>
-										<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-											School Level
-										</Typography>
-										<div className="flex gap-3">
-											{(['primary', 'secondary'] as SchoolLevel[]).map((lvl) => (
-												<LevelToggle
-													key={lvl}
-													label={lvl === 'primary' ? 'Primary' : 'Secondary'}
-													icon={lvl === 'primary' ? 'lucide:pencil-ruler' : 'lucide:school'}
-													subtitle={lvl === 'primary' ? 'Grades 1 – 9' : 'Years 1 – 4 (Bac)'}
-													selected={tutorSchoolLvl === lvl}
-													from={lvl === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-													to={lvl === 'primary' ? '#0284c7' : '#7c3aed'}
-													onClick={() => {
-														setValue('tutorSchoolLevel', lvl, { shouldDirty: true });
-														setValue('tutorGrades', []);
-														setValue('tutorSections', []);
-													}}
-												/>
-											))}
-										</div>
-									</div>
-
-									{/* Grade selector */}
-									<AnimatePresence>
-										{tutorSchoolLvl && (
-											<motion.div key={`tg-${tutorSchoolLvl}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													{tutorSchoolLvl === 'primary' ? 'Grades (select all that apply)' : 'Years (select all that apply)'}
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{(tutorSchoolLvl === 'primary' ? [1,2,3,4,5,6,7,8,9] : [1,2,3,4]).map((g) => (
-														<GradePill
-															key={g}
-															grade={g}
-															selected={tutorGrades.includes(g)}
-															multi
-															from={tutorSchoolLvl === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-															to={tutorSchoolLvl === 'primary' ? '#0284c7' : '#7c3aed'}
-															onClick={() => toggleTutorGrade(g)}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-
-									{/* Sections (secondary only) */}
-									<AnimatePresence>
-										{tutorSchoolLvl === 'secondary' && tutorGrades.length > 0 && availableTutorSections.length > 0 && (
-											<motion.div key="tsec" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													Sections / Streams (select all that apply)
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{availableTutorSections.map((s) => (
-														<SpecChip
-															key={s}
-															label={s}
-															selected={tutorSections.includes(s)}
-															multi
-															onClick={() => toggleTutorSection(s)}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-								</Box>
-							</motion.div>
+								))}
+							</div>
 						)}
-					</AnimatePresence>
+					/>
 
-					{/* ── STUDENT waterfall ─────────────────────────────────── */}
+					{/* Role badge preview */}
 					<AnimatePresence>
-						{role === 'student' && (
+						{role && ROLE_MAP[role as Exclude<UserRole, ''>] && (
 							<motion.div
-								key="student-block"
-								initial={{ opacity: 0, height: 0, marginTop: 0 }}
-								animate={{ opacity: 1, height: 'auto', marginTop: 24 }}
-								exit={{ opacity: 0, height: 0, marginTop: 0 }}
-								style={{ overflow: 'hidden' }}
+								initial={{ opacity: 0, y: -8 }}
+								animate={{ opacity: 1, y: 0 }}
+								exit={{ opacity: 0, y: -8 }}
+								className="mt-3"
 							>
-								<Box className="flex flex-col gap-5 rounded-2xl border p-5" sx={{ borderColor: 'divider', backgroundColor: 'background.default' }}>
-									<div className="flex items-center gap-2">
-										<Box className="flex h-8 w-8 items-center justify-center rounded-xl" sx={{ background: 'linear-gradient(135deg, #ec4899, #f43f5e)' }}>
-											<FuseSvgIcon className="text-white" size={16}>lucide:graduation-cap</FuseSvgIcon>
-										</Box>
-										<Typography className="text-sm font-extrabold">Academic Placement</Typography>
-									</div>
-
-									{/* School level */}
-									<div>
-										<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">School Level</Typography>
-										<div className="flex gap-3">
-											{(['primary', 'secondary'] as SchoolLevel[]).map((lvl) => (
-												<LevelToggle
-													key={lvl}
-													label={lvl === 'primary' ? 'Primary' : 'Secondary'}
-													icon={lvl === 'primary' ? 'lucide:pencil-ruler' : 'lucide:school'}
-													subtitle={lvl === 'primary' ? 'Grades 1 – 9' : 'Years 1 – 4 (Bac)'}
-													selected={schoolLevel === lvl}
-													from={lvl === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-													to={lvl === 'primary' ? '#0284c7' : '#7c3aed'}
-													onClick={() => {
-														setValue('schoolLevel', lvl, { shouldDirty: true });
-														setValue('grade', null);
-														setValue('section', '');
-													}}
-												/>
-											))}
-										</div>
-									</div>
-
-									{/* Grade pills */}
-									<AnimatePresence>
-										{schoolLevel && (
-											<motion.div key={`sg-${schoolLevel}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													{schoolLevel === 'primary' ? 'Grade' : 'Year'}
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{(schoolLevel === 'primary' ? [1,2,3,4,5,6,7,8,9] : [1,2,3,4]).map((g) => (
-														<GradePill
-															key={g}
-															grade={g}
-															selected={grade === g}
-															from={schoolLevel === 'primary' ? '#0ea5e9' : '#8b5cf6'}
-															to={schoolLevel === 'primary' ? '#0284c7' : '#7c3aed'}
-															onClick={() => { setValue('grade', g, { shouldDirty: true }); setValue('section', ''); }}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
-
-									{/* Section chips (secondary only) */}
-									<AnimatePresence>
-										{schoolLevel === 'secondary' && grade && (SECONDARY_SECTIONS[grade] ?? []).length > 0 && (
-											<motion.div key={`ss-${grade}`} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-												<Typography className="mb-3 text-xs font-bold uppercase tracking-wider" color="text.secondary">
-													Section / Stream
-												</Typography>
-												<div className="flex flex-wrap gap-3">
-													{(SECONDARY_SECTIONS[grade] ?? []).map((s) => (
-														<SpecChip
-															key={s}
-															label={s}
-															selected={section === s}
-															onClick={() => setValue('section', s, { shouldDirty: true })}
-														/>
-													))}
-												</div>
-											</motion.div>
-										)}
-									</AnimatePresence>
+								<Box
+									className="inline-flex items-center gap-2 rounded-xl border px-3 py-2"
+									sx={{ borderColor: 'divider', backgroundColor: 'background.default' }}
+								>
+									<Box
+										className="flex h-6 w-6 items-center justify-center rounded-lg"
+										sx={{ background: `linear-gradient(135deg, ${ROLE_MAP[role as Exclude<UserRole, ''>].from}, ${ROLE_MAP[role as Exclude<UserRole, ''>].to})` }}
+									>
+										<FuseSvgIcon className="text-white" size={13}>
+											{ROLE_MAP[role as Exclude<UserRole, ''>].icon}
+										</FuseSvgIcon>
+									</Box>
+									<Typography className="text-xs font-semibold" color="text.secondary">
+										Selected: <span className="font-bold" style={{ color: ROLE_MAP[role as Exclude<UserRole, ''>].from }}>
+											{ROLE_MAP[role as Exclude<UserRole, ''>].label}
+										</span>
+										{' · '}{ROLE_MAP[role as Exclude<UserRole, ''>].description}
+									</Typography>
 								</Box>
 							</motion.div>
 						)}
@@ -742,13 +378,12 @@ function ContactForm({ isNew }: ContactFormProps) {
 															className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 mr-1"
 															sx={{ backgroundColor: 'action.hover', borderColor: 'divider' }}
 														>
-															{/* TN flag */}
 															<Box
 																className="h-4 w-6 overflow-hidden rounded-sm"
 																sx={{
 																	background: "url('/assets/images/administration/accounts/flags.png') no-repeat 0 0",
 																	backgroundSize: '24px 3876px',
-																	backgroundPosition: '-1px -2145px' // Tunisia flag position
+																	backgroundPosition: '-1px -2145px'
 																}}
 															/>
 															<Typography className="text-sm font-bold">+216</Typography>
