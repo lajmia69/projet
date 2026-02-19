@@ -47,8 +47,6 @@ function ContactsHeader() {
 	};
 
 	const statCards = [
-		{ label: 'Total',    value: total,        icon: 'lucide:users',           from: '#6366f1', to: '#3b82f6' },
-		{ label: 'Admins',   value: roleCounts.super_admin + roleCounts.content_admin + roleCounts.member_admin + roleCounts.studio_admin, icon: 'lucide:shield-admin', from: '#dc2626', to: '#7f1d1d' }
 	];
 
 	return (

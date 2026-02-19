@@ -311,13 +311,28 @@ function ContactForm({ isNew }: ContactFormProps) {
 		};
 		if (isNew) {
 			createContact(ContactModel(formData as any), {
-				onSuccess: (action) => navigate(`/administration/accounts/${action.id}`)
+				onSuccess: (action) => navigate(`/administration/accounts/${action.id}`),
+				onError: (error: any) => {
+					if (error?.response?.status === 401) {
+						enqueueSnackbar('You do not have permission to assign this role', { variant: 'error' });
+					} else {
+						enqueueSnackbar('Failed to create contact', { variant: 'error' });
+					}
+				}
 			});
 		} else {
-			updateContact({ id: contact.id, ...formData } as any);
+			updateContact({ id: contact.id, ...formData } as any, {
+				onError: (error: any) => {
+					if (error?.response?.status === 401) {
+						enqueueSnackbar('You do not have permission to assign this role', { variant: 'error' });
+					} else {
+						enqueueSnackbar('Failed to update contact', { variant: 'error' });
+					}
+				}
+			});
 		}
 		// eslint-disable-next-line
-	}, [form]);
+	}, [form, enqueueSnackbar]);
 
 	// Toggle helpers
 	function handleRemoveContact() {
