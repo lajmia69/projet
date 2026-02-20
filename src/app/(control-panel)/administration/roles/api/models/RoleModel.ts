@@ -1,4 +1,3 @@
-// File: src/app/(control-panel)/administration/roles/api/models/RoleModel.ts
 
 import { PartialDeep } from 'type-fest';
 import { Role } from '../types';

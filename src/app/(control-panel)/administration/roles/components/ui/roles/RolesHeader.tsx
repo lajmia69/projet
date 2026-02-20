@@ -1,4 +1,3 @@
-// File: src/app/(control-panel)/administration/roles/components/ui/roles/RolesHeader.tsx
 
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -7,9 +6,7 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 
-/**
- * The roles header.
- */
+
 function RolesHeader() {
 	return (
 		<div className="flex flex-auto flex-col py-4">

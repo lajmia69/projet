@@ -1,4 +1,3 @@
-// File: src/app/(control-panel)/administration/roles/components/views/roles/role/RoleView.tsx
 
 'use client';
 

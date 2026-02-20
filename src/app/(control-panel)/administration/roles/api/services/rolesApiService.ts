@@ -1,4 +1,3 @@
-// File: src/app/(control-panel)/administration/roles/api/services/rolesApiService.ts
 
 import { api } from '@/utils/api';
 import { Role } from '../types';

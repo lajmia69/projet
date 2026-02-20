@@ -1,4 +1,3 @@
-// File: src/app/(control-panel)/administration/roles/components/ui/roles/RolesTable.tsx
 
 'use client';
 

@@ -1,4 +1,3 @@
-// File: src/app/(control-panel)/administration/roles/components/views/roles/RolesView.tsx
 
 'use client';
 import RolesHeader from '../../ui/roles/RolesHeader';
