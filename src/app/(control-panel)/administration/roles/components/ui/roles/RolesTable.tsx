@@ -21,7 +21,7 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { motion } from 'motion/react';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import FuseLoading from '@fuse/core/FuseLoading';
-import { useRoles, useDeleteRoles } from '../../../api/hooks/useRoles';
+import { useRoles, useDeleteRoles } from '../../../api/hooks/Useroles';
 import { Role } from '../../../api/types';
 
 type SortOrder = 'asc' | 'desc';

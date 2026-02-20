@@ -17,7 +17,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import RoleHeader from '../../../ui/roles/RoleHeader';
 import RoleBasicInfoTab from './tabs/RoleBasicInfo';
-import { useRole } from '../../../../api/hooks/useRoles';
+import { useRole } from '../../../../api/hooks/Useroles';
 import RoleModel from '../../../../api/models/RoleModel';
 
 /**
