@@ -1,3 +1,5 @@
+// File: src/app/(control-panel)/administration/roles/components/ui/roles/RolesHeader.tsx
+
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { motion } from 'motion/react';
@@ -6,9 +8,9 @@ import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 
 /**
- * The products header.
+ * The roles header.
  */
-function ProductsHeader() {
+function RolesHeader() {
 	return (
 		<div className="flex flex-auto flex-col py-4">
 			<PageBreadcrumb className="mb-2" />
@@ -19,7 +21,7 @@ function ProductsHeader() {
 						animate={{ x: 0, transition: { delay: 0.2 } }}
 					>
 						<Typography className="text-4xl leading-none font-extrabold tracking-tight">
-							Products
+							Roles
 						</Typography>
 					</motion.span>
 
@@ -46,4 +48,4 @@ function ProductsHeader() {
 	);
 }
 
-export default ProductsHeader;
+export default RolesHeader;

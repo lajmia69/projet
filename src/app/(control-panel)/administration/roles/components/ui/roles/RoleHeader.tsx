@@ -1,3 +1,5 @@
+// File: src/app/(control-panel)/administration/roles/components/ui/roles/RoleHeader.tsx
+
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { motion } from 'motion/react';
@@ -7,21 +9,19 @@ import _ from 'lodash';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import useNavigate from '@fuse/hooks/useNavigate';
-import { Product } from '../../../api/types';
-import { useCreateProduct } from '../../../api/hooks/products/useCreateProduct';
-import { useUpdateProduct } from '../../../api/hooks/products/useUpdateProduct';
-import { useDeleteProduct } from '../../../api/hooks/products/useDeleteProduct';
+import { Role } from '../../../api/types';
+import { useCreateRole, useUpdateRole, useDeleteRole } from '../../../api/hooks/UseRoles';
 
 /**
- * The product header.
+ * The role header.
  */
-function ProductHeader() {
-	const routeParams = useParams<{ productId: string }>();
-	const { productId } = routeParams;
+function RoleHeader() {
+	const routeParams = useParams<{ roleId: string }>();
+	const { roleId } = routeParams;
 
-	const { mutate: createProduct } = useCreateProduct();
-	const { mutate: saveProduct } = useUpdateProduct();
-	const { mutate: removeProduct } = useDeleteProduct();
+	const { mutate: createRole } = useCreateRole();
+	const { mutate: saveRole } = useUpdateRole();
+	const { mutate: removeRole } = useDeleteRole();
 
 	const methods = useFormContext();
 	const { formState, watch, getValues } = methods;
@@ -29,18 +29,19 @@ function ProductHeader() {
 
 	const navigate = useNavigate();
 
-	const { name, images, featuredImageId } = watch() as Product;
+	const { name } = watch() as Role;
 
-	function handleSaveProduct() {
-		saveProduct(getValues() as Product);
+	function handleSaveRole() {
+		saveRole(getValues() as Role);
 	}
 
-	function handleCreateProduct() {
-		createProduct(getValues() as Product);
+	function handleCreateRole() {
+		createRole(getValues() as Role);
+		navigate('/administration/roles');
 	}
 
-	function handleRemoveProduct() {
-		removeProduct(productId);
+	function handleRemoveRole() {
+		removeRole(roleId);
 		navigate('/administration/roles');
 	}
 
@@ -50,37 +51,18 @@ function ProductHeader() {
 			<div className="flex min-w-0 flex-auto flex-col gap-2 sm:flex-row sm:items-center">
 				<div className="flex flex-auto items-center gap-2">
 					<motion.div
-						className="hidden sm:flex"
-						initial={{ scale: 0 }}
-						animate={{ scale: 1, transition: { delay: 0.3 } }}
-					>
-						{images && images.length > 0 && featuredImageId ? (
-							<img
-								className="w-8 rounded-sm sm:w-12"
-								src={_.find(images, { id: featuredImageId })?.url}
-								alt={name}
-							/>
-						) : (
-							<img
-								className="w-8 rounded-sm sm:w-12"
-								src="/assets/images/apps/ecommerce/product-image-placeholder.png"
-								alt={name}
-							/>
-						)}
-					</motion.div>
-					<motion.div
 						className="flex min-w-0 flex-col"
 						initial={{ x: -20 }}
 						animate={{ x: 0, transition: { delay: 0.3 } }}
 					>
 						<Typography className="truncate text-lg font-semibold sm:text-2xl">
-							{name || 'New Product'}
+							{name || 'New Role'}
 						</Typography>
 						<Typography
 							variant="caption"
 							className="font-medium"
 						>
-							Product Detail
+							Role Detail
 						</Typography>
 					</motion.div>
 				</div>
@@ -89,13 +71,13 @@ function ProductHeader() {
 					initial={{ opacity: 0, x: 20 }}
 					animate={{ opacity: 1, x: 0, transition: { delay: 0.3 } }}
 				>
-					{productId !== 'new' ? (
+					{roleId !== 'new' ? (
 						<>
 							<Button
 								className="mx-1 whitespace-nowrap"
 								variant="contained"
 								color="secondary"
-								onClick={handleRemoveProduct}
+								onClick={handleRemoveRole}
 								startIcon={<FuseSvgIcon>lucide:trash</FuseSvgIcon>}
 							>
 								Remove
@@ -105,7 +87,7 @@ function ProductHeader() {
 								variant="contained"
 								color="secondary"
 								disabled={_.isEmpty(dirtyFields) || !isValid}
-								onClick={handleSaveProduct}
+								onClick={handleSaveRole}
 							>
 								Save
 							</Button>
@@ -116,7 +98,7 @@ function ProductHeader() {
 							variant="contained"
 							color="secondary"
 							disabled={_.isEmpty(dirtyFields) || !isValid}
-							onClick={handleCreateProduct}
+							onClick={handleCreateRole}
 						>
 							Add
 						</Button>
@@ -127,4 +109,4 @@ function ProductHeader() {
 	);
 }
 
-export default ProductHeader;
+export default RoleHeader;

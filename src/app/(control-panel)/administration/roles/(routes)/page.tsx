@@ -1,8 +1,4 @@
-import { redirect } from 'next/navigation';
-
-function ECommerceApp() {
-	redirect(`/administration/roles`);
-	return null;
-}
-
-export default ECommerceApp;
+// ...existing code...
+import Roles from '../components/views/roles/RolesView';
+export default Roles;
+// ...existing code...
