@@ -1,2 +1,3 @@
-import Roles from '../components/views/roles/RolesView';
-export default Roles;
+import RolesAppView from '../components/views/roles/RolesAppView';
+
+export default RolesAppView;
