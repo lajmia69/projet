@@ -2,7 +2,8 @@
 
 import { styled } from '@mui/material/styles';
 import FusePageSimple from '@fuse/core/FusePageSimple';
-import { RolesAppProvider } from '../../../Contexts/RolesAppProvider';
+import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
+import { RolesAppProvider } from '../../../Contexts/Rolesappprovider';
 import RolesHeader from '../../ui/roles/RolesHeader';
 import RolesList from '../../ui/roles/RolesList';
 
@@ -19,10 +20,13 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 }));
 
 function RolesAppView() {
+	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+
 	return (
 		<Root
 			header={<RolesHeader />}
 			content={<RolesList />}
+			scroll={isMobile ? 'page' : 'content'}
 		/>
 	);
 }

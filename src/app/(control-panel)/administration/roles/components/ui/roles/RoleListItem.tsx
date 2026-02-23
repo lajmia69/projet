@@ -1,9 +1,10 @@
 'use client';
 
-import Box from '@mui/material/Box';
+import Avatar from '@mui/material/Avatar';
 import Typography from '@mui/material/Typography';
-import Tooltip from '@mui/material/Tooltip';
+import Box from '@mui/material/Box';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
+import Tooltip from '@mui/material/Tooltip';
 import { motion } from 'motion/react';
 import { format } from 'date-fns/format';
 import { Role } from '../../../api/types';
@@ -45,6 +46,13 @@ function RoleListItem({ role, index = 0, onClick, selected = false }: Props) {
 		? format(new Date(role.createdAt), 'MMM d, yyyy')
 		: null;
 
+	const initials = role.name
+		.split(' ')
+		.map((w) => w[0])
+		.slice(0, 2)
+		.join('')
+		.toUpperCase() || '?';
+
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 14 }}
@@ -56,6 +64,7 @@ function RoleListItem({ role, index = 0, onClick, selected = false }: Props) {
 				onClick={() => onClick(role)}
 				className="group relative flex w-full items-center overflow-hidden rounded-2xl border text-left transition-all duration-200"
 				sx={{
+					display: 'flex',
 					backgroundColor: selected ? cfg.from + '08' : 'background.paper',
 					borderColor: selected ? cfg.from : 'divider',
 					boxShadow: selected ? `0 6px 28px -4px ${cfg.from}28` : 'none',
@@ -69,29 +78,36 @@ function RoleListItem({ role, index = 0, onClick, selected = false }: Props) {
 				{/* Accent stripe */}
 				<Box
 					className="w-1 self-stretch shrink-0"
-					sx={{ background: `linear-gradient(180deg, ${cfg.from}, ${cfg.to})`, opacity: 0.85 }}
+					sx={{
+						background: `linear-gradient(180deg, ${cfg.from}, ${cfg.to})`,
+						opacity: 0.85
+					}}
 				/>
 
 				<div className="flex flex-1 items-center gap-4 px-4 py-3.5 min-w-0">
-					{/* Icon */}
-					<Box
-						className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl"
-						sx={{
-							background: selected
-								? `linear-gradient(135deg, ${cfg.from}, ${cfg.to})`
-								: cfg.from + '18',
-							transition: 'background 0.2s',
-							'& .group:hover &': {
-								background: `linear-gradient(135deg, ${cfg.from}, ${cfg.to})`
-							}
-						}}
-					>
-						<FuseSvgIcon
-							size={20}
-							sx={{ color: selected ? 'white' : cfg.from }}
+					{/* Avatar */}
+					<Box className="relative shrink-0">
+						<Box
+							className="rounded-full p-[2px]"
+							sx={{
+								background: `linear-gradient(135deg, ${cfg.from}66, ${cfg.to}22)`
+							}}
 						>
-							{cfg.icon}
-						</FuseSvgIcon>
+							<Avatar
+								sx={(t) => ({
+									width: 46,
+									height: 46,
+									fontSize: '0.9rem',
+									fontWeight: 700,
+									backgroundColor: cfg.from + '18',
+									color: cfg.from,
+									border: '2px solid',
+									borderColor: 'background.paper'
+								})}
+							>
+								{initials}
+							</Avatar>
+						</Box>
 					</Box>
 
 					{/* Info */}
@@ -114,22 +130,38 @@ function RoleListItem({ role, index = 0, onClick, selected = false }: Props) {
 
 						{/* Created date */}
 						{createdDate && (
-							<div className="flex items-center gap-1">
-								<FuseSvgIcon size={10} color="action">lucide:calendar</FuseSvgIcon>
-								<Typography className="text-[11px]" color="text.secondary">
-									Created {createdDate}
-								</Typography>
+							<div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
+								<span className="flex items-center gap-1 text-[11px] text-gray-400">
+									<FuseSvgIcon size={10} color="action">lucide:calendar</FuseSvgIcon>
+									<span>Created {createdDate}</span>
+								</span>
 							</div>
 						)}
 					</div>
 
-					{/* Chevron */}
-					<Box
-						className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200 group-hover:translate-x-0.5"
-						sx={{ color: 'text.disabled' }}
-					>
-						<FuseSvgIcon size={16}>lucide:chevron-right</FuseSvgIcon>
-					</Box>
+					{/* Quick actions + chevron */}
+					<div className="flex shrink-0 items-center gap-1.5">
+						<div className="flex gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+							<Tooltip title={`Edit ${role.name}`} arrow>
+								<Box
+									className="flex h-7 w-7 items-center justify-center rounded-lg transition-colors"
+									sx={{
+										backgroundColor: 'action.hover',
+										color: 'text.secondary',
+										'&:hover': { backgroundColor: cfg.from, color: 'white' }
+									}}
+								>
+									<FuseSvgIcon size={13}>lucide:pencil</FuseSvgIcon>
+								</Box>
+							</Tooltip>
+						</div>
+						<Box
+							className="flex h-7 w-7 items-center justify-center rounded-lg transition-all duration-200 group-hover:translate-x-0.5"
+							sx={{ color: 'text.disabled' }}
+						>
+							<FuseSvgIcon size={16}>lucide:chevron-right</FuseSvgIcon>
+						</Box>
+					</div>
 				</div>
 			</Box>
 		</motion.div>

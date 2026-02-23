@@ -22,9 +22,9 @@ function RolesList() {
 	const isSuperAdmin = useIsSuperAdmin();
 	const { enqueueSnackbar } = useSnackbar();
 
-	const [dialogOpen,  setDialogOpen]  = useState(false);
-	const [editRole,    setEditRole]    = useState<Role | undefined>(undefined);
-	const [selectedId,  setSelectedId]  = useState<string | null>(null);
+	const [dialogOpen, setDialogOpen] = useState(false);
+	const [editRole,   setEditRole]   = useState<Role | undefined>(undefined);
+	const [selectedId, setSelectedId] = useState<string | null>(null);
 
 	function openCreate() {
 		if (!isSuperAdmin) {
@@ -63,7 +63,11 @@ function RolesList() {
 	}, [roles]);
 
 	if (isLoading) {
-		return <div className="flex flex-1 items-center justify-center py-24"><FuseLoading /></div>;
+		return (
+			<div className="flex flex-1 items-center justify-center py-24">
+				<FuseLoading />
+			</div>
+		);
 	}
 
 	if (!roles?.length) {
@@ -106,7 +110,7 @@ function RolesList() {
 					variant="contained"
 					color="secondary"
 					onClick={openCreate}
-					startIcon={<FuseSvgIcon size={18}>lucide:plus</FuseSvgIcon>}
+					startIcon={<FuseSvgIcon size={18}>lucide:shield-plus</FuseSvgIcon>}
 					className="rounded-xl px-6 py-2.5 font-bold shadow-lg"
 				>
 					Create First Role
@@ -128,17 +132,18 @@ function RolesList() {
 					const cfg = TYPE_CONFIG[type] ?? DEFAULT_CONFIG;
 					return (
 						<div key={type} className="px-4 pb-2 md:px-6">
-							{/* Sticky group header */}
+							{/* Sticky group header — mirrors ContactsList letter header */}
 							<div className="sticky top-0 z-10 flex items-center gap-3 py-3">
 								<Box
-									className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl"
-									sx={{ background: `linear-gradient(135deg, ${cfg.from}, ${cfg.to})`, boxShadow: `0 2px 8px ${cfg.from}44` }}
+									className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-black"
+									sx={{
+										background: `linear-gradient(135deg, ${cfg.from}, ${cfg.to})`,
+										color: 'white',
+										boxShadow: `0 2px 8px ${cfg.from}44`
+									}}
 								>
 									<FuseSvgIcon className="text-white" size={15}>{cfg.icon}</FuseSvgIcon>
 								</Box>
-								<Typography className="text-xs font-bold uppercase tracking-widest" color="text.secondary">
-									{cfg.label}
-								</Typography>
 								<Box className="h-px flex-1" sx={{ backgroundColor: 'divider' }} />
 								<Typography className="text-[11px] font-bold tabular-nums" color="text.disabled">
 									{typeRoles.length}
