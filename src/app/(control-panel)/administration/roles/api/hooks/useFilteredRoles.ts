@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import FuseUtils from '@fuse/utils';
-import { useRoles } from '../api/hooks/Useroles';
-import { useRolesAppContext } from '../contexts/useRolesAppContext';
+import { useRoles } from '../../api/hooks/Useroles';
+import { useRolesAppContext } from '../../contexts/useRolesAppContext';
 import { Role } from '../api/types';
 
 export function useFilteredRoles() {

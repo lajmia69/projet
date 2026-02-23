@@ -2,7 +2,7 @@
 
 import { styled } from '@mui/material/styles';
 import FusePageSimple from '@fuse/core/FusePageSimple';
-import { RolesAppProvider } from '../../../contexts/RolesAppProvider';
+import { RolesAppProvider } from '../../../Contexts/RolesAppProvider';
 import RolesHeader from '../../ui/roles/RolesHeader';
 import RolesList from '../../ui/roles/RolesList';
 

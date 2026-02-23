@@ -11,10 +11,10 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import { useSnackbar } from 'notistack';
 
-import { useRolesAppContext } from '../../../contexts/useRolesAppContext';
-import { useFilteredRoles } from '../../../hooks/useFilteredRoles';
+import { useRolesAppContext } from '../../../Contexts/useRolesAppContext';
+import { useFilteredRoles } from '../../../api/hooks/useFilteredRoles';
 import { useRoles } from '../../../api/hooks/Useroles';
-import { useIsSuperAdmin } from '../../../hooks/useIsSuperAdmin';
+import { useIsSuperAdmin } from '../../../api/hooks/useIsSuperAdmin';
 import RoleDialog from './RoleDialog';
 
 // ─── Type color map for stat cards ────────────────────────────────────────────
@@ -39,8 +39,8 @@ function RolesHeader() {
 
 	const [dialogOpen, setDialogOpen] = useState(false);
 
-	const total      = allRoles?.length ?? 0;
-	const filtered   = filteredRoles?.length ?? 0;
+	const total       = allRoles?.length ?? 0;
+	const filtered    = filteredRoles?.length ?? 0;
 	const isFiltering = searchText.length > 0;
 
 	function handleAddClick() {
@@ -220,7 +220,6 @@ function RolesHeader() {
 						})}
 					</div>
 
-					{/* Search result count */}
 					{isFiltering && (
 						<motion.div
 							initial={{ opacity: 0 }}

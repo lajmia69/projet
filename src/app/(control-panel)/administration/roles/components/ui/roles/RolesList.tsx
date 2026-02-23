@@ -11,8 +11,8 @@ import { useSnackbar } from 'notistack';
 
 import RoleListItem, { TYPE_CONFIG, DEFAULT_CONFIG } from './RoleListItem';
 import RoleDialog from './RoleDialog';
-import { useFilteredRoles } from '../../../hooks/useFilteredRoles';
-import { useIsSuperAdmin } from '../../../hooks/useIsSuperAdmin';
+import { useFilteredRoles } from '../../../api/hooks/useFilteredRoles';
+import { useIsSuperAdmin } from '../../../api/hooks/useIsSuperAdmin';
 import { Role } from '../../../api/types';
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ function RolesList() {
 	}
 
 	// Group roles by type
-	const grouped = useMemo(() => {
+	const grouped = useMemo((): Record<string, Role[]> => {
 		if (!roles) return {};
 		return roles.reduce<Record<string, Role[]>>((acc, role) => {
 			const key = role.type || 'Unknown';
@@ -73,7 +73,6 @@ function RolesList() {
 				animate={{ opacity: 1, y: 0, transition: { duration: 0.4 } }}
 				className="flex flex-1 flex-col items-center justify-center gap-6 px-8 py-28 text-center"
 			>
-				{/* Floating icons decoration */}
 				<div className="relative flex h-28 w-44 items-center justify-center">
 					{[
 						{ color: '#dc2626', icon: 'lucide:shield-alert', left: 0,  top: 14 },
