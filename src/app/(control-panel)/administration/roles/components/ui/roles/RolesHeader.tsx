@@ -13,33 +13,19 @@ import { useSnackbar } from 'notistack';
 
 import { useRolesAppContext } from '../../../Contexts/useRolesAppContext';
 import { useFilteredRoles } from '../../../api/hooks/useFilteredRoles';
-import { useRoles } from '../../../api/hooks/Useroles';
 import { useIsSuperAdmin } from '../../../api/hooks/useIsSuperAdmin';
 import RoleDialog from './RoleDialog';
-
-// ─── Type color map for stat cards ────────────────────────────────────────────
-
-const STAT_TYPES = [
-	{ key: 'SuperAdmin',           label: 'Super Admins',     icon: 'lucide:shield-alert', from: '#dc2626', to: '#7f1d1d' },
-	{ key: 'ContentAdmin',         label: 'Content Admins',   icon: 'lucide:file-check',   from: '#2563eb', to: '#1e40af' },
-	{ key: 'MemberAdmin',          label: 'Member Admins',    icon: 'lucide:users-cog',    from: '#7c3aed', to: '#5b21b6' },
-	{ key: 'StudioAdmin',          label: 'Studio Admins',    icon: 'lucide:video-cog',    from: '#f97316', to: '#c2410c' },
-	{ key: 'LessonContentCreator', label: 'Lesson Creators',  icon: 'lucide:book-open',    from: '#8b5cf6', to: '#6d28d9' },
-	{ key: 'Member',               label: 'Members',          icon: 'lucide:user-check',   from: '#22c55e', to: '#15803d' },
-];
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
 function RolesHeader() {
 	const { searchText, setSearchText } = useRolesAppContext();
 	const { data: filteredRoles }       = useFilteredRoles();
-	const { data: allRoles }            = useRoles();
 	const isSuperAdmin                  = useIsSuperAdmin();
 	const { enqueueSnackbar }           = useSnackbar();
 
 	const [dialogOpen, setDialogOpen] = useState(false);
 
-	const total       = allRoles?.length ?? 0;
 	const filtered    = filteredRoles?.length ?? 0;
 	const isFiltering = searchText.length > 0;
 
@@ -101,8 +87,8 @@ function RolesHeader() {
 									</Typography>
 									<Typography className="text-xs text-white/60 mt-0.5">
 										{isFiltering
-											? `${filtered} of ${total} results`
-											: `${total} role${total !== 1 ? 's' : ''}`
+											? `${filtered} result${filtered !== 1 ? 's' : ''}`
+											: 'Manage permission roles'
 										}
 									</Typography>
 								</div>
@@ -180,51 +166,16 @@ function RolesHeader() {
 					</div>
 				</Box>
 
-				{/* ── Stat cards ── */}
-				<Box
-					className="border-b px-6 py-4 md:px-8"
-					sx={{ backgroundColor: 'background.paper', borderColor: 'divider' }}
-				>
-					<div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-						{STAT_TYPES.map(({ key, label, icon, from, to }, i) => {
-							const count = allRoles?.filter((r) => r.type === key).length ?? 0;
-							return (
-								<motion.div
-									key={key}
-									initial={{ opacity: 0, y: 8 }}
-									animate={{ opacity: 1, y: 0, transition: { delay: 0.08 + i * 0.06, duration: 0.3 } }}
-								>
-									<Box
-										className="relative flex items-center gap-2.5 overflow-hidden rounded-xl border p-3 transition-all hover:shadow-sm"
-										sx={{ borderColor: 'divider', backgroundColor: 'background.default' }}
-									>
-										<Box
-											className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-											sx={{ background: `linear-gradient(135deg, ${from}, ${to})` }}
-										>
-											<FuseSvgIcon className="text-white" size={16}>{icon}</FuseSvgIcon>
-										</Box>
-										<div className="min-w-0">
-											<Typography className="text-xl font-black leading-none tabular-nums">{count}</Typography>
-											<Typography className="mt-0.5 text-[10px] font-medium truncate" color="text.secondary">
-												{label}
-											</Typography>
-										</div>
-										<Box
-											className="pointer-events-none absolute -right-3 -top-3 h-12 w-12 rounded-full opacity-[0.07]"
-											sx={{ background: `radial-gradient(circle, ${from}, transparent)` }}
-										/>
-									</Box>
-								</motion.div>
-							);
-						})}
-					</div>
-
-					{isFiltering && (
+				{/* ── Filter results indicator ── */}
+				{isFiltering && (
+					<Box
+						className="border-b px-6 py-3 md:px-8"
+						sx={{ backgroundColor: 'background.paper', borderColor: 'divider' }}
+					>
 						<motion.div
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
-							className="mt-3 flex items-center gap-2"
+							className="flex items-center gap-2"
 						>
 							<Typography className="text-[10px] font-bold uppercase tracking-widest" color="text.disabled">
 								Results
@@ -233,8 +184,8 @@ function RolesHeader() {
 								{filtered} role{filtered !== 1 ? 's' : ''} match "{searchText}"
 							</Typography>
 						</motion.div>
-					)}
-				</Box>
+					</Box>
+				)}
 			</div>
 
 			<RoleDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />

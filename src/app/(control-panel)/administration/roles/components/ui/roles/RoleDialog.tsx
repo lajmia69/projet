@@ -13,7 +13,6 @@ import DialogActions from '@mui/material/DialogActions';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import FormControl from '@mui/material/FormControl';
@@ -21,7 +20,6 @@ import FormLabel from '@mui/material/FormLabel';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
-// 3 levels up: roles/components/ui/roles → roles/api/…
 import { useCreateRole, useUpdateRole } from '../../../api/hooks/Useroles';
 import RoleModel from '../../../api/models/RoleModel';
 import { Role } from '../../../api/types';
@@ -47,7 +45,7 @@ const ROLE_TYPES = [
 	{ value: 'RadioContentCreator',   label: 'Radio Creator',         icon: 'lucide:radio',        color: '#06b6d4' },
 	{ value: 'PodcastContentCreator', label: 'Podcast Creator',       icon: 'lucide:mic-2',        color: '#ec4899' },
 	{ value: 'CultureContentCreator', label: 'Culture Creator',       icon: 'lucide:palette',      color: '#f59e0b' },
-	{ value: 'Lesson Content Creator',               label: 'Lesson Content Creator',               icon: 'lucide:book-open',    color: '#8b5cf6' },
+	{ value: 'Lesson Content Creator', label: 'Lesson Content Creator', icon: 'lucide:book-open',  color: '#8b5cf6' },
 	{ value: 'StudioStaff',           label: 'Studio Staff',          icon: 'lucide:users',        color: '#0ea5e9' },
 	{ value: 'Member',                label: 'Member',                icon: 'lucide:user-check',   color: '#22c55e' },
 	{ value: 'Application',           label: 'Application',           icon: 'lucide:app-window',   color: '#a16207' },
@@ -58,7 +56,6 @@ const ROLE_TYPES = [
 type RoleDialogProps = {
 	open: boolean;
 	onClose: () => void;
-	/** Pass an existing role to edit; omit for create mode */
 	role?: Role;
 };
 
@@ -88,7 +85,6 @@ function RoleDialog({ open, onClose, role }: RoleDialogProps) {
 	const selectedTypeConfig = ROLE_TYPES.find((t) => t.value === selectedType);
 	const isDirty = Object.keys(dirtyFields).length > 0;
 
-	// Reset form whenever the dialog opens or the target role changes
 	useEffect(() => {
 		if (open) {
 			reset(role ? { ...role } : RoleModel({}));
@@ -149,7 +145,6 @@ function RoleDialog({ open, onClose, role }: RoleDialogProps) {
 					background: `linear-gradient(135deg, ${t.palette.secondary.dark} 0%, ${t.palette.secondary.main} 55%, ${t.palette.primary.main} 100%)`
 				})}
 			>
-				{/* Grid texture */}
 				<svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.06]">
 					<defs>
 						<pattern id="rdg" width="28" height="28" patternUnits="userSpaceOnUse">
@@ -162,7 +157,6 @@ function RoleDialog({ open, onClose, role }: RoleDialogProps) {
 
 				<div className="relative flex items-start justify-between gap-4">
 					<div className="flex items-center gap-3">
-						{/* Animated icon badge */}
 						<AnimatePresence mode="wait">
 							<motion.div
 								key={selectedTypeConfig?.value ?? 'default'}
@@ -299,23 +293,6 @@ function RoleDialog({ open, onClose, role }: RoleDialogProps) {
 								{errors.type && (
 									<Typography className="mt-1 text-xs" color="error">{errors.type.message}</Typography>
 								)}
-
-								{/* Autocomplete fallback for unlisted types */}
-								<Box className="mt-3">
-									<Autocomplete
-										options={ROLE_TYPES.map((r) => r.value)}
-										value={value || ''}
-										onChange={(_, v) => onChange(v ?? '')}
-										renderInput={(params) => (
-											<TextField
-												{...params}
-												size="small"
-												placeholder="Or type a custom role type…"
-												sx={{ '& input': { fontSize: '0.8rem' } }}
-											/>
-										)}
-									/>
-								</Box>
 							</FormControl>
 						)}
 					/>

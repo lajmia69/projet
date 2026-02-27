@@ -5,7 +5,7 @@ import FusePageSimple from '@fuse/core/FusePageSimple';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import { RolesAppProvider } from '../../../Contexts/Rolesappprovider';
 import RolesHeader from '../../ui/roles/RolesHeader';
-import RolesList from '../../ui/roles/RolesList';
+import RolesTable from '../../ui/roles/RolesTable';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .container': {
@@ -25,7 +25,7 @@ function RolesAppView() {
 	return (
 		<Root
 			header={<RolesHeader />}
-			content={<RolesList />}
+			content={<RolesTable />}
 			scroll={isMobile ? 'page' : 'content'}
 		/>
 	);
