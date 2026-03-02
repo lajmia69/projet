@@ -1,33 +1,45 @@
-export type Permission = {
-	id: number;
+export type ContactPhoneNumber = {
+	country: string;
+	phoneNumber: string;
+	label?: string;
+};
+
+export type ContactEmail = {
+	email: string;
+	label?: string;
+};
+
+export type Contact = {
+	id: string;
+	avatar?: string;
+	background?: string;
 	name: string;
-	label: string;
+	emails?: ContactEmail[];
+	phoneNumbers?: ContactPhoneNumber[];
+	title?: string;
+	company?: string;
+	birthday?: string;
+	address?: string;
+	notes?: string;
+	tags?: string[];
 };
 
-export type subscriptionType = {
-	id: number;
-	name: string;
-	description: string;
+export type Tag = {
+	id: string;
+	title: string;
 };
 
-export type subscription = {
-	id: number;
-	name: string;
-	type: subscriptionType;
-	permissions: Permission[];
+export type Country = {
+	id?: string;
+	title?: string;
+	iso?: string;
+	code?: string;
+	flagImagePos?: string;
 };
 
-export type Createsubscription = {
-	name: string;
-	type_id: number;
+export type GroupedContacts = {
+	group: string;
+	children?: Contact[];
 };
 
-export type subscriptionsResponse = {
-	count: number;
-	items: subscription[];
-};
-
-export type subscriptionTypesResponse = {
-	count: number;
-	items: subscriptionType[];
-};
+export type AccumulatorType = Record<string, GroupedContacts>;

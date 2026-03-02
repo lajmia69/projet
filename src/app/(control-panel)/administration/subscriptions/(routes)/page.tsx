@@ -1,3 +1,5 @@
-import subscriptionsView from '@/app/(control-panel)/administration/subscriptions/components/views/subscriptions/subscriptionsView';
+function ContactsPage() {
+	return null;
+}
 
-export default subscriptionsView;
+export default ContactsPage;
