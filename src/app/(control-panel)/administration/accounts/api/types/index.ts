@@ -123,5 +123,9 @@ export type GroupedAccounts = {
 	group: string;
 	children?: Account[];
 };
+export type SubscriptionsResponse = {
+  count: number;
+  items: Subscription[];
+};
 
 export type AccumulatorAccountsType = Record<string, GroupedAccounts>;
