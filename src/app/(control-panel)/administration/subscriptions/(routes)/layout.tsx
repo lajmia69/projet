@@ -1,3 +1,3 @@
-import ContactsAppView from '../components/views/ContactsAppView';
+import SubscriptionsAppView from '../components/views/SubscriptionsAppView';
 
-export default ContactsAppView;
+export default SubscriptionsAppView;

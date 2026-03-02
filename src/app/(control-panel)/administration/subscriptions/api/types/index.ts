@@ -1,45 +1,35 @@
-export type ContactPhoneNumber = {
-	country: string;
-	phoneNumber: string;
-	label?: string;
+export type Level = {
+	id?: number;
+	name?: string;
 };
 
-export type ContactEmail = {
-	email: string;
-	label?: string;
+export type Subscription = {
+	id: number;
+	start_date: string;
+	end_date: string;
+	is_active: boolean;
+	level: Level;
+	reference: string;
+	account_id?: number;
 };
 
-export type Contact = {
-	id: string;
-	avatar?: string;
-	background?: string;
-	name: string;
-	emails?: ContactEmail[];
-	phoneNumbers?: ContactPhoneNumber[];
-	title?: string;
-	company?: string;
-	birthday?: string;
-	address?: string;
-	notes?: string;
-	tags?: string[];
+export type CreateSubscription = {
+	start_date: string;
+	end_date: string;
+	is_active: boolean;
+	level_id: number;
+	reference: string;
+	account_id: number;
 };
 
-export type Tag = {
-	id: string;
-	title: string;
+export type SubscriptionsResponse = {
+	count: number;
+	items: Subscription[];
 };
 
-export type Country = {
-	id?: string;
-	title?: string;
-	iso?: string;
-	code?: string;
-	flagImagePos?: string;
-};
-
-export type GroupedContacts = {
+export type GroupedSubscriptions = {
 	group: string;
-	children?: Contact[];
+	children?: Subscription[];
 };
 
-export type AccumulatorType = Record<string, GroupedContacts>;
+export type AccumulatorSubscriptionsType = Record<string, GroupedSubscriptions>;

@@ -1,5 +1,5 @@
-function ContactsPage() {
+function SubscriptionsPage() {
 	return null;
 }
 
-export default ContactsPage;
+export default SubscriptionsPage;

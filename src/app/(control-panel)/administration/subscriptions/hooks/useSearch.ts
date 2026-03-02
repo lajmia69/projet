@@ -1,7 +1,7 @@
-import { useContactsAppContext } from '../contexts/ContactsAppContext/useContactsAppContext';
+import { useSubscriptionsAppContext } from '../contexts/SubscriptionsAppContext/useSubscriptionsAppContext';
 
 export function useSearch() {
-	const { searchText, setSearchText, resetSearchText } = useContactsAppContext();
+	const { searchText, setSearchText, resetSearchText } = useSubscriptionsAppContext();
 
 	return {
 		searchText,
