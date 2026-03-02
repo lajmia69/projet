@@ -1,16 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { rolesApi } from '@/app/(control-panel)/administration/roles/api/services/rolesApiService';
 import { rolesListQueryKey } from '@/app/(control-panel)/administration/roles/api/hooks/useRolesList';
+import { roleQueryKey } from '@/app/(control-panel)/administration/roles/api/hooks/useRole';
 import { Token } from '@auth/user';
-import { CreateRole } from '@/app/(control-panel)/administration/roles/api/types';
 
-export const useCreateRole = (token: Token) => {
+export const useDeleteRole = (token: Token) => {
 	const queryClient = useQueryClient();
 
-	return useMutation<CreateRole, Error, CreateRole>({
-		mutationFn: (role) => rolesApi.createRole(token, role),
-		onSuccess: () => {
+	return useMutation({
+		mutationFn: (roleId: number) => rolesApi.deleteRole(token, roleId),
+		onSuccess: (_, roleId) => {
 			queryClient.invalidateQueries({ queryKey: rolesListQueryKey(token) });
+			queryClient.invalidateQueries({ queryKey: roleQueryKey(token, roleId) });
 		}
 	});
 };
