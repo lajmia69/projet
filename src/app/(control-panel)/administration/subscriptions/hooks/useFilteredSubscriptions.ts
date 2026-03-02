@@ -2,24 +2,18 @@ import { useMemo } from 'react';
 import FuseUtils from '@fuse/utils';
 import { useSearch } from './useSearch';
 import { Token } from '@auth/user';
-import { Subscription } from '../api/types';
-import { useSubscriptionsList } from '../api/hooks/subscriptions/useSubscriptionsList';
+import { Account } from '../api/types';
+import { useAccountsList } from '../api/hooks/useAccountsList';
 
-export function useFilteredSubscriptions(token: Token) {
+export function useFilteredAccounts(token: Token) {
 	const { searchText } = useSearch();
-	const { data: subscriptions, isLoading } = useSubscriptionsList(token);
+	const { data: accounts, isLoading } = useAccountsList(token);
 
-	const filteredSubscriptions = useMemo(() => {
-		if (!subscriptions || isLoading) {
-			return [];
-		}
+	const filtered = useMemo(() => {
+		if (!accounts || isLoading) return [];
+		if (searchText.length === 0) return accounts;
+		return FuseUtils.filterArrayByString<Account>(accounts, searchText);
+	}, [accounts, searchText, isLoading]);
 
-		if (searchText.length === 0) {
-			return subscriptions;
-		}
-
-		return FuseUtils.filterArrayByString<Subscription>(subscriptions, searchText);
-	}, [subscriptions, searchText, isLoading]);
-
-	return { data: filteredSubscriptions, isLoading };
+	return { data: filtered, isLoading };
 }

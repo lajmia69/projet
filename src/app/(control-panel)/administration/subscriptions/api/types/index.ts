@@ -10,26 +10,36 @@ export type Subscription = {
 	is_active: boolean;
 	level: Level;
 	reference: string;
-	account_id?: number;
 };
 
-export type CreateSubscription = {
-	start_date: string;
-	end_date: string;
+export type Account = {
+	id: number;
+	avatar?: string;
+	phone?: string;
+	address?: string;
+	biography?: string;
 	is_active: boolean;
-	level_id: number;
-	reference: string;
-	account_id: number;
+	full_name?: string;
+	username: string;
+	first_name: string;
+	last_name: string;
+	email: string;
+	avatar_alt: string;
+	avatar_url: string;
+	can_edit: boolean;
+	roles?: { id: number; name: string }[];
+	subscriptions?: Subscription[];
+	created_at?: string;
 };
 
-export type SubscriptionsResponse = {
+export type AccountsResponse = {
 	count: number;
-	items: Subscription[];
+	items: Account[];
 };
 
-export type GroupedSubscriptions = {
+export type GroupedAccounts = {
 	group: string;
-	children?: Subscription[];
+	children?: Account[];
 };
 
-export type AccumulatorSubscriptionsType = Record<string, GroupedSubscriptions>;
+export type AccumulatorAccountsType = Record<string, GroupedAccounts>;

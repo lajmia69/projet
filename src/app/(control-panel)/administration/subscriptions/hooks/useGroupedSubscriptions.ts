@@ -1,37 +1,25 @@
 import { useMemo } from 'react';
 import { Token } from '@auth/user';
-import { GroupedSubscriptions, AccumulatorSubscriptionsType } from '../api/types';
-import { useFilteredSubscriptions } from './useFilteredSubscriptions';
+import { GroupedAccounts, AccumulatorAccountsType } from '../api/types';
+import { useFilteredAccounts } from './useFilteredAccounts';
 
-export function useGroupedSubscriptions(token: Token) {
-	const { data: filteredSubscriptions, isLoading } = useFilteredSubscriptions(token);
+export function useGroupedAccounts(token: Token) {
+	const { data: filteredAccounts, isLoading } = useFilteredAccounts(token);
 
-	const groupedSubscriptions = useMemo(() => {
-		if (!filteredSubscriptions || isLoading) {
-			return {};
-		}
+	const grouped = useMemo(() => {
+		if (!filteredAccounts || isLoading) return {};
 
-		const sorted = [...filteredSubscriptions].sort((a, b) =>
-			a.reference.localeCompare(b.reference, 'es', { sensitivity: 'base' })
+		const sorted = [...filteredAccounts].sort((a, b) =>
+			(a.full_name ?? '').localeCompare(b.full_name ?? '', 'es', { sensitivity: 'base' })
 		);
 
-		const groupedObject: Record<string, GroupedSubscriptions> = sorted.reduce<AccumulatorSubscriptionsType>(
-			(r, e) => {
-				const group = e.reference?.[0]?.toUpperCase() || '#';
+		return sorted.reduce<Record<string, GroupedAccounts>>((r, e) => {
+			const group = (e.full_name?.[0] ?? '#').toUpperCase();
+			if (!r[group]) r[group] = { group, children: [e] };
+			else r[group].children?.push(e);
+			return r;
+		}, {});
+	}, [filteredAccounts, isLoading]);
 
-				if (!r[group]) {
-					r[group] = { group, children: [e] };
-				} else {
-					r[group]?.children?.push(e);
-				}
-
-				return r;
-			},
-			{}
-		);
-
-		return groupedObject;
-	}, [filteredSubscriptions, isLoading]);
-
-	return { data: groupedSubscriptions, isLoading };
+	return { data: grouped, isLoading };
 }

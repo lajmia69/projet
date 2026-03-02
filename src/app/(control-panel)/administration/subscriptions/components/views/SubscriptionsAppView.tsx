@@ -7,7 +7,7 @@ import { styled } from '@mui/material/styles';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import useNavigate from '@fuse/hooks/useNavigate';
 import SubscriptionsHeader from '../ui/SubscriptionsHeader';
-import SubscriptionsList from '../ui/subscription-list/SubscriptionsList';
+import AccountsList from '../ui/account-list/AccountsList';
 import SubscriptionsSidebarContent from '../ui/SubscriptionsSidebarContent';
 import { SubscriptionsAppProvider } from '../../contexts/SubscriptionsAppContext/SubscriptionsAppProvider';
 
@@ -17,12 +17,9 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-content': { boxShadow: theme.vars.shadows[2] }
 }));
 
-type SubscriptionsAppProps = {
-	children?: React.ReactNode;
-};
+type Props = { children?: React.ReactNode };
 
-function SubscriptionsAppView(props: SubscriptionsAppProps) {
-	const { children } = props;
+function SubscriptionsAppView({ children }: Props) {
 	const navigate = useNavigate();
 	const routeParams = useParams();
 	const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
@@ -30,13 +27,13 @@ function SubscriptionsAppView(props: SubscriptionsAppProps) {
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
 	useEffect(() => {
-		setRightSidebarOpen(!!routeParams.subscriptionId);
+		setRightSidebarOpen(!!routeParams.accountId);
 	}, [routeParams]);
 
 	return (
 		<Root
 			header={<SubscriptionsHeader />}
-			content={<SubscriptionsList />}
+			content={<AccountsList />}
 			ref={pageLayout}
 			rightSidebarProps={{
 				content: <SubscriptionsSidebarContent>{children}</SubscriptionsSidebarContent>,
@@ -50,7 +47,7 @@ function SubscriptionsAppView(props: SubscriptionsAppProps) {
 	);
 }
 
-function SubscriptionsAppWrapper(props: { children?: React.ReactNode }) {
+function SubscriptionsAppWrapper(props: Props) {
 	return (
 		<SubscriptionsAppProvider>
 			<SubscriptionsAppView {...props} />

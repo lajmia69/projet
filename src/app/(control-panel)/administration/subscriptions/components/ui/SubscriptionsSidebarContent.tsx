@@ -2,13 +2,9 @@ import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import IconButton from '@mui/material/IconButton';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
-type SubscriptionsSidebarContentType = {
-	children: React.ReactNode;
-};
+type Props = { children: React.ReactNode };
 
-function SubscriptionsSidebarContent(props: SubscriptionsSidebarContentType) {
-	const { children } = props;
-
+function SubscriptionsSidebarContent({ children }: Props) {
 	return (
 		<div className="flex max-h-screen min-h-0 max-w-full flex-auto flex-col">
 			<IconButton
@@ -16,10 +12,7 @@ function SubscriptionsSidebarContent(props: SubscriptionsSidebarContentType) {
 				sx={{
 					backgroundColor: 'primary.light',
 					color: 'primary.contrastText',
-					'&:hover': {
-						backgroundColor: 'primary.main',
-						color: 'primary.contrastText'
-					}
+					'&:hover': { backgroundColor: 'primary.main', color: 'primary.contrastText' }
 				}}
 				component={NavLinkAdapter}
 				to="/administration/subscriptions"
