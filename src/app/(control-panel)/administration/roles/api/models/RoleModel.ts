@@ -1,16 +1,12 @@
-
 import { PartialDeep } from 'type-fest';
-import { Role } from '../types';
+import _ from 'lodash';
+import { CreateRole } from '@/app/(control-panel)/administration/roles/api/types';
 
 /**
- * The role model.
+ * The Account Role model.
  */
-const RoleModel = (data: PartialDeep<Role>): Role => ({
-	id: data?.id ?? '',
-	name: data?.name ?? '',
-	type: data?.type ?? '',
-	createdAt: data?.createdAt ?? new Date().toISOString(),
-	updatedAt: data?.updatedAt ?? new Date().toISOString()
-});
-
-export default RoleModel;
+export const CreateRoleModel = (data: PartialDeep<CreateRole> | null): CreateRole =>
+	_.defaults(data || {}, {
+		name: '',
+		type_id: 1
+	});

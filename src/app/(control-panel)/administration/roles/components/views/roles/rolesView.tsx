@@ -1,9 +1,10 @@
-
 'use client';
-import RolesHeader from '../../ui/roles/RolesHeader';
-import RolesTable from '../../ui/roles/RolesTable';
+
+import RolesHeader from '@/app/(control-panel)/administration/roles/components/ui/roles/RolesHeader';
+import RolesTable from '@/app/(control-panel)/administration/roles/components/ui/roles/RolesTable';
 import FusePageCarded from '@fuse/core/FusePageCarded';
 import { styled } from '@mui/material/styles';
+import useThemeMediaQuery from '../../../../../../../@fuse/hooks/useThemeMediaQuery';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': {
@@ -12,15 +13,18 @@ const Root = styled(FusePageCarded)(() => ({
 }));
 
 /**
- * The roles page.
+ * The products page.
  */
-function Roles() {
+function RolesView() {
+	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+
 	return (
 		<Root
+			scroll={isMobile ? 'page' : 'content'}
 			header={<RolesHeader />}
 			content={<RolesTable />}
 		/>
 	);
 }
 
-export default Roles;
+export default RolesView;

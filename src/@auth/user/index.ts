@@ -4,34 +4,8 @@ import { PartialDeep } from 'type-fest';
 /**
  * The type definition for a user object.
  */
-export type Permission = {
-	id: number;
-	name: string;
-};
 
-export type Level = {
-	id: number;
-	name: string;
-};
-
-export type Subscription = {
-	id: number;
-	start_date: string;
-	end_date: string;
-	is_active: boolean;
-	level?: Level;
-	reference: string;
-};
-
-export type Role = {
-	role_id: number;
-	id?: number;
-	name?: string;
-	label?: string;
-	permissions?: Permission[];
-};
-
-export type UserAccount = {
+export type UserAuthAccount = {
 	id?: number;
 	username: string;
 	first_name: string;
@@ -40,25 +14,25 @@ export type UserAccount = {
 	date_joined?: string;
 };
 
-export type Account = {
-	id: number;
-	avatar?: string;
-	phone?: string;
-	address?: string;
-	biography?: string;
-	is_active: boolean;
-	full_name?: string;
+export type LevelAuthAccount = {
+	id?: number;
 	username: string;
-	first_name: string;
-	last_name: string;
-	email: string;
+};
+
+export type AuthAccount = {
+	id: number;
+	user: UserAuthAccount;
+	role: [string];
+	level: LevelAuthAccount;
+	full_name: string;
 	avatar_alt: string;
 	avatar_url: string;
-	can_edit: boolean;
-	roles?: [Role];
-	subscriptions?: Subscription[];
-	created_at?: string;
-	hasPassword?: boolean;
+	notifications: number;
+	avatar: string;
+	is_active: boolean;
+	phone: string;
+	address: string;
+	biography: string;
 };
 
 export type Token = {
@@ -76,6 +50,6 @@ export type User = {
 	shortcuts?: string[];
 	settings?: PartialDeep<FuseSettingsConfigType>;
 	loginRedirectUrl?: string; // The URL to redirect to after login.
-	account: Account;
+	account: AuthAccount;
 	token: Token;
 };

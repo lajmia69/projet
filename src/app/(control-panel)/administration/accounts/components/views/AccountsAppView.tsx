@@ -6,10 +6,10 @@ import useParams from '@fuse/hooks/useParams';
 import { styled } from '@mui/material/styles';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import useNavigate from '@fuse/hooks/useNavigate';
-import ContactsHeader from '../ui/ContactsHeader';
-import ContactsList from '@/app/(control-panel)/administration/accounts/components/ui/account-list/ContactsList';
-import ContactsSidebarContent from '../ui/ContactsSidebarContent';
-import { ContactsAppProvider } from '../../contexts/ContactsAppContext/ContactsAppProvider';
+import AccountsHeader from '../ui/AccountsHeader';
+import AccountsList from '@/app/(control-panel)/administration/accounts/components/ui/account-list/AccountsList';
+import AccountsSidebarContent from '../ui/AccountsSidebarContent';
+import { AccountsAppProvider } from '@/app/(control-panel)/administration/accounts/contexts/ContactsAppContext/AccountsAppProvider';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .container': {
@@ -23,14 +23,14 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 	}
 }));
 
-type ContactsAppProps = {
+type AccountsAppProps = {
 	children?: React.ReactNode;
 };
 
 /**
- * The ContactsApp page.
+ * The AccountsApp page.
  */
-function ContactsAppView(props: ContactsAppProps) {
+function AccountsAppView(props: AccountsAppProps) {
 	const { children } = props;
 	const navigate = useNavigate();
 	const routeParams = useParams();
@@ -40,16 +40,16 @@ function ContactsAppView(props: ContactsAppProps) {
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
 	useEffect(() => {
-		setRightSidebarOpen(!!routeParams.contactId);
+		setRightSidebarOpen(!!routeParams.accountId);
 	}, [routeParams]);
 
 	return (
 		<Root
-			header={<ContactsHeader />}
-			content={<ContactsList />}
+			header={<AccountsHeader />}
+			content={<AccountsList />}
 			ref={pageLayout}
 			rightSidebarProps={{
-				content: <ContactsSidebarContent>{children}</ContactsSidebarContent>,
+				content: <AccountsSidebarContent>{children}</AccountsSidebarContent>,
 				open: rightSidebarOpen,
 				onClose: () => navigate('/administration/accounts'),
 				width: 640,
@@ -60,12 +60,12 @@ function ContactsAppView(props: ContactsAppProps) {
 	);
 }
 
-function ContactsAppWrapper(props: { children?: React.ReactNode }) {
+function AccountsAppWrapper(props: { children?: React.ReactNode }) {
 	return (
-		<ContactsAppProvider>
-			<ContactsAppView {...props} />
-		</ContactsAppProvider>
+		<AccountsAppProvider>
+			<AccountsAppView {...props} />
+		</AccountsAppProvider>
 	);
 }
 
-export default ContactsAppWrapper;
+export default AccountsAppWrapper;

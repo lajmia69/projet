@@ -1,4 +1,3 @@
-
 'use client';
 
 import FuseLoading from '@fuse/core/FuseLoading';
@@ -6,7 +5,7 @@ import FusePageCarded from '@fuse/core/FusePageCarded';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import { motion } from 'motion/react';
-import { useEffect } from 'react';
+import { SyntheticEvent, useEffect, useState } from 'react';
 import useParams from '@fuse/hooks/useParams';
 import Link from '@fuse/core/Link';
 import _ from 'lodash';
@@ -14,30 +13,35 @@ import { FormProvider, useForm } from 'react-hook-form';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import RoleHeader from '../../../ui/roles/RoleHeader';
-import RoleBasicInfoTab from './tabs/RoleBasicInfo';
-import { useRole } from '../../../../api/hooks/Useroles';
-import RoleModel from '../../../../api/models/RoleModel';
+import RoleHeader from '@/app/(control-panel)/administration/roles/components/ui/roles/RoleHeader';
+import BasicInfoTab from './tabs/BasicInfoTab';
+import { useRole } from '@/app/(control-panel)/administration/roles/api/hooks/useRole';
+import { CreateRoleModel } from '@/app/(control-panel)/administration/roles/api/models/RoleModel';
+import { Tabs, Tab } from '@mui/material';
+import useUser from '@auth/useUser';
 
 /**
  * Form Validation Schema
  */
 const schema = z.object({
-	name: z.string().nonempty('You must enter a role name').min(2, 'The role name must be at least 2 characters'),
-	type: z.string().nonempty('You must select a role type')
+	name: z.string().nonempty('You must enter a role name').min(5, 'The role name must be at least 5 characters'),
+	type_id: z.number()
 });
 
 /**
- * The role detail page.
+ * The role page.
  */
-function Role() {
+function RoleView() {
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
 	const routeParams = useParams();
 
 	const { roleId } = routeParams as { roleId: string };
 
-	const { data: role, isLoading, isError } = useRole(roleId);
+	const { data: currentAccount } = useUser();
+	const { data: role, isLoading, isError } = useRole(currentAccount.token, parseInt(roleId));
+
+	const [tabValue, setTabValue] = useState('basic-info');
 
 	const methods = useForm({
 		mode: 'onChange',
@@ -51,7 +55,7 @@ function Role() {
 
 	useEffect(() => {
 		if (roleId === 'new') {
-			reset(RoleModel({}));
+			reset(CreateRoleModel({}));
 		}
 	}, [roleId, reset]);
 
@@ -61,12 +65,19 @@ function Role() {
 		}
 	}, [role, reset]);
 
+	/**
+	 * Tab Change
+	 */
+	function handleTabChange(event: SyntheticEvent, value: string) {
+		setTabValue(value);
+	}
+
 	if (isLoading) {
 		return <FuseLoading />;
 	}
 
 	/**
-	 * Show Message if the requested role does not exist
+	 * Show Message if the requested roles is not exists
 	 */
 	if (isError && roleId !== 'new') {
 		return (
@@ -95,9 +106,9 @@ function Role() {
 	}
 
 	/**
-	 * Wait while role data is loading and form is set
+	 * Wait while role data is loading and form is setted
 	 */
-	if (_.isEmpty(form) || (role && routeParams.roleId !== role.id && routeParams.roleId !== 'new')) {
+	if (_.isEmpty(form) || (role && parseInt(roleId) !== role.id && routeParams.roleId !== 'new')) {
 		return <FuseLoading />;
 	}
 
@@ -107,7 +118,20 @@ function Role() {
 				header={<RoleHeader />}
 				content={
 					<div className="flex max-w-3xl flex-col gap-6 p-4 sm:p-6">
-						<RoleBasicInfoTab />
+						<Tabs
+							value={tabValue}
+							onChange={handleTabChange}
+						>
+							<Tab
+								value="basic-info"
+								label="Basic Info"
+							/>
+						</Tabs>
+						<div className="">
+							<div className={tabValue !== 'basic-info' ? 'hidden' : ''}>
+								<BasicInfoTab />
+							</div>
+						</div>
 					</div>
 				}
 				scroll={isMobile ? 'page' : 'content'}
@@ -116,4 +140,4 @@ function Role() {
 	);
 }
 
-export default Role;
+export default RoleView;

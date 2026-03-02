@@ -1,3 +1,3 @@
-import RolesAppView from '../components/views/roles/RolesAppView';
+import RolesView from '@/app/(control-panel)/administration/roles/components/views/roles/RolesView';
 
-export default RolesAppView;
+export default RolesView;

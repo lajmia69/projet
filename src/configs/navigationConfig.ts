@@ -61,7 +61,6 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:user-group',
 				translate: 'ACCOUNTS',
 				children: [
-		
 					{
 						id: 'account-accounts',
 						title: 'Accounts',

@@ -2,7 +2,7 @@
 
 import Button from '@mui/material/Button';
 import Link from '@fuse/core/Link';
-import useParams from '@fuse/hooks/useParams';
+// import useParams from '@fuse/hooks/useParams';
 import { useCallback, useEffect } from 'react';
 import FuseLoading from '@fuse/core/FuseLoading';
 import _ from 'lodash';
@@ -14,60 +14,88 @@ import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Autocomplete from '@mui/material/Autocomplete';
 import Checkbox from '@mui/material/Checkbox';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+// import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import useNavigate from '@fuse/hooks/useNavigate';
-import ContactEmailSelector from './email-selector/ContactEmailSelector';
-import PhoneNumberSelector from './phone-number-selector/PhoneNumberSelector';
+// import ContactEmailSelector from './email-selector/ContactEmailSelector';
+// import PhoneNumberSelector from './phone-number-selector/PhoneNumberSelector';
 import ContactModel from '../../api/models/ContactModel';
-import { ContactEmailModel, ContactPhoneModel } from '../../api/models/ContactModel';
-import { useContact } from '../../api/hooks/contacts/useContact';
-import { useTags } from '../../api/hooks/tags/useTags';
-import { Tag } from '../../api/types';
+// import { ContactEmailModel, ContactPhoneModel } from '../../api/models/ContactModel';
+// import { useContact } from '../../api/hooks/contacts/useContact';
+// import { useTags } from '../../api/hooks/tags/useTags';
+import { Role } from '../../api/types';
 import { useCreateContact } from '../../api/hooks/contacts/useCreateContact';
-import { useUpdateContact } from '../../api/hooks/contacts/useUpdateContact';
-import { useDeleteContact } from '../../api/hooks/contacts/useDeleteContact';
-import { useSnackbar } from 'notistack';
+// import { useUpdateContact } from '../../api/hooks/contacts/useUpdateContact';
+// import { useDeleteContact } from '../../api/hooks/contacts/useDeleteContact';
+// import { useSnackbar } from 'notistack';
 import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
+import useUser from '@auth/useUser';
+// import {useRole} from "@floating-ui/react";
+import { useRolesList } from '@/app/(control-panel)/administration/roles/api/hooks/useRolesList';
+import { CreateAccountModel } from '@/app/(control-panel)/administration/accounts/api/models/AccountModel';
 
-function BirtdayIcon() {
-	return <FuseSvgIcon>lucide:cake</FuseSvgIcon>;
-}
+// function BirtdayIcon() {
+// 	return <FuseSvgIcon>lucide:cake</FuseSvgIcon>;
+// }
 
 /**
  * Form Validation Schema
  */
 
 // Zod schema for ContactEmail
-const ContactEmailSchema = z.object({
-	email: z.string().min(1, { message: 'Email is required' }),
-	label: z.string().optional()
-});
+// const ContactEmailSchema = z.object({
+// 	email: z.string().min(1, { message: 'Email is required' }),
+// 	label: z.string().optional()
+// });
 
 // Zod schema for ContactPhoneNumber
-const ContactPhoneNumberSchema = z.object({
-	country: z.string().optional(),
-	phoneNumber: z.string().optional(),
-	label: z.string().optional()
-});
+// const ContactPhoneNumberSchema = z.object({
+// 	country: z.string().optional(),
+// 	phoneNumber: z.string().optional(),
+// 	label: z.string().optional()
+// });
 
-const schema = z.object({
+// const schema = z.object({
+// 	avatar: z.string().optional(),
+// 	background: z.string().optional(),
+// 	name: z.string().min(1, { message: 'Name is required' }),
+// 	emails: z.array(ContactEmailSchema),
+// 	phoneNumbers: z.array(ContactPhoneNumberSchema).optional(),
+// 	title: z.string().optional(),
+// 	company: z.string().optional(),
+// 	birthday: z.string().optional(),
+// 	address: z.string().optional(),
+// 	notes: z.string().optional(),
+// 	tags: z.array(z.string()).optional()
+// });
+
+// Zod schema CreateUserAccount
+// const createUserAccountSchema = z.object({
+// 	username: z.string().min(1, { message: 'Username is required' }),
+// 	first_name: z.string().min(1, { message: 'First Name is required' }),
+// 	last_name: z.string().min(1, { message: 'Last Name is required' }),
+// 	email: z.string().email({ message: 'Email is required' })
+// });
+
+const createAccountSchema = z.object({
 	avatar: z.string().optional(),
-	background: z.string().optional(),
-	name: z.string().min(1, { message: 'Name is required' }),
-	emails: z.array(ContactEmailSchema),
-	phoneNumbers: z.array(ContactPhoneNumberSchema).optional(),
-	title: z.string().optional(),
-	company: z.string().optional(),
-	birthday: z.string().optional(),
+	user: z.object({
+		username: z.string().min(1, { message: 'Username is required' }),
+		first_name: z.string().min(1, { message: 'First Name is required' }),
+		last_name: z.string().min(1, { message: 'Last Name is required' }),
+		email: z.string().email({ message: 'Email is required' })
+	}),
+	roles: z.array(z.number()),
+	phone: z.string().optional(),
 	address: z.string().optional(),
-	notes: z.string().optional(),
-	tags: z.array(z.string()).optional()
+	biography: z.string().optional()
 });
 
-type FormType = z.infer<typeof schema>;
+// type FormType = z.infer<typeof schema>;
+
+type FormType = z.infer<typeof createAccountSchema>;
 
 type ContactFormProps = {
 	isNew?: boolean;
@@ -76,23 +104,23 @@ type ContactFormProps = {
 /**
  * The contact form.
  */
-function ContactForm(props: ContactFormProps) {
+function CreateAccountForm(props: ContactFormProps) {
 	const { isNew } = props;
 	const navigate = useNavigate();
-	const { enqueueSnackbar } = useSnackbar();
-	const routeParams = useParams<{ contactId: string }>();
-	const { contactId } = routeParams;
+	// const { enqueueSnackbar } = useSnackbar();
+	// const routeParams = useParams<{ contactId: string }>();
+	// const { contactId } = routeParams;
 
-	const { data: contact, isError } = useContact(contactId);
-	const { data: tags } = useTags();
-
+	// const { data: contact, isError } = useContact(contactId);
+	const { data: currentAccount } = useUser();
+	const { data: rolesList } = useRolesList(currentAccount.token);
 	const { mutate: createContact } = useCreateContact();
-	const { mutate: updateContact } = useUpdateContact();
-	const { mutate: deleteContact } = useDeleteContact();
+	// const { mutate: updateContact } = useUpdateContact();
+	// const { mutate: deleteContact } = useDeleteContact();
 
 	const { control, watch, reset, handleSubmit, formState } = useForm<FormType>({
 		mode: 'all',
-		resolver: zodResolver(schema)
+		resolver: zodResolver(createAccountSchema)
 	});
 
 	const { isValid, dirtyFields, errors } = formState;
@@ -101,12 +129,12 @@ function ContactForm(props: ContactFormProps) {
 
 	useEffect(() => {
 		if (isNew) {
-			reset(ContactModel({}));
+			reset(CreateAccountModel({}));
 		} else {
-			reset({ ...contact });
+			// reset({ ...contact });
 		}
 		// eslint-disable-next-line
-	}, [contact, reset, routeParams]);
+	}, [ reset]);
 
 	/**
 	 * Form Submit
@@ -114,9 +142,9 @@ function ContactForm(props: ContactFormProps) {
 	const onSubmit = useCallback(() => {
 		// Prepare form data with properly transformed fields
 		const formData = {
-			...form,
-			emails: form.emails?.map((email) => ContactEmailModel(email)) || [],
-			phoneNumbers: form.phoneNumbers?.map((phone) => ContactPhoneModel(phone)) || []
+			...form
+			// emails: form.emails?.map((email) => ContactEmailModel(email)) || [],
+			// phoneNumbers: form.phoneNumbers?.map((phone) => ContactPhoneModel(phone)) || []
 		};
 
 		if (isNew) {
@@ -127,41 +155,48 @@ function ContactForm(props: ContactFormProps) {
 				}
 			});
 		} else {
-			updateContact({ id: contact.id, name: formData.name, ...formData });
+			// updateContact({ id: contact.id, name: formData.name, ...formData });
 		}
 		// eslint-disable-next-line
 	}, [form]);
 
 	function handleRemoveContact() {
-		if (!contact) {
-			return;
-		}
-
-		deleteContact(contact.id, {
-			onSuccess: () => {
-				navigate('/administration/accounts');
-			}
-		});
+		// if (!contact) {
+		// 	return;
+		// }
+		//
+		// deleteContact(contact.id, {
+		// 	onSuccess: () => {
+		// 		navigate('/administration/accounts');
+		// 	}
+		// });
 	}
 
-	const background = watch('background');
-	const name = watch('name');
+	// const background = watch('background');
+	const username = watch('user.username');
 
-	if (isError && !isNew) {
-		setTimeout(() => {
-			navigate('/administration/accounts');
-			enqueueSnackbar('NOT FOUND', {
-				variant: 'error'
-			});
-		}, 0);
-
-		return null;
-	}
+	// if (isError && !isNew) {
+	// 	setTimeout(() => {
+	// 		navigate('/administration/accounts');
+	// 		enqueueSnackbar('NOT FOUND', {
+	// 			variant: 'error'
+	// 		});
+	// 	}, 0);
+	//
+	// 	return null;
+	// }
 
 	if (_.isEmpty(form)) {
 		return <FuseLoading className="min-h-screen" />;
 	}
 
+	const defaultProps = {
+		options: rolesList,
+		getOptionLabel: (option: Role) => option.name
+	};
+	const flatProps = {
+		options: rolesList.map((option) => option.name)
+	};
 	return (
 		<>
 			<div className="relative flex flex-auto flex-col items-center overflow-y-auto">
@@ -171,13 +206,13 @@ function ContactForm(props: ContactFormProps) {
 						backgroundColor: 'background.default'
 					}}
 				>
-					{background && (
-						<img
-							className="absolute inset-0 h-full w-full object-cover"
-							src={background}
-							alt="user background"
-						/>
-					)}
+					{/*{background && (*/}
+					{/*	<img*/}
+					{/*		className="absolute inset-0 h-full w-full object-cover"*/}
+					{/*		src={background}*/}
+					{/*		alt="user background"*/}
+					{/*	/>*/}
+					{/*)}*/}
 				</Box>
 
 				<div className="w-full px-6 pb-8 sm:px-12">
@@ -264,9 +299,9 @@ function ContactForm(props: ContactFormProps) {
 										}}
 										className="text-16 h-full w-full object-cover font-bold"
 										src={value}
-										alt={name}
+										alt={username}
 									>
-										{name?.charAt(0)}
+										{username?.charAt(0)}
 									</Avatar>
 								</Box>
 							)}
@@ -275,16 +310,16 @@ function ContactForm(props: ContactFormProps) {
 					<div className="flex flex-col gap-4">
 						<Controller
 							control={control}
-							name="name"
+							name="user.username"
 							render={({ field }) => (
 								<FormControl className="w-full">
-									<FormLabel htmlFor="name">Name</FormLabel>
+									<FormLabel htmlFor="user.username">Username</FormLabel>
 									<TextField
 										{...field}
-										id="name"
-										placeholder="Name"
-										error={!!errors.name}
-										helperText={errors?.name?.message}
+										id="user.username"
+										placeholder="Username"
+										error={!!errors.user?.username}
+										helperText={errors?.user?.username?.message}
 										variant="outlined"
 										required
 										fullWidth
@@ -301,26 +336,29 @@ function ContactForm(props: ContactFormProps) {
 						/>
 						<Controller
 							control={control}
-							name="tags"
+							name="roles"
 							render={({ field: { onChange, value } }) => (
 								<FormControl className="w-full">
-									<FormLabel htmlFor="tags">Tags</FormLabel>
+									<FormLabel htmlFor="roles">Roles</FormLabel>
 									<Autocomplete
 										multiple
-										id="tags"
-										options={tags || []}
+										id="roles"
+										{...defaultProps}
+										{...flatProps}
+										getOptionKey={(option) => option.id}
 										disableCloseOnSelect
-										getOptionLabel={(option) => option?.title}
+										getOptionLabel={(option: Role) => option.name}
+
 										renderOption={(_props, option, { selected }) => (
 											<li {..._props}>
 												<Checkbox
 													style={{ marginRight: 8 }}
 													checked={selected}
 												/>
-												{option?.title}
+												{option?.name}
 											</li>
 										)}
-										value={value ? value?.map((id) => _.find(tags, { id })) : ([] as Tag[])}
+										value={value ? value?.map((id) => _.find(rolesList, { id })) : ([] as Role[])}
 										onChange={(_event, newValue) => {
 											onChange(newValue?.map((item) => item?.id));
 										}}
@@ -328,26 +366,27 @@ function ContactForm(props: ContactFormProps) {
 										renderInput={(params) => (
 											<TextField
 												{...params}
-												placeholder="Tags"
+												placeholder="Roles"
 											/>
 										)}
 									/>
+
 								</FormControl>
 							)}
 						/>
 
 						<Controller
 							control={control}
-							name="title"
+							name="user.first_name"
 							render={({ field }) => (
 								<FormControl className="w-full">
-									<FormLabel htmlFor="title">Title</FormLabel>
+									<FormLabel htmlFor="user.first_name">First Name</FormLabel>
 									<TextField
 										{...field}
-										placeholder="Job title"
-										id="title"
-										error={!!errors.title}
-										helperText={errors?.title?.message}
+										placeholder="First Name"
+										id="user.first_name"
+										error={!!errors.user?.first_name}
+										helperText={errors?.user?.first_name?.message}
 										variant="outlined"
 										fullWidth
 										slotProps={{
@@ -364,16 +403,16 @@ function ContactForm(props: ContactFormProps) {
 
 						<Controller
 							control={control}
-							name="company"
+							name="user.last_name"
 							render={({ field }) => (
 								<FormControl className="w-full">
-									<FormLabel htmlFor="company">Company</FormLabel>
+									<FormLabel htmlFor="user.last_name">Last Name</FormLabel>
 									<TextField
 										{...field}
-										placeholder="Company"
-										id="company"
-										error={!!errors.company}
-										helperText={errors?.company?.message}
+										placeholder="Last Name"
+										id="user.last_name"
+										error={!!errors.user?.last_name}
+										helperText={errors?.user?.last_name?.message}
 										variant="outlined"
 										fullWidth
 										slotProps={{
@@ -387,31 +426,31 @@ function ContactForm(props: ContactFormProps) {
 								</FormControl>
 							)}
 						/>
-						<Controller
-							control={control}
-							name="emails"
-							render={({ field }) => (
-								<ContactEmailSelector
-									{...field}
-									value={field.value.map((email) => ContactEmailModel(email))}
-									onChange={(val) => field.onChange(val)}
-								/>
-							)}
-						/>
+						{/*<Controller*/}
+						{/*	control={control}*/}
+						{/*	name="emails"*/}
+						{/*	render={({ field }) => (*/}
+						{/*		<ContactEmailSelector*/}
+						{/*			{...field}*/}
+						{/*			value={field.value.map((email) => ContactEmailModel(email))}*/}
+						{/*			onChange={(val) => field.onChange(val)}*/}
+						{/*		/>*/}
+						{/*	)}*/}
+						{/*/>*/}
 
-						<Controller
-							control={control}
-							name="phoneNumbers"
-							render={({ field }) => (
-								<PhoneNumberSelector
-									{...field}
-									error={!!errors.phoneNumbers}
-									helperText={errors?.phoneNumbers?.message}
-									value={field.value.map((phone) => ContactPhoneModel(phone))}
-									onChange={(val) => field.onChange(val)}
-								/>
-							)}
-						/>
+						{/*<Controller*/}
+						{/*	control={control}*/}
+						{/*	name="phoneNumbers"*/}
+						{/*	render={({ field }) => (*/}
+						{/*		<PhoneNumberSelector*/}
+						{/*			{...field}*/}
+						{/*			error={!!errors.phoneNumbers}*/}
+						{/*			helperText={errors?.phoneNumbers?.message}*/}
+						{/*			value={field.value.map((phone) => ContactPhoneModel(phone))}*/}
+						{/*			onChange={(val) => field.onChange(val)}*/}
+						{/*		/>*/}
+						{/*	)}*/}
+						{/*/>*/}
 
 						<Controller
 							control={control}
@@ -436,49 +475,49 @@ function ContactForm(props: ContactFormProps) {
 								</FormControl>
 							)}
 						/>
+						{/*<Controller*/}
+						{/*	control={control}*/}
+						{/*	name="birthday"*/}
+						{/*	render={({ field: { value, onChange } }) => (*/}
+						{/*		<FormControl className="w-full">*/}
+						{/*			<FormLabel htmlFor="birthday">Birthday</FormLabel>*/}
+						{/*			<DateTimePicker*/}
+						{/*				value={new Date(value)}*/}
+						{/*				onChange={(val) => {*/}
+						{/*					onChange(val?.toISOString());*/}
+						{/*				}}*/}
+						{/*				slotProps={{*/}
+						{/*					textField: {*/}
+						{/*						id: 'birthday',*/}
+						{/*						fullWidth: true,*/}
+						{/*						size: 'small',*/}
+						{/*						variant: 'outlined',*/}
+						{/*						error: !!errors.birthday,*/}
+						{/*						helperText: errors?.birthday?.message*/}
+						{/*					},*/}
+						{/*					actionBar: {*/}
+						{/*						actions: ['clear', 'today']*/}
+						{/*					}*/}
+						{/*				}}*/}
+						{/*				slots={{*/}
+						{/*					openPickerIcon: BirtdayIcon*/}
+						{/*				}}*/}
+						{/*			/>*/}
+						{/*		</FormControl>*/}
+						{/*	)}*/}
+						{/*/>*/}
 						<Controller
 							control={control}
-							name="birthday"
-							render={({ field: { value, onChange } }) => (
-								<FormControl className="w-full">
-									<FormLabel htmlFor="birthday">Birthday</FormLabel>
-									<DateTimePicker
-										value={new Date(value)}
-										onChange={(val) => {
-											onChange(val?.toISOString());
-										}}
-										slotProps={{
-											textField: {
-												id: 'birthday',
-												fullWidth: true,
-												size: 'small',
-												variant: 'outlined',
-												error: !!errors.birthday,
-												helperText: errors?.birthday?.message
-											},
-											actionBar: {
-												actions: ['clear', 'today']
-											}
-										}}
-										slots={{
-											openPickerIcon: BirtdayIcon
-										}}
-									/>
-								</FormControl>
-							)}
-						/>
-						<Controller
-							control={control}
-							name="notes"
+							name="biography"
 							render={({ field }) => (
 								<FormControl className="w-full">
-									<FormLabel htmlFor="notes">Notes</FormLabel>
+									<FormLabel htmlFor="biography">Biography</FormLabel>
 									<TextField
 										{...field}
-										placeholder="Notes"
-										id="notes"
-										error={!!errors.notes}
-										helperText={errors?.notes?.message}
+										placeholder="Biography"
+										id="biography"
+										error={!!errors.biography}
+										helperText={errors?.biography?.message}
 										variant="outlined"
 										fullWidth
 										multiline
@@ -519,7 +558,8 @@ function ContactForm(props: ContactFormProps) {
 				<Button
 					component={Link}
 					className="ml-auto"
-					to={`/administration/accounts/${contactId}`}
+					to={`/administration/accounts`}
+					// to={`/administration/accounts/${contactId}`}
 				>
 					Cancel
 				</Button>
@@ -537,4 +577,4 @@ function ContactForm(props: ContactFormProps) {
 	);
 }
 
-export default ContactForm;
+export default CreateAccountForm;

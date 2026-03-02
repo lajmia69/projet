@@ -1,0 +1,11 @@
+const schema = z.object({
+	avatar: z.string().optional(),
+	username: z.string().min(8, { message: 'First name is required' }),
+	first_name: z.string().min(1, { message: 'First name is required' }),
+	last_name: z.string().min(1, { message: 'Last name is required' }),
+	email: z.string().min(1, { message: 'Email is required' }),
+	roles: z.array(z.number()),
+	phone: z.string().optional(),
+	address: z.string().optional(),
+	biography: z.string().optional()
+});

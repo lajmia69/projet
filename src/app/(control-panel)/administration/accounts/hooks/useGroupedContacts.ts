@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { GroupedContacts, AccumulatorType, contactFullName } from '../api/types';
+import { GroupedContacts, AccumulatorType } from '../api/types';
 import { useFilteredContacts } from './useFilteredContacts';
 
 export function useGroupedContacts() {
@@ -9,15 +9,12 @@ export function useGroupedContacts() {
 			return [];
 		}
 
-		const sortedContacts = [...filteredContacts]?.sort((a, b) => {
-			const nameA = contactFullName(a);
-			const nameB = contactFullName(b);
-			return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' });
-		});
+		const sortedContacts = [...filteredContacts]?.sort((a, b) =>
+			a?.name?.localeCompare(b.name, 'es', { sensitivity: 'base' })
+		);
 
 		const groupedObject: Record<string, GroupedContacts> = sortedContacts?.reduce<AccumulatorType>((r, e) => {
-			const fullName = contactFullName(e);
-			const group = fullName[0];
+			const group = e.name[0];
 
 			if (!r[group]) {
 				r[group] = { group, children: [e] };

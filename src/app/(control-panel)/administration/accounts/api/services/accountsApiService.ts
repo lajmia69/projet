@@ -1,28 +1,23 @@
 import { api } from '@/utils/api';
+import { Account } from '../types';
 import { Token } from '@auth/user';
-import {
-	CreateRole,
-	Role,
-	RolesResponse,
-	RoleType,
-	RoleTypesResponse
-} from '@/app/(control-panel)/administration/roles/api/types';
+import { AccountsResponse } from '@/app/(control-panel)/administration/accounts/api/types';
 
-export const rolesApi = {
-	getRolesList: async (token: Token): Promise<Role[]> => {
-		const response = await api.get(`account/role/list/${token.id}`, {
+export const accountsApi = {
+	getAccountsList: async (token: Token): Promise<Account[]> => {
+		const response = await api.get(`account/list/${token.id}`, {
 			method: 'GET',
 			headers: {
 				Authorization: `Bearer ${token.access}`
 			}
 		});
-		const data: RolesResponse = await response.json();
+		const data: AccountsResponse = await response.json();
 		return data.items;
 	},
 
-	getRole: async (token: Token, roleId: number): Promise<Role> => {
+	getAccount: async (token: Token, accountId: number): Promise<Account> => {
 		return api
-			.get(`account/role/detail/${token.id}/${roleId}`, {
+			.get(`account/detail/${token.id}/${accountId}`, {
 				method: 'GET',
 				headers: {
 					Authorization: `Bearer ${token.access}`
@@ -31,42 +26,31 @@ export const rolesApi = {
 			.json();
 	},
 
-	createRole: async (token: Omit<Token, ''>, role: Omit<CreateRole, ''>): Promise<CreateRole> => {
+	createAccount: async (token: Omit<Token, ''>, account: Omit<Account, 'id'>): Promise<Account> => {
 		return api
-			.post(`account/role/create/${token.id}/`, {
+			.post(`account/create/${token.id}}`, {
 				headers: {
 					Authorization: `Bearer ${token.access}`
 				},
-				json: role
+				json: account
 			})
 			.json();
 	},
 
-	updateRole: async (token: Omit<Token, ''>, role: Omit<Role, 'avatar'>): Promise<Role> => {
+	updateAccount: async (token: Omit<Token, ''>, account: Omit<Account, 'avatar'>): Promise<Account> => {
 		return api
-			.put(`account/role/update/${token.id}`, {
-				json: role
+			.put(`account/update/${token.id}`, {
+				json: account
 			})
 			.json();
 	},
 
-	deleteRole: async (token: Token, roleId: number): Promise<void> => {
-		await api.delete(`account/role/delete/${token.id}/${roleId}`, {
+	deleteAccount: async (token: Token, accountId: number): Promise<void> => {
+		await api.delete(`account/delete/${token.id}/${accountId}`, {
 			headers: {
 				Authorization: `Bearer ${token.access}`
-			}
+			},
 		});
-	},
-
-	getRoleTypesList: async (token: Token): Promise<RoleType[]> => {
-		const response = await api.get(`account/role_type/list/${token.id}`, {
-			method: 'GET',
-			headers: {
-				Authorization: `Bearer ${token.access}`
-			}
-		});
-		const data: RoleTypesResponse = await response.json();
-		return data.items;
 	}
 
 	// getTags: async (): Promise<Tag[]> => {

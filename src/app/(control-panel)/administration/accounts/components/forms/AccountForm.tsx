@@ -76,7 +76,7 @@ type ContactFormProps = {
 /**
  * The contact form.
  */
-function ContactForm(props: ContactFormProps) {
+function AccountForm(props: ContactFormProps) {
 	const { isNew } = props;
 	const navigate = useNavigate();
 	const { enqueueSnackbar } = useSnackbar();
@@ -537,4 +537,4 @@ function ContactForm(props: ContactFormProps) {
 	);
 }
 
-export default ContactForm;
+export default AccountForm;
