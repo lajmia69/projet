@@ -1,11 +1,16 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { redirect } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 function AccountSubscriptionPage() {
 	const { accountId } = useParams<{ accountId: string }>();
-	redirect(`/administration/subscriptions/${accountId}/view`);
+	const router = useRouter();
+
+	useEffect(() => {
+		router.replace(`/administration/subscriptions/${accountId}/view`);
+	}, [accountId, router]);
+
 	return null;
 }
 

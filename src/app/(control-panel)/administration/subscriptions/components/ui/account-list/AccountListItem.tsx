@@ -18,7 +18,7 @@ function AccountListItem({ account }: Props) {
 			className="border-divider border-b-1 px-4 py-4 md:px-8"
 			sx={{ bgcolor: 'background.paper' }}
 			component={NavLinkAdapter}
-			to={`/administration/subscriptions/${account.id}`}
+			to={`/administration/subscriptions/${account.id}/view`}
 		>
 			<ListItemAvatar>
 				<Avatar alt={account.full_name} src={account.avatar_url}>
