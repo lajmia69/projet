@@ -62,6 +62,11 @@ export type Subscription = {
 	is_active: boolean;
 	level: Level;
 	reference: string;
+	account?: {
+		id?: number;        // ← make id optional
+		full_name?: string;
+		email?: string;
+	};
 };
 
 export type RoleType = {

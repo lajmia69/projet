@@ -1,0 +1,14 @@
+import { useQuery } from '@tanstack/react-query';
+import { subscriptionsApi } from '../services/subscriptionsApiService';
+import { Subscription } from '../types';
+import { Token } from '@auth/user';
+
+export const subscriptionsListQueryKey = (token: Token) => ['subscriptions', 'list', token];
+
+export const useSubscriptionsList = (token: Token) => {
+	return useQuery<Subscription[]>({
+		queryFn: () => subscriptionsApi.getAllSubscriptionsList(token),
+		queryKey: subscriptionsListQueryKey(token),
+		refetchOnWindowFocus: true
+	});
+};
