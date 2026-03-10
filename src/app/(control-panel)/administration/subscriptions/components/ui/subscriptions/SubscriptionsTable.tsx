@@ -42,8 +42,7 @@ function SubscriptionsTable() {
 			const fromAccount = account.subscriptions ?? [];
 
 			// Merge and deduplicate by subscription id
-			const combined = [...fromAccount, ...fromSubsList];
-			const unique = combined.filter(
+				const combined = [...fromSubsList, ...fromAccount];			const unique = combined.filter(
 				(sub, index, self) => self.findIndex((s) => s.id === sub.id) === index
 			);
 
@@ -137,11 +136,11 @@ function SubscriptionsTable() {
 							{subs.map((sub) => (
 								<Typography key={sub.id} className="text-xs" color="text.secondary">
 									{sub.start_date
-										? format(new Date(sub.start_date), 'MMM d, yyyy')
+										? format(new Date(`${sub.start_date}T00:00:00`), 'MMM d, yyyy')
 										: '—'}{' '}
 									→{' '}
 									{sub.end_date
-										? format(new Date(sub.end_date), 'MMM d, yyyy')
+										? format(new Date(`${sub.end_date}T00:00:00`),   'MMM d, yyyy')
 										: '—'}
 								</Typography>
 							))}

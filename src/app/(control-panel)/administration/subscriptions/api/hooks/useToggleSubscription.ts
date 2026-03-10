@@ -3,6 +3,7 @@ import { subscriptionsApi } from '../services/subscriptionsApiService';
 import { subscriptionsListQueryKey } from './useSubscriptionsList';
 import { subscriptionQueryKey } from './useSubscription';
 import { Token } from '@auth/user';
+import { subscriptionAccountsListQueryKey } from './useAccountsList';
 
 type TogglePayload = {
 	subscriptionId: number;
@@ -20,6 +21,9 @@ export const useToggleSubscription = (token: Token) => {
 			queryClient.invalidateQueries({
 				queryKey: subscriptionQueryKey(token, subscriptionId)
 			});
+			 queryClient.invalidateQueries({ queryKey: subscriptionsListQueryKey(token) });
+    queryClient.invalidateQueries({ queryKey: subscriptionQueryKey(token, subscriptionId) });
+    queryClient.invalidateQueries({ queryKey: subscriptionAccountsListQueryKey(token) });
 		}
 	});
 };

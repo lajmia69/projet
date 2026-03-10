@@ -57,20 +57,16 @@ function SubscriptionView() {
 
 	const [tabValue, setTabValue] = useState('basic-info');
 
-	const methods = useForm({
-		mode: 'onChange',
-		defaultValues: {},
-		resolver: zodResolver(schema)
-	});
+const methods = useForm({
+    mode: 'onChange',
+    defaultValues: isNew
+        ? CreateSubscriptionModel({})
+        : { reference: '', account_id: 0, level_id: 0, start_date: '', end_date: '', is_active: false },
+    resolver: zodResolver(schema)
+});
 
 	const { reset, watch } = methods;
 	const form = watch();
-
-	useEffect(() => {
-		if (isNew) {
-			reset(CreateSubscriptionModel({}));
-		}
-	}, [isNew, reset]);
 
 	useEffect(() => {
 		if (subscription) {
