@@ -8,6 +8,7 @@ export const roleTypesListQueryKey = (token: Token) => ['role_types', 'list', to
 export const useRoleTypesList = (token: Token) => {
 	return useQuery<RoleType[]>({
 		queryFn: () => rolesApi.getRoleTypesList(token),
-		queryKey: roleTypesListQueryKey(token)
+		queryKey: roleTypesListQueryKey(token),
+		refetchOnWindowFocus: true
 	});
 };

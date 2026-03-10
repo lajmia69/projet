@@ -1,12 +1,18 @@
 import { PartialDeep } from 'type-fest';
 import _ from 'lodash';
-import { CreateRole } from '@/app/(control-panel)/administration/roles/api/types';
+import { Role } from '@/app/(control-panel)/administration/roles/api/types';
 
 /**
  * The Account Role model.
  */
-export const CreateRoleModel = (data: PartialDeep<CreateRole> | null): CreateRole =>
+export const RoleModel = (data: PartialDeep<Role> | null): Role =>
 	_.defaults(data || {}, {
+		id: 0,
 		name: '',
-		type_id: 1
+		type: {
+			id: 1,
+			name: '',
+			description: ''
+		},
+		permissions: []
 	});

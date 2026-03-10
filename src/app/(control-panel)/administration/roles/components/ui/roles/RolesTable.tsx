@@ -3,33 +3,20 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import DataTable from 'src/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
 import { ListItemIcon, MenuItem, Paper } from '@mui/material';
+// import _ from 'lodash';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
+// import clsx from 'clsx';
+// import Button from '@mui/material/Button';
 import { useRolesList } from '@/app/(control-panel)/administration/roles/api/hooks/useRolesList';
-import { useDeleteRole } from '@/app/(control-panel)/administration/roles/api/hooks/useDeleteRole';
+// import { useDeleteProducts } from '../../../api/hooks/products/useDeleteProducts';
 import useUser from '@auth/useUser';
 import { Role } from '@/app/(control-panel)/administration/roles/api/types';
-import { useSnackbar } from 'notistack';
 
 function RolesTable() {
 	const { data: currentAccount } = useUser();
 	const { data: roles, isLoading } = useRolesList(currentAccount.token);
-	const { mutate: deleteRole } = useDeleteRole(currentAccount.token);
-	const { enqueueSnackbar } = useSnackbar();
-
-	function handleDeleteRole(roleId: number) {
-		deleteRole(roleId, {
-			onSuccess: () => {
-				enqueueSnackbar('Role deleted successfully', { variant: 'success' });
-			},
-			onError: (error) => {
-				console.error('Delete error:', error);
-				enqueueSnackbar('Failed to delete role', { variant: 'error' });
-			}
-		});
-	}
 
 	const columns = useMemo<MRT_ColumnDef<Role>[]>(
 		() => [
@@ -55,27 +42,99 @@ function RolesTable() {
 					</div>
 				)
 			}
+			// {
+			// 	accessorKey: 'priceTaxIncl',
+			// 	header: 'Price',
+			// 	accessorFn: (row) => `$${row.priceTaxIncl}`
+			// },
+			// {
+			// 	accessorKey: 'quantity',
+			// 	header: 'Quantity',
+			// 	Cell: ({ row }) => (
+			// 		<div className="flex items-center gap-1">
+			// 			<span>{row.original.quantity}</span>
+			// 			<i
+			// 				className={clsx(
+			// 					'inline-block h-2 w-2 rounded-sm',
+			// 					row.original.quantity <= 5 && 'bg-red-500',
+			// 					row.original.quantity > 5 && row.original.quantity <= 25 && 'bg-orange-500',
+			// 					row.original.quantity > 25 && 'bg-green-500'
+			// 				)}
+			// 			/>
+			// 		</div>
+			// 	)
+			// },
+			// {
+			// 	accessorKey: 'active',
+			// 	header: 'Active',
+			// 	Cell: ({ row }) => (
+			// 		<div className="flex items-center">
+			// 			{row.original.active ? (
+			// 				<FuseSvgIcon
+			// 					className="text-green-500"
+			// 					size={20}
+			// 				>
+			// 					lucide:circle-check
+			// 				</FuseSvgIcon>
+			// 			) : (
+			// 				<FuseSvgIcon
+			// 					className="text-red-500"
+			// 					size={20}
+			// 				>
+			// 					lucide:circle-minus
+			// 				</FuseSvgIcon>
+			// 			)}
+			// 		</div>
+			// 	)
+			// }
 		],
 		[]
 	);
 
-	if (isLoading) {
-		return <FuseLoading />;
-	}
+	// if (isLoading) {
+	// 	return <FuseLoading />;
+	// }
 
-	return (
+	return isLoading ? (
+		<FuseLoading />
+	) : (
 		<Paper
-			className="flex h-full w-full flex-auto flex-col overflow-hidden rounded-b-none"
+			className="flex h-full w-full flex-col overflow-hidden rounded-b-none"
 			elevation={2}
 		>
 			<DataTable
+				enableStickyHeader={true}
+				enableStickyFooter={true}
+				enablePagination={true}
+				paginateExpandedRows={true}
+				enableSelectAll={false}
+				enableRowSelection={false}
+				autoResetPageIndex={true}
+				paginationDisplayMode={'pages'}
+				// manualPagination={true}
+				// rowCount={30}
+				// pageCount={3}
+				// rowNumberDisplayMode={'static'}
+				enableRowNumbers={true}
+				initialState={{
+					pagination: {
+						pageSize: 10,
+						pageIndex: 0
+					}
+				}}
+				muiPaginationProps={{
+					color: 'secondary',
+					rowsPerPageOptions: [10, 15, 20],
+					shape: 'rounded',
+					variant: 'outlined'
+				}}
 				data={roles}
 				columns={columns}
 				renderRowActionMenuItems={({ closeMenu, row, table }) => [
 					<MenuItem
 						key={0}
 						onClick={() => {
-							handleDeleteRole(row.original.id);
+							// deleteProducts([row.original.id]);
 							closeMenu();
 							table.resetRowSelection();
 						}}
@@ -86,30 +145,30 @@ function RolesTable() {
 						Delete
 					</MenuItem>
 				]}
-				renderTopToolbarCustomActions={({ table }) => {
-					const { rowSelection } = table.getState();
-
-					if (Object.keys(rowSelection).length === 0) {
-						return null;
-					}
-
-					return (
-						<Button
-							variant="contained"
-							size="small"
-							onClick={() => {
-								const selectedRows = table.getSelectedRowModel().rows;
-								selectedRows.forEach((row) => handleDeleteRole(row.original.id));
-								table.resetRowSelection();
-							}}
-							className="flex min-w-9 shrink ltr:mr-2 rtl:ml-2"
-							color="secondary"
-						>
-							<FuseSvgIcon>lucide:trash</FuseSvgIcon>
-							<span className="mx-2 hidden sm:flex">Delete selected items</span>
-						</Button>
-					);
-				}}
+				// renderTopToolbarCustomActions={({ table }) => {
+				// 	const { rowSelection } = table.getState();
+				//
+				// 	if (Object.keys(rowSelection).length === 0) {
+				// 		return null;
+				// 	}
+				//
+				// 	return (
+				// 		<Button
+				// 			variant="contained"
+				// 			size="small"
+				// 			onClick={() => {
+				// 				const selectedRows = table.getSelectedRowModel().rows;
+				// 				// deleteProducts(selectedRows.map((row) => row.original.id));
+				// 				table.resetRowSelection();
+				// 			}}
+				// 			className="flex min-w-9 shrink ltr:mr-2 rtl:ml-2"
+				// 			color="secondary"
+				// 		>
+				// 			<FuseSvgIcon>lucide:trash</FuseSvgIcon>
+				// 			<span className="mx-2 hidden sm:flex">Delete selected items</span>
+				// 		</Button>
+				// 	);
+				// }}
 			/>
 		</Paper>
 	);

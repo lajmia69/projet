@@ -7,63 +7,44 @@ import _ from 'lodash';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import useNavigate from '@fuse/hooks/useNavigate';
-import { Role, CreateRole } from '@/app/(control-panel)/administration/roles/api/types';
+import { Role } from '@/app/(control-panel)/administration/roles/api/types';
 import { useCreateRole } from '@/app/(control-panel)/administration/roles/api/hooks/useCreateRole';
 import { useUpdateRole } from '@/app/(control-panel)/administration/roles/api/hooks/useUpdateRole';
-import { useDeleteRole } from '@/app/(control-panel)/administration/roles/api/hooks/useDeleteRole';
 import useUser from '@auth/useUser';
-import { useSnackbar } from 'notistack';
+// import { enqueueSnackbar } from 'notistack';
 
+/**
+ * The role header.
+ */
 function RoleHeader() {
 	const routeParams = useParams<{ roleId: string }>();
 	const { roleId } = routeParams;
 	const { data: currentAccount } = useUser();
-	const { enqueueSnackbar } = useSnackbar();
-	const navigate = useNavigate();
-
 	const { mutate: createRole } = useCreateRole(currentAccount.token);
 	const { mutate: updateRole } = useUpdateRole(currentAccount.token);
-	const { mutate: deleteRole } = useDeleteRole(currentAccount.token);
+	// const { mutate: removeProduct } = useDeleteProduct();
 
 	const methods = useFormContext();
-	const { formState, getValues, watch } = methods;
+	const { formState, watch, getValues } = methods;
 	const { isValid, dirtyFields } = formState;
+
+	const navigate = useNavigate();
 
 	const { name } = watch() as Role;
 
-	function handleCreateRole() {
-		createRole(getValues() as CreateRole, {
-			onSuccess: () => {
-				enqueueSnackbar('Role created successfully', { variant: 'success' });
-				navigate('/administration/roles');
-			},
-			onError: () => {
-				enqueueSnackbar('Failed to create role', { variant: 'error' });
-			}
-		});
+	function handleSaveRole() {
+		updateRole(getValues() as Role);
+		navigate('/administration/roles');
 	}
 
-	function handleSaveRole() {
-		updateRole(getValues() as Role, {
-			onSuccess: () => {
-				enqueueSnackbar('Role updated successfully', { variant: 'success' });
-			},
-			onError: () => {
-				enqueueSnackbar('Failed to update role', { variant: 'error' });
-			}
-		});
+	function handleCreateRole() {
+		createRole(getValues() as Role);
+		navigate('/administration/roles');
 	}
 
 	function handleRemoveRole() {
-		deleteRole(parseInt(roleId), {
-			onSuccess: () => {
-				enqueueSnackbar('Role deleted successfully', { variant: 'success' });
-				navigate('/administration/roles');
-			},
-			onError: () => {
-				enqueueSnackbar('Failed to delete role', { variant: 'error' });
-			}
-		});
+		// removeProduct(roleId);
+		navigate('/administration/roles');
 	}
 
 	return (
@@ -71,6 +52,25 @@ function RoleHeader() {
 			<PageBreadcrumb className="mb-2" />
 			<div className="flex min-w-0 flex-auto flex-col gap-2 sm:flex-row sm:items-center">
 				<div className="flex flex-auto items-center gap-2">
+					<motion.div
+						className="hidden sm:flex"
+						initial={{ scale: 0 }}
+						animate={{ scale: 1, transition: { delay: 0.3 } }}
+					>
+						{/*{images && images.length > 0 && featuredImageId ? (*/}
+						{/*	<img*/}
+						{/*		className="w-8 rounded-sm sm:w-12"*/}
+						{/*		src={_.find(images, { id: featuredImageId })?.url}*/}
+						{/*		alt={name}*/}
+						{/*	/>*/}
+						{/*) : (*/}
+						{/*	<img*/}
+						{/*		className="w-8 rounded-sm sm:w-12"*/}
+						{/*		src="/assets/images/apps/ecommerce/product-image-placeholder.png"*/}
+						{/*		alt={name}*/}
+						{/*	/>*/}
+						{/*)}*/}
+					</motion.div>
 					<motion.div
 						className="flex min-w-0 flex-col"
 						initial={{ x: -20 }}
@@ -97,7 +97,7 @@ function RoleHeader() {
 							<Button
 								className="mx-1 whitespace-nowrap"
 								variant="contained"
-								color="error"
+								color="secondary"
 								onClick={handleRemoveRole}
 								startIcon={<FuseSvgIcon>lucide:trash</FuseSvgIcon>}
 							>

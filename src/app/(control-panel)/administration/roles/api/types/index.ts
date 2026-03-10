@@ -17,11 +17,6 @@ export type Role = {
 	permissions: Permission[];
 };
 
-export type CreateRole = {
-	name: string;
-	type_id: number;
-};
-
 export type RolesResponse = {
 	count: number;
 	items: Role[];

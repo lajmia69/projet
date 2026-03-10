@@ -16,7 +16,7 @@ import { z } from 'zod';
 import RoleHeader from '@/app/(control-panel)/administration/roles/components/ui/roles/RoleHeader';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import { useRole } from '@/app/(control-panel)/administration/roles/api/hooks/useRole';
-import { CreateRoleModel } from '@/app/(control-panel)/administration/roles/api/models/RoleModel';
+import { RoleModel } from '@/app/(control-panel)/administration/roles/api/models/RoleModel';
 import { Tabs, Tab } from '@mui/material';
 import useUser from '@auth/useUser';
 
@@ -24,8 +24,11 @@ import useUser from '@auth/useUser';
  * Form Validation Schema
  */
 const schema = z.object({
+	id: z.number().optional(),
 	name: z.string().nonempty('You must enter a role name').min(5, 'The role name must be at least 5 characters'),
-	type_id: z.number()
+	type: z.object({
+		id: z.number()
+	})
 });
 
 /**
@@ -55,13 +58,13 @@ function RoleView() {
 
 	useEffect(() => {
 		if (roleId === 'new') {
-			reset(CreateRoleModel({}));
+			reset(RoleModel({}));
 		}
 	}, [roleId, reset]);
 
 	useEffect(() => {
 		if (role) {
-			reset({ ...role });
+			reset(RoleModel(role));
 		}
 	}, [role, reset]);
 

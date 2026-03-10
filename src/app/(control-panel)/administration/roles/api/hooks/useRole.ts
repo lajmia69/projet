@@ -9,6 +9,8 @@ export const useRole = (token: Token, roleId: number) => {
 	return useQuery<Role>({
 		queryFn: () => rolesApi.getRole(token, roleId),
 		queryKey: roleQueryKey(token, roleId),
-		enabled: !!roleId
+		// The query will not execute until the roleId exists
+		enabled: !!roleId,
+		refetchOnWindowFocus: true
 	});
 };
