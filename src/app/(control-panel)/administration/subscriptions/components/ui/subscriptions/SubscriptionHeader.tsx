@@ -8,16 +8,21 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import useNavigate from '@fuse/hooks/useNavigate';
 import useUser from '@auth/useUser';
+import { useSnackbar } from 'notistack';
 import { useCreateSubscription } from '../../../api/hooks/useCreateSubscription';
+import { useUpdateSubscription } from '../../../api/hooks/Useupdatesubscription';
 import { CreateSubscription } from '../../../api/types';
 
 function SubscriptionHeader() {
 	const routeParams = useParams<{ subscriptionId: string }>();
 	const isNew = routeParams.subscriptionId === 'new';
+	const subscriptionId = isNew ? 0 : parseInt(routeParams.subscriptionId, 10);
 
 	const { data: currentAccount } = useUser();
-	const { mutate: createSubscription } = useCreateSubscription(currentAccount.token);
+	const { mutate: createSubscription, isPending: isCreating } = useCreateSubscription(currentAccount.token);
+	const { mutate: updateSubscription, isPending: isUpdating } = useUpdateSubscription(currentAccount.token);
 	const navigate = useNavigate();
+	const { enqueueSnackbar } = useSnackbar();
 
 	const methods = useFormContext();
 	const { formState, watch, getValues } = methods;
@@ -26,8 +31,24 @@ function SubscriptionHeader() {
 
 	function handleCreate() {
 		createSubscription(getValues() as CreateSubscription, {
-			onSuccess: () => navigate('/administration/subscriptions')
+			onSuccess: () => {
+				enqueueSnackbar('Subscription created successfully', { variant: 'success' });
+				navigate('/administration/subscriptions');
+			},
+			onError: () => enqueueSnackbar('Failed to create subscription', { variant: 'error' })
 		});
+	}
+
+	function handleSave() {
+		updateSubscription(
+			{ subscriptionId, data: getValues() as CreateSubscription },
+			{
+				onSuccess: () =>
+					enqueueSnackbar('Subscription updated successfully', { variant: 'success' }),
+				onError: () =>
+					enqueueSnackbar('Failed to update subscription', { variant: 'error' })
+			}
+		);
 	}
 
 	return (
@@ -50,29 +71,40 @@ function SubscriptionHeader() {
 				</div>
 
 				<motion.div
-					className="flex w-full flex-1 justify-end"
+					className="flex w-full flex-1 items-center justify-end gap-2"
 					initial={{ opacity: 0, x: 20 }}
 					animate={{ opacity: 1, x: 0, transition: { delay: 0.3 } }}
 				>
+					<Button
+						className="whitespace-nowrap"
+						variant="outlined"
+						color="secondary"
+						onClick={() => navigate('/administration/subscriptions')}
+						startIcon={<FuseSvgIcon>lucide:arrow-left</FuseSvgIcon>}
+					>
+						Back
+					</Button>
+
 					{isNew ? (
 						<Button
-							className="mx-1 whitespace-nowrap"
+							className="whitespace-nowrap"
 							variant="contained"
 							color="secondary"
-							disabled={_.isEmpty(dirtyFields) || !isValid}
+							disabled={_.isEmpty(dirtyFields) || !isValid || isCreating}
 							onClick={handleCreate}
 						>
-							Add
+							{isCreating ? 'Creating…' : 'Create'}
 						</Button>
 					) : (
 						<Button
-							className="mx-1 whitespace-nowrap"
-							variant="outlined"
+							className="whitespace-nowrap"
+							variant="contained"
 							color="secondary"
-							onClick={() => navigate('/administration/subscriptions')}
-							startIcon={<FuseSvgIcon>lucide:arrow-left</FuseSvgIcon>}
+							disabled={_.isEmpty(dirtyFields) || !isValid || isUpdating}
+							onClick={handleSave}
+							startIcon={<FuseSvgIcon>lucide:save</FuseSvgIcon>}
 						>
-							Back
+							{isUpdating ? 'Saving…' : 'Save'}
 						</Button>
 					)}
 				</motion.div>

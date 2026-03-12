@@ -2,24 +2,18 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscriptionsApi } from '../services/subscriptionsApiService';
 import { subscriptionsListQueryKey } from './useSubscriptionsList';
 import { subscriptionQueryKey } from './useSubscription';
-import { subscriptionAccountsListQueryKey } from './useAccountsList';
 import { Token } from '@auth/user';
+import { CreateSubscription, Subscription } from '../types';
 
-type TogglePayload = {
-	subscriptionId: number;
-	is_active: boolean;
-};
-
-export const useToggleSubscription = (token: Token) => {
+export const useUpdateSubscription = (token: Token) => {
 	const queryClient = useQueryClient();
 
-	return useMutation({
-		mutationFn: ({ subscriptionId, is_active }: TogglePayload) =>
-			subscriptionsApi.toggleSubscription(token, subscriptionId, is_active),
+	return useMutation<Subscription, Error, { subscriptionId: number; data: CreateSubscription }>({
+		mutationFn: ({ subscriptionId, data }) =>
+			subscriptionsApi.updateSubscription(token, subscriptionId, data),
 		onSuccess: (_, { subscriptionId }) => {
 			queryClient.invalidateQueries({ queryKey: subscriptionsListQueryKey(token) });
 			queryClient.invalidateQueries({ queryKey: subscriptionQueryKey(token, subscriptionId) });
-			queryClient.invalidateQueries({ queryKey: subscriptionAccountsListQueryKey(token) });
 		}
 	});
 };
