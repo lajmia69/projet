@@ -8,7 +8,6 @@ import {
 	Box,
 	Chip,
 	InputAdornment,
-	ListItemIcon,
 	MenuItem,
 	Paper,
 	Select,
@@ -26,6 +25,7 @@ import { format, isValid, parseISO } from 'date-fns';
 import useUser from '@auth/useUser';
 import useNavigate from '@fuse/hooks/useNavigate';
 import { useSubscriptionsList } from '../../../api/hooks/useSubscriptionsList';
+import { useLevelsList } from '../../../api/hooks/useLevelsList';
 import { Subscription } from '../../../api/types';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -34,6 +34,17 @@ function safeFormat(dateStr: string | null | undefined, fmt = 'MMM d, yyyy') {
 	if (!dateStr) return '—';
 	const d = parseISO(`${dateStr.split('T')[0]}T00:00:00`);
 	return isValid(d) ? format(d, fmt) : '—';
+}
+
+function resolveLevelId(level: any): number | undefined {
+	if (typeof level === 'number') return level;
+	return level?.id;
+}
+
+function resolveLevelName(level: any, levelMap: Map<number, string>): string | undefined {
+	if (typeof level === 'object' && level?.name) return level.name;
+	const id = resolveLevelId(level);
+	return id !== undefined ? levelMap.get(id) : undefined;
 }
 
 const STATUS_OPTIONS = [
@@ -49,7 +60,13 @@ function SubscriptionsTable() {
 	const token = currentAccount.token;
 	const navigate = useNavigate();
 
-	const { data: allSubscriptions = [], isLoading } = useSubscriptionsList(token);
+	const { data: allSubscriptions = [], isLoading: subsLoading } = useSubscriptionsList(token);
+	const { data: levels = [], isLoading: levelsLoading } = useLevelsList(token);
+
+	const levelMap = useMemo(
+		() => new Map(levels.map((l) => [l.id, l.name])),
+		[levels]
+	);
 
 	// ── filter state ──
 	const [search, setSearch] = useState('');
@@ -65,15 +82,17 @@ function SubscriptionsTable() {
 
 		if (search.trim()) {
 			const q = search.toLowerCase();
-			data = data.filter(
-				(sub) =>
+			data = data.filter((sub) => {
+				const lName = resolveLevelName(sub.level, levelMap) ?? '';
+				return (
 					String(sub.id).includes(q) ||
 					sub.reference?.toLowerCase().includes(q) ||
-					sub.level?.name?.toLowerCase().includes(q) ||
+					lName.toLowerCase().includes(q) ||
 					String(sub.account?.id ?? '').includes(q) ||
 					(sub.account as any)?.full_name?.toLowerCase().includes(q) ||
 					(sub.account as any)?.email?.toLowerCase().includes(q)
-			);
+				);
+			});
 		}
 
 		if (statusFilter === 'active') data = data.filter((s) => s.is_active);
@@ -89,7 +108,7 @@ function SubscriptionsTable() {
 			data = data.filter((s) => s.end_date && s.end_date <= endDateTo);
 
 		return data;
-	}, [allSubscriptions, search, statusFilter, startDateFrom, startDateTo, endDateFrom, endDateTo]);
+	}, [allSubscriptions, levelMap, search, statusFilter, startDateFrom, startDateTo, endDateFrom, endDateTo]);
 
 	const hasFilters = !!(search || statusFilter || startDateFrom || startDateTo || endDateFrom || endDateTo);
 
@@ -108,9 +127,18 @@ function SubscriptionsTable() {
 			{
 				accessorKey: 'id',
 				header: 'ID',
-				size: 70,
+				grow: false,
+				size: 60,
 				Cell: ({ cell }) => (
-					<Typography className="text-xs font-mono font-semibold" color="text.secondary">
+					<Typography
+						sx={{
+							fontSize: '0.8rem',
+							fontWeight: 700,
+							fontFamily: 'monospace',
+							color: 'text.secondary',
+							letterSpacing: '0.02em'
+						}}
+					>
 						#{cell.getValue<number>()}
 					</Typography>
 				)
@@ -118,16 +146,34 @@ function SubscriptionsTable() {
 			{
 				id: 'account',
 				header: 'Account',
+				grow: 2,
 				accessorFn: (row) => (row.account as any)?.full_name ?? '',
 				Cell: ({ row }) => {
 					const acct = row.original.account as any;
 					return (
-						<div className="flex flex-col">
-							<Typography className="font-medium text-sm">
+						<div className="flex flex-col min-w-0">
+							<Typography
+								sx={{
+									fontSize: '0.875rem',
+									fontWeight: 600,
+									color: 'text.primary',
+									lineHeight: 1.4,
+									letterSpacing: '0.01em'
+								}}
+								className="truncate"
+							>
 								{acct?.full_name ?? `Account #${acct?.id ?? '—'}`}
 							</Typography>
 							{acct?.email && (
-								<Typography className="text-xs" color="text.secondary">
+								<Typography
+									sx={{
+										fontSize: '0.775rem',
+										fontWeight: 400,
+										color: 'text.secondary',
+										letterSpacing: '0.01em'
+									}}
+									className="truncate"
+								>
 									{acct.email}
 								</Typography>
 							)}
@@ -138,34 +184,54 @@ function SubscriptionsTable() {
 			{
 				accessorKey: 'reference',
 				header: 'Reference',
+				grow: 2,
 				Cell: ({ cell }) => (
-					<Typography className="text-sm font-medium">{cell.getValue<string>() || '—'}</Typography>
+					<Typography
+						sx={{
+							fontSize: '0.825rem',
+							fontWeight: 500,
+							color: 'text.primary',
+							letterSpacing: '0.015em',
+							fontFamily: 'monospace'
+						}}
+						className="truncate"
+					>
+						{cell.getValue<string>() || '—'}
+					</Typography>
 				)
 			},
 			{
-				id: 'plan',
-				header: 'Plan',
-				accessorFn: (row) => row.level?.name ?? '',
-				Cell: ({ row }) =>
-					row.original.level?.name ? (
+				id: 'level',
+				header: 'Level',
+				grow: 1,
+				accessorFn: (row) => resolveLevelName(row.level, levelMap) ?? '',
+				Cell: ({ row }) => {
+					const levelName = resolveLevelName(row.original.level, levelMap);
+					return levelName ? (
 						<Chip
-							label={row.original.level.name}
+							label={levelName}
 							size="small"
 							sx={{
 								backgroundColor: '#eff6ff',
 								color: '#1d4ed8',
 								border: '1px solid #bfdbfe',
-								fontWeight: 600,
-								fontSize: 11
+								fontWeight: 700,
+								fontSize: '0.775rem',
+								letterSpacing: '0.02em',
+								maxWidth: '100%',
+								height: 24
 							}}
 						/>
 					) : (
-						<Typography className="text-xs" color="text.secondary">—</Typography>
-					)
+						<Typography sx={{ fontSize: '0.875rem', color: 'text.disabled' }}>—</Typography>
+					);
+				}
 			},
 			{
 				id: 'status',
 				header: 'Status',
+				grow: false,
+				size: 100,
 				accessorFn: (row) => row.is_active,
 				Cell: ({ row }) => (
 					<Chip
@@ -173,10 +239,12 @@ function SubscriptionsTable() {
 						size="small"
 						sx={{
 							backgroundColor: row.original.is_active ? '#dcfce7' : '#f1f5f9',
-							color: row.original.is_active ? '#16a34a' : '#64748b',
-							border: `1px solid ${row.original.is_active ? '#bbf7d0' : '#e2e8f0'}`,
-							fontWeight: 600,
-							fontSize: 11
+							color: row.original.is_active ? '#15803d' : '#475569',
+							border: `1px solid ${row.original.is_active ? '#86efac' : '#cbd5e1'}`,
+							fontWeight: 700,
+							fontSize: '0.775rem',
+							letterSpacing: '0.03em',
+							height: 24
 						}}
 					/>
 				)
@@ -184,32 +252,53 @@ function SubscriptionsTable() {
 			{
 				id: 'start_date',
 				header: 'Start Date',
+				grow: false,
+				size: 120,
 				accessorFn: (row) => row.start_date ?? '',
 				Cell: ({ row }) => (
-					<Typography className="text-sm">{safeFormat(row.original.start_date)}</Typography>
+					<Typography
+						sx={{
+							fontSize: '0.825rem',
+							fontWeight: 500,
+							color: 'text.primary',
+							letterSpacing: '0.01em'
+						}}
+					>
+						{safeFormat(row.original.start_date)}
+					</Typography>
 				)
 			},
 			{
 				id: 'end_date',
 				header: 'Expiry Date',
+				grow: false,
+				size: 120,
 				accessorFn: (row) => row.end_date ?? '',
 				Cell: ({ row }) => (
-					<Typography className="text-sm">{safeFormat(row.original.end_date)}</Typography>
+					<Typography
+						sx={{
+							fontSize: '0.825rem',
+							fontWeight: 500,
+							color: 'text.primary',
+							letterSpacing: '0.01em'
+						}}
+					>
+						{safeFormat(row.original.end_date)}
+					</Typography>
 				)
 			}
 		],
-		[]
+		[levelMap]
 	);
 
-	if (isLoading) return <FuseLoading />;
+	if (subsLoading || levelsLoading) return <FuseLoading />;
 
 	return (
 		<Paper className="flex h-full w-full flex-col overflow-hidden rounded-b-none" elevation={2}>
 			{/* ── Filter bar ── */}
 			<Box className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-3">
-				{/* Search */}
 				<TextField
-					placeholder="Search subscriptions…"
+					placeholder="Search…"
 					size="small"
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
@@ -227,11 +316,10 @@ function SubscriptionsTable() {
 							</InputAdornment>
 						) : null
 					}}
-					sx={{ minWidth: 220 }}
+					sx={{ width: 180 }}
 				/>
 
-				{/* Status filter */}
-				<FormControl size="small" sx={{ minWidth: 140 }}>
+				<FormControl size="small" sx={{ width: 130 }}>
 					<InputLabel>Status</InputLabel>
 					<Select
 						label="Status"
@@ -246,7 +334,6 @@ function SubscriptionsTable() {
 					</Select>
 				</FormControl>
 
-				{/* Start date range */}
 				<Stack direction="row" alignItems="center" gap={0.5}>
 					<TextField
 						label="Start from"
@@ -256,7 +343,7 @@ function SubscriptionsTable() {
 						onChange={(e) => setStartDateFrom(e.target.value)}
 						InputLabelProps={{ shrink: true }}
 						inputProps={{ max: startDateTo || undefined }}
-						sx={{ width: 150 }}
+						sx={{ width: 140 }}
 					/>
 					<Typography variant="caption" color="text.secondary">→</Typography>
 					<TextField
@@ -267,11 +354,10 @@ function SubscriptionsTable() {
 						onChange={(e) => setStartDateTo(e.target.value)}
 						InputLabelProps={{ shrink: true }}
 						inputProps={{ min: startDateFrom || undefined }}
-						sx={{ width: 150 }}
+						sx={{ width: 140 }}
 					/>
 				</Stack>
 
-				{/* End date range */}
 				<Stack direction="row" alignItems="center" gap={0.5}>
 					<TextField
 						label="Expiry from"
@@ -281,7 +367,7 @@ function SubscriptionsTable() {
 						onChange={(e) => setEndDateFrom(e.target.value)}
 						InputLabelProps={{ shrink: true }}
 						inputProps={{ max: endDateTo || undefined }}
-						sx={{ width: 150 }}
+						sx={{ width: 140 }}
 					/>
 					<Typography variant="caption" color="text.secondary">→</Typography>
 					<TextField
@@ -292,7 +378,7 @@ function SubscriptionsTable() {
 						onChange={(e) => setEndDateTo(e.target.value)}
 						InputLabelProps={{ shrink: true }}
 						inputProps={{ min: endDateFrom || undefined }}
-						sx={{ width: 150 }}
+						sx={{ width: 140 }}
 					/>
 				</Stack>
 
@@ -312,7 +398,7 @@ function SubscriptionsTable() {
 
 				<Box className="ml-auto">
 					<Typography variant="caption" color="text.secondary">
-						{filtered.length} of {allSubscriptions.length} subscriptions
+						{filtered.length} of {allSubscriptions.length}
 					</Typography>
 				</Box>
 			</Box>
@@ -325,6 +411,8 @@ function SubscriptionsTable() {
 				paginateExpandedRows
 				enableSelectAll={false}
 				enableRowSelection={false}
+				enableRowActions={false}
+				layoutMode="grid"
 				autoResetPageIndex
 				paginationDisplayMode="pages"
 				enableRowNumbers
@@ -338,38 +426,46 @@ function SubscriptionsTable() {
 					shape: 'rounded',
 					variant: 'outlined'
 				}}
+				muiTableProps={{
+					sx: { tableLayout: 'fixed' }
+				}}
+				muiTableContainerProps={{
+					sx: { overflow: 'hidden' },
+					onWheel: (e) => {
+						window.scrollBy({ top: e.deltaY, behavior: 'auto' });
+					}
+				}}
+				muiTableHeadCellProps={{
+					sx: {
+						fontSize: '0.8rem',
+						fontWeight: 700,
+						color: 'text.primary',
+						letterSpacing: '0.06em',
+						textTransform: 'uppercase',
+						backgroundColor: 'background.paper',
+						borderBottom: '2px solid',
+						borderColor: 'divider',
+						paddingY: '12px'
+					}
+				}}
+				muiTableBodyCellProps={{
+					sx: {
+						paddingY: '14px',
+						borderBottom: '1px solid',
+						borderColor: 'divider'
+					}
+				}}
+				muiTableBodyRowProps={({ row }) => ({
+					onClick: () => navigate(`/administration/subscriptions/${row.original.id}`),
+					sx: {
+						cursor: 'pointer',
+						'&:hover': {
+							backgroundColor: 'action.hover'
+						}
+					}
+				})}
 				data={filtered}
 				columns={columns}
-				renderRowActionMenuItems={({ closeMenu, row }) => {
-					const sub = row.original;
-					return [
-						<MenuItem
-							key="view"
-							onClick={() => {
-								navigate(`/administration/subscriptions/${sub.id}`);
-								closeMenu();
-							}}
-						>
-							<ListItemIcon>
-								<FuseSvgIcon>lucide:eye</FuseSvgIcon>
-							</ListItemIcon>
-							View Details
-						</MenuItem>,
-
-						<MenuItem
-							key="new-for-account"
-							onClick={() => {
-								navigate('/administration/subscriptions/new');
-								closeMenu();
-							}}
-						>
-							<ListItemIcon>
-								<FuseSvgIcon>lucide:plus</FuseSvgIcon>
-							</ListItemIcon>
-							Add Subscription
-						</MenuItem>
-					];
-				}}
 			/>
 		</Paper>
 	);

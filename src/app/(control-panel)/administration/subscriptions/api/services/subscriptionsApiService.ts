@@ -88,7 +88,7 @@ export const subscriptionsApi = {
 
 	// GET /account/level/list/{id}/ — used to populate the Plan dropdown
 	getLevelsList: async (token: Token): Promise<Level[]> => {
-		const response = await api.get(`account/level/list/${token.id}/`, {
+		const response = await api.get(`lesson/level/list/${token.id}/`, {
 			headers: { Authorization: `Bearer ${token.access}` },
 			searchParams: { page_size: 1000 }
 		});
