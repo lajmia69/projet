@@ -23,11 +23,9 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import { format, isValid, parseISO } from 'date-fns';
-import { useSnackbar } from 'notistack';
 import useUser from '@auth/useUser';
 import useNavigate from '@fuse/hooks/useNavigate';
 import { useSubscriptionsList } from '../../../api/hooks/useSubscriptionsList';
-import { useToggleSubscription } from '../../../api/hooks/useToggleSubscription';
 import { Subscription } from '../../../api/types';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
@@ -52,8 +50,6 @@ function SubscriptionsTable() {
 	const navigate = useNavigate();
 
 	const { data: allSubscriptions = [], isLoading } = useSubscriptionsList(token);
-	const { mutate: toggleSubscription } = useToggleSubscription(token);
-	const { enqueueSnackbar } = useSnackbar();
 
 	// ── filter state ──
 	const [search, setSearch] = useState('');
@@ -358,34 +354,6 @@ function SubscriptionsTable() {
 								<FuseSvgIcon>lucide:eye</FuseSvgIcon>
 							</ListItemIcon>
 							View Details
-						</MenuItem>,
-
-						<MenuItem
-							key="toggle"
-							onClick={() => {
-								toggleSubscription(
-									{ subscriptionId: sub.id, is_active: !sub.is_active },
-									{
-										onSuccess: () =>
-											enqueueSnackbar(
-												`Subscription ${!sub.is_active ? 'activated' : 'deactivated'} successfully`,
-												{ variant: 'success' }
-											),
-										onError: () =>
-											enqueueSnackbar('Failed to update subscription', {
-												variant: 'error'
-											})
-									}
-								);
-								closeMenu();
-							}}
-						>
-							<ListItemIcon>
-								<FuseSvgIcon>
-									{sub.is_active ? 'lucide:toggle-right' : 'lucide:toggle-left'}
-								</FuseSvgIcon>
-							</ListItemIcon>
-							{sub.is_active ? 'Deactivate' : 'Activate'}
 						</MenuItem>,
 
 						<MenuItem

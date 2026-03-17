@@ -10,17 +10,16 @@ import useNavigate from '@fuse/hooks/useNavigate';
 import useUser from '@auth/useUser';
 import { useSnackbar } from 'notistack';
 import { useCreateSubscription } from '../../../api/hooks/useCreateSubscription';
-import { useUpdateSubscription } from '../../../api/hooks/Useupdatesubscription';
 import { CreateSubscription } from '../../../api/types';
 
 function SubscriptionHeader() {
 	const routeParams = useParams<{ subscriptionId: string }>();
 	const isNew = routeParams.subscriptionId === 'new';
-	const subscriptionId = isNew ? 0 : parseInt(routeParams.subscriptionId, 10);
 
 	const { data: currentAccount } = useUser();
-	const { mutate: createSubscription, isPending: isCreating } = useCreateSubscription(currentAccount.token);
-	const { mutate: updateSubscription, isPending: isUpdating } = useUpdateSubscription(currentAccount.token);
+	const { mutate: createSubscription, isPending: isCreating } = useCreateSubscription(
+		currentAccount.token
+	);
 	const navigate = useNavigate();
 	const { enqueueSnackbar } = useSnackbar();
 
@@ -39,18 +38,6 @@ function SubscriptionHeader() {
 		});
 	}
 
-	function handleSave() {
-		updateSubscription(
-			{ subscriptionId, data: getValues() as CreateSubscription },
-			{
-				onSuccess: () =>
-					enqueueSnackbar('Subscription updated successfully', { variant: 'success' }),
-				onError: () =>
-					enqueueSnackbar('Failed to update subscription', { variant: 'error' })
-			}
-		);
-	}
-
 	return (
 		<div className="flex flex-auto flex-col py-4">
 			<PageBreadcrumb className="mb-2" />
@@ -62,10 +49,10 @@ function SubscriptionHeader() {
 						animate={{ x: 0, transition: { delay: 0.3 } }}
 					>
 						<Typography className="truncate text-lg font-semibold sm:text-2xl">
-							{reference || 'New Subscription'}
+							{reference || (isNew ? 'New Subscription' : 'Subscription Detail')}
 						</Typography>
 						<Typography variant="caption" className="font-medium">
-							Subscription Detail
+							{isNew ? 'Create Subscription' : 'View Subscription'}
 						</Typography>
 					</motion.div>
 				</div>
@@ -85,26 +72,16 @@ function SubscriptionHeader() {
 						Back
 					</Button>
 
-					{isNew ? (
+					{isNew && (
 						<Button
 							className="whitespace-nowrap"
 							variant="contained"
 							color="secondary"
 							disabled={_.isEmpty(dirtyFields) || !isValid || isCreating}
 							onClick={handleCreate}
+							startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}
 						>
 							{isCreating ? 'Creating…' : 'Create'}
-						</Button>
-					) : (
-						<Button
-							className="whitespace-nowrap"
-							variant="contained"
-							color="secondary"
-							disabled={_.isEmpty(dirtyFields) || !isValid || isUpdating}
-							onClick={handleSave}
-							startIcon={<FuseSvgIcon>lucide:save</FuseSvgIcon>}
-						>
-							{isUpdating ? 'Saving…' : 'Save'}
 						</Button>
 					)}
 				</motion.div>

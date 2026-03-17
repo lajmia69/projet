@@ -21,6 +21,7 @@ export type SubscriptionSearchParams = {
 };
 
 export const subscriptionsApi = {
+	// GET /account/list/{id}/ — used to populate the Account dropdown
 	getAccountsList: async (token: Token): Promise<Account[]> => {
 		const response = await api.get(`account/list/${token.id}`, {
 			headers: { Authorization: `Bearer ${token.access}` },
@@ -30,6 +31,7 @@ export const subscriptionsApi = {
 		return data.items;
 	},
 
+	// GET /account/subscription/all/list/{current_account_id}/
 	getAllSubscriptionsList: async (token: Token): Promise<Subscription[]> => {
 		const response = await api.get(`account/subscription/all/list/${token.id}/`, {
 			headers: { Authorization: `Bearer ${token.access}` },
@@ -39,6 +41,7 @@ export const subscriptionsApi = {
 		return data.items;
 	},
 
+	// GET /account/subscription/list/{current_account_id}/{account_id}/
 	getSubscriptionsByAccount: async (token: Token, accountId: number): Promise<Subscription[]> => {
 		const response = await api.get(
 			`account/subscription/list/${token.id}/${accountId}/`,
@@ -51,6 +54,7 @@ export const subscriptionsApi = {
 		return data.items;
 	},
 
+	// GET /account/subscription/detail/{current_account_id}/{subscription_id}/
 	getSubscription: async (token: Token, subscriptionId: number): Promise<Subscription> => {
 		return api
 			.get(`account/subscription/detail/${token.id}/${subscriptionId}/`, {
@@ -59,6 +63,7 @@ export const subscriptionsApi = {
 			.json();
 	},
 
+	// GET /account/subscription/search/{current_account_id}/
 	searchSubscriptions: async (
 		token: Token,
 		params: SubscriptionSearchParams
@@ -81,6 +86,7 @@ export const subscriptionsApi = {
 		return data.items;
 	},
 
+	// GET /account/level/list/{id}/ — used to populate the Plan dropdown
 	getLevelsList: async (token: Token): Promise<Level[]> => {
 		const response = await api.get(`account/level/list/${token.id}/`, {
 			headers: { Authorization: `Bearer ${token.access}` },
@@ -90,6 +96,7 @@ export const subscriptionsApi = {
 		return data.items;
 	},
 
+	// POST /account/subscription/create/{current_account_id}/
 	createSubscription: async (
 		token: Token,
 		subscription: CreateSubscription
@@ -98,32 +105,6 @@ export const subscriptionsApi = {
 			.post(`account/subscription/create/${token.id}/`, {
 				headers: { Authorization: `Bearer ${token.access}` },
 				json: subscription
-			})
-			.json();
-	},
-
-	updateSubscription: async (
-		token: Token,
-		subscriptionId: number,
-		subscription: CreateSubscription
-	): Promise<Subscription> => {
-		return api
-			.patch(`account/subscription/update/${token.id}/${subscriptionId}/`, {
-				headers: { Authorization: `Bearer ${token.access}` },
-				json: subscription
-			})
-			.json();
-	},
-
-	toggleSubscription: async (
-		token: Token,
-		subscriptionId: number,
-		is_active: boolean
-	): Promise<Subscription> => {
-		return api
-			.patch(`account/subscription/update/${token.id}/${subscriptionId}/`, {
-				headers: { Authorization: `Bearer ${token.access}` },
-				json: { is_active }
 			})
 			.json();
 	}

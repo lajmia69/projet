@@ -10,11 +10,9 @@ import FormHelperText from '@mui/material/FormHelperText';
 import useUser from '@auth/useUser';
 import FuseLoading from '@fuse/core/FuseLoading';
 import useParams from '@fuse/hooks/useParams';
-import { useSnackbar } from 'notistack';
 import { useQuery } from '@tanstack/react-query';
 import { Token } from '@auth/user';
 import { subscriptionsApi } from '../../../../../api/services/subscriptionsApiService';
-import { useToggleSubscription } from '../../../../../api/hooks/useToggleSubscription';
 
 // ─── local hooks ─────────────────────────────────────────────────────────────
 
@@ -49,8 +47,6 @@ function BasicInfoTab() {
 
 	const { data: accounts, isLoading: accountsLoading } = useAccountsList(token);
 	const { data: levels, isLoading: levelsLoading } = useLevelsList(token);
-	const { mutate: toggleSubscription, isPending } = useToggleSubscription(token);
-	const { enqueueSnackbar } = useSnackbar();
 
 	if (accountsLoading || levelsLoading) return <FuseLoading />;
 
@@ -62,15 +58,16 @@ function BasicInfoTab() {
 				control={control}
 				render={({ field }) => (
 					<FormControl className="w-full">
-						<FormLabel htmlFor="reference" required>
+						<FormLabel htmlFor="reference" required={isNew}>
 							Reference
 						</FormLabel>
 						<TextField
 							id="reference"
 							{...field}
 							value={field.value ?? ''}
-							autoFocus
+							autoFocus={isNew}
 							fullWidth
+							disabled={!isNew}
 							error={!!errors.reference}
 							helperText={errors?.reference?.message as string}
 						/>
@@ -84,7 +81,7 @@ function BasicInfoTab() {
 				control={control}
 				render={({ field }) => (
 					<FormControl className="w-full" error={!!errors.account_id}>
-						<FormLabel htmlFor="account_id" required>
+						<FormLabel htmlFor="account_id" required={isNew}>
 							Account
 						</FormLabel>
 						<Select
@@ -116,7 +113,7 @@ function BasicInfoTab() {
 				control={control}
 				render={({ field }) => (
 					<FormControl className="w-full" error={!!errors.level_id}>
-						<FormLabel htmlFor="level_id" required>
+						<FormLabel htmlFor="level_id" required={isNew}>
 							Plan
 						</FormLabel>
 						{levels && levels.length > 0 ? (
@@ -124,6 +121,7 @@ function BasicInfoTab() {
 								id="level_id"
 								{...field}
 								value={field.value && field.value > 0 ? field.value : ''}
+								disabled={!isNew}
 								displayEmpty
 							>
 								<MenuItem value="" disabled>
@@ -136,13 +134,13 @@ function BasicInfoTab() {
 								))}
 							</Select>
 						) : (
-							// Fallback: numeric input if no levels endpoint available
 							<TextField
 								id="level_id"
 								type="number"
 								{...field}
 								value={field.value ?? ''}
 								fullWidth
+								disabled={!isNew}
 								error={!!errors.level_id}
 								inputProps={{ min: 1 }}
 								onChange={(e) => {
@@ -158,28 +156,30 @@ function BasicInfoTab() {
 				)}
 			/>
 
-			{/* Start Date — key fix: InputLabelProps shrink + no defaultValue */}
+			{/* Start Date */}
 			<Controller
 				name="start_date"
 				control={control}
 				render={({ field }) => (
 					<FormControl className="w-full">
-						<FormLabel htmlFor="start_date" required>
+						<FormLabel htmlFor="start_date" required={isNew}>
 							Start Date
 						</FormLabel>
 						<TextField
 							id="start_date"
 							type="date"
 							fullWidth
+							disabled={!isNew}
 							error={!!errors.start_date}
 							helperText={errors?.start_date?.message as string}
 							InputLabelProps={{ shrink: true }}
-							// Never fall back to a non-empty default — keep blank until user picks
-							value={field.value || ''}
-							onChange={(e) => field.onChange(e.target.value || '')}
+							// Use nullish check: only render a value when it's a non-empty string
+							value={field.value && field.value !== '' ? field.value : ''}
+							onChange={(e) => field.onChange(e.target.value ?? '')}
 							onBlur={field.onBlur}
 							name={field.name}
 							ref={field.ref}
+							inputProps={{ placeholder: 'yyyy-mm-dd' }}
 						/>
 					</FormControl>
 				)}
@@ -191,27 +191,29 @@ function BasicInfoTab() {
 				control={control}
 				render={({ field }) => (
 					<FormControl className="w-full">
-						<FormLabel htmlFor="end_date" required>
+						<FormLabel htmlFor="end_date" required={isNew}>
 							End Date
 						</FormLabel>
 						<TextField
 							id="end_date"
 							type="date"
 							fullWidth
+							disabled={!isNew}
 							error={!!errors.end_date}
 							helperText={errors?.end_date?.message as string}
 							InputLabelProps={{ shrink: true }}
-							value={field.value || ''}
-							onChange={(e) => field.onChange(e.target.value || '')}
+							value={field.value && field.value !== '' ? field.value : ''}
+							onChange={(e) => field.onChange(e.target.value ?? '')}
 							onBlur={field.onBlur}
 							name={field.name}
 							ref={field.ref}
+							inputProps={{ placeholder: 'yyyy-mm-dd' }}
 						/>
 					</FormControl>
 				)}
 			/>
 
-			{/* Active toggle */}
+			{/* Active — read-only display for existing subscriptions */}
 			<Controller
 				name="is_active"
 				control={control}
@@ -221,36 +223,16 @@ function BasicInfoTab() {
 							control={
 								<Switch
 									checked={!!field.value}
-									disabled={isPending}
+									disabled={!isNew}
 									color="success"
 									onChange={(e) => {
-										if (!isNew) {
-											const subscriptionId = parseInt(routeParams.subscriptionId, 10);
-											toggleSubscription(
-												{ subscriptionId, is_active: e.target.checked },
-												{
-													onSuccess: () => {
-														field.onChange(e.target.checked);
-														enqueueSnackbar(
-															`Subscription ${
-																e.target.checked ? 'activated' : 'deactivated'
-															} successfully`,
-															{ variant: 'success' }
-														);
-													},
-													onError: () =>
-														enqueueSnackbar('Failed to update subscription', {
-															variant: 'error'
-														})
-												}
-											);
-										} else {
+										if (isNew) {
 											field.onChange(e.target.checked);
 										}
 									}}
 								/>
 							}
-							label="Active"
+							label={isNew ? 'Active' : `Status: ${field.value ? 'Active' : 'Inactive'}`}
 						/>
 					</FormControl>
 				)}

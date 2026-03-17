@@ -18,7 +18,6 @@ import useUser from '@auth/useUser';
 import SubscriptionHeader from '../../../ui/subscriptions/SubscriptionHeader';
 import BasicInfoTab from './tabs/BasicInfoTab';
 import { useSubscription } from '../../../../api/hooks/useSubscription';
-import { CreateSubscriptionModel } from '../../../../api/models/SubscriptionModel';
 
 const schema = z.object({
 	reference: z
@@ -42,6 +41,16 @@ const schema = z.object({
 	is_active: z.boolean().optional()
 });
 
+// Explicit blank defaults — never auto-fill dates
+const EMPTY_DEFAULTS = {
+	reference: '',
+	account_id: 0,
+	level_id: 0,
+	start_date: '',
+	end_date: '',
+	is_active: false
+};
+
 function SubscriptionView() {
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 	const routeParams = useParams<{ subscriptionId: string }>();
@@ -51,36 +60,46 @@ function SubscriptionView() {
 	const { data: currentAccount } = useUser();
 	const { data: subscription, isLoading, isError } = useSubscription(
 		currentAccount.token,
-		// don't try to parse 'new' — enabled: !!subscriptionId handles it
 		isNew ? 0 : parseInt(subscriptionId)
 	);
 
 	const [tabValue, setTabValue] = useState('basic-info');
 
-const methods = useForm({
-    mode: 'onChange',
-    defaultValues: isNew
-        ? CreateSubscriptionModel({})
-        : { reference: '', account_id: 0, level_id: 0, start_date: '', end_date: '', is_active: false },
-    resolver: zodResolver(schema)
-});
+	const methods = useForm({
+		mode: 'onChange',
+		// Always start with empty values — never let the browser or library inject dates
+		defaultValues: EMPTY_DEFAULTS,
+		resolver: zodResolver(schema)
+	});
 
 	const { reset, watch } = methods;
 	const form = watch();
 
+	// When navigating to /new — hard-reset every field to blank
 	useEffect(() => {
-		if (subscription) {
+		if (isNew) {
+			reset(EMPTY_DEFAULTS);
+		}
+	}, [isNew, reset]);
+
+	// When viewing an existing subscription — populate from API response
+	useEffect(() => {
+		if (!isNew && subscription) {
 			reset({
-				reference: subscription.reference,
-				// account is now typed correctly after updating accounts/api/types/index.ts
+				reference: subscription.reference ?? '',
 				account_id: subscription.account?.id ?? 0,
 				level_id: subscription.level?.id ?? 0,
-				start_date: subscription.start_date?.split('T')[0] ?? '',
-				end_date: subscription.end_date?.split('T')[0] ?? '',
-				is_active: subscription.is_active
+				// Strip time portion; fall back to '' not today's date
+				start_date: subscription.start_date
+					? subscription.start_date.split('T')[0]
+					: '',
+				end_date: subscription.end_date
+					? subscription.end_date.split('T')[0]
+					: '',
+				is_active: subscription.is_active ?? false
 			});
 		}
-	}, [subscription, reset]);
+	}, [isNew, subscription, reset]);
 
 	function handleTabChange(_event: SyntheticEvent, value: string) {
 		setTabValue(value);
@@ -113,9 +132,11 @@ const methods = useForm({
 		);
 	}
 
+	// Wait until form is populated before rendering for existing subscriptions
 	if (
-		_.isEmpty(form) ||
-		(!isNew && subscription && parseInt(subscriptionId) !== subscription.id)
+		!isNew &&
+		(_.isEmpty(form) ||
+			(subscription && parseInt(subscriptionId) !== subscription.id))
 	) {
 		return <FuseLoading />;
 	}
