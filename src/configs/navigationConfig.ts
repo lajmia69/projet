@@ -211,7 +211,7 @@ const navigationConfig: FuseNavItemType[] = [
 						title: 'All Lessons',
 						auth: authRoles.contentAdmin,
 						type: 'item',
-						url: '/lessons'
+						url: '/content/lessons'
 					}
 				]
 			},
@@ -227,7 +227,7 @@ const navigationConfig: FuseNavItemType[] = [
 						title: 'Courses',
 						auth: authRoles.contentAdmin,
 						type: 'item',
-						url: '/podcast/courses'
+						url: '/content/podcast/courses'
 					}
 				]
 			},
@@ -243,7 +243,7 @@ const navigationConfig: FuseNavItemType[] = [
 						title: 'Courses',
 						auth: authRoles.contentAdmin,
 						type: 'item',
-						url: '/radio/courses'
+						url: '/content/radio/courses'
 					}
 				]
 			}
