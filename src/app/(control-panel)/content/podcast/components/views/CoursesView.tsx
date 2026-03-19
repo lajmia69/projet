@@ -5,254 +5,226 @@ import MenuItem from '@mui/material/MenuItem';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import InputAdornment from '@mui/material/InputAdornment';
 import { motion } from 'motion/react';
 import { ChangeEvent, useEffect, useState } from 'react';
-import Box from '@mui/material/Box';
-import Switch from '@mui/material/Switch';
-import { FormControlLabel } from '@mui/material';
 import FusePageSimple from '@fuse/core/FusePageSimple';
-import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import { styled } from '@mui/material/styles';
 import FuseLoading from '@fuse/core/FuseLoading';
-import PageBreadcrumb from '@/components/PageBreadcrumb';
+import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
+import { InputLabel } from '@mui/material';
 import CourseCard from '../ui/CourseCard';
 import { Course } from '../../api/types';
 import { useAcademyCourses } from '../../api/hooks/courses/useAcademyCourses';
 import { useCategories } from '../../api/hooks/categories/useCategories';
 
-const Root = styled(FusePageSimple)(({ theme }) => ({
+const Root = styled(FusePageSimple)(() => ({
 	'& .FusePageSimple-header': {
-		backgroundColor: theme.vars.palette.primary.dark,
-		color: theme.palette.getContrastText(theme.palette.primary.main)
-	}
+		background: 'transparent',
+		border: 'none',
+		boxShadow: 'none',
+		padding: 0,
+	},
+	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
+	'& .FusePageSimple-content': { overflow: 'visible !important' },
+	'& .FusePageSimple-rootWrapper': { overflow: 'visible !important' },
 }));
 
-const container = {
-	show: {
-		transition: {
-			staggerChildren: 0.04
-		}
-	}
+const cardContainer = { show: { transition: { staggerChildren: 0.05 } } };
+const cardItem = {
+	hidden: { opacity: 0, y: 16 },
+	show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
 };
 
-const item = {
-	hidden: {
-		opacity: 0,
-		y: 10
-	},
-	show: {
-		opacity: 1,
-		y: 0
-	}
-};
+const FADE_START = 20;
+const FADE_END = 180;
 
-/**
- * The Courses page.
- */
 function CoursesView() {
 	const { data: courses, isLoading } = useAcademyCourses();
 	const { data: categories } = useCategories();
 
-	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
-
-	const [filteredData, setFilteredData] = useState<Course[]>(courses || []);
+	const [filteredData, setFilteredData] = useState<Course[]>([]);
 	const [searchText, setSearchText] = useState('');
 	const [selectedCategory, setSelectedCategory] = useState('all');
-	const [hideCompleted, setHideCompleted] = useState(false);
+	const [scrollY, setScrollY] = useState(0);
 
 	useEffect(() => {
-		function getFilteredArray() {
-			if (courses && searchText.length === 0 && selectedCategory === 'all' && !hideCompleted) {
-				return courses;
-			}
+		const onScroll = () => setScrollY(window.scrollY);
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	}, []);
 
-			return _.filter(courses, (item) => {
-				if (selectedCategory !== 'all' && item.category !== selectedCategory) {
-					return false;
-				}
+	const progress = Math.min(1, Math.max(0, (scrollY - FADE_START) / (FADE_END - FADE_START)));
+	const heroOpacity = 1 - progress;
+	const heroTranslateY = -(progress * 24);
 
-				if (hideCompleted && item.progress.completed > 0) {
-					return false;
-				}
+	useEffect(() => {
+		if (!courses) return;
+		const arr =
+			searchText.length === 0 && selectedCategory === 'all'
+				? courses
+				: _.filter(courses, (c) => {
+						if (selectedCategory !== 'all' && c.category !== selectedCategory) return false;
+						return c.title.toLowerCase().includes(searchText.toLowerCase());
+					});
+		setFilteredData(arr);
+	}, [courses, searchText, selectedCategory]);
 
-				return item.title.toLowerCase().includes(searchText.toLowerCase());
-			});
-		}
-
-		if (courses) {
-			setFilteredData(getFilteredArray());
-		}
-	}, [courses, hideCompleted, searchText, selectedCategory]);
-
-	function handleSelectedCategory(event: SelectChangeEvent<string>) {
-		setSelectedCategory(event.target.value);
-	}
-
-	function handleSearchText(event: ChangeEvent<HTMLInputElement>) {
-		setSearchText(event.target.value);
-	}
-
-	if (isLoading) {
-		return <FuseLoading />;
-	}
+	if (isLoading) return <FuseLoading />;
 
 	return (
 		<Root
+			scroll="page"
 			header={
-				<Box className="relative flex shrink-0 items-center justify-center overflow-hidden px-4 py-8 md:p-16">
-					<div className="mx-auto flex w-full flex-col items-center justify-center">
-						<motion.div
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1, transition: { delay: 0 } }}
-						>
-							<PageBreadcrumb
-								color="inherit"
-								borderColor="inherit"
-								className="mb-4"
-							/>
-						</motion.div>
-						<motion.div
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1, transition: { delay: 0 } }}
-						>
-							<Typography
-								color="inherit"
-								className="mt-1 text-center text-4xl font-extrabold tracking-tight sm:text-7xl"
-							>
-								What do you want to learn today?
-							</Typography>
-						</motion.div>
-						<motion.div
-							initial={{ opacity: 0 }}
-							animate={{ opacity: 1, transition: { delay: 0.3 } }}
-						>
-							<Typography
-								color="inherit"
-								className="text-md mt-4 max-w-xl text-center tracking-tight opacity-75 sm:mt-6 sm:text-2xl"
-							>
-								Our courses will step you through the process of a building small applications, or
-								adding new features to existing applications.
-							</Typography>
-						</motion.div>
-					</div>
+				<div
+					style={{
+						position: 'relative',
+						width: '100%',
+						overflow: 'hidden',
+						background: 'linear-gradient(160deg, #1c2537 0%, #1e2d45 50%, #192132 100%)',
+						paddingTop: '56px',
+						paddingBottom: '64px',
+						opacity: heroOpacity,
+						transform: `translateY(${heroTranslateY}px)`,
+						pointerEvents: 'none',
+						willChange: 'opacity, transform',
+					}}
+				>
+					{/* Grid */}
+					<div style={{
+						position: 'absolute', inset: 0,
+						backgroundImage: `
+							linear-gradient(rgba(148,163,184,0.045) 1px, transparent 1px),
+							linear-gradient(90deg, rgba(148,163,184,0.045) 1px, transparent 1px)
+						`,
+						backgroundSize: '52px 52px',
+						pointerEvents: 'none',
+					}} />
+					{/* Orb top-left */}
+					<div style={{
+						position: 'absolute', top: '-100px', left: '-120px',
+						width: '500px', height: '500px', borderRadius: '50%',
+						background: 'radial-gradient(circle, rgba(100,116,139,0.15) 0%, transparent 65%)',
+						pointerEvents: 'none',
+					}} />
+					{/* Orb bottom-right */}
+					<div style={{
+						position: 'absolute', bottom: '-120px', right: '-100px',
+						width: '560px', height: '560px', borderRadius: '50%',
+						background: 'radial-gradient(circle, rgba(71,85,105,0.2) 0%, transparent 65%)',
+						pointerEvents: 'none',
+					}} />
+					{/* Faint blue halo */}
+					<div style={{
+						position: 'absolute', top: '50%', left: '50%',
+						transform: 'translate(-50%, -50%)',
+						width: '580px', height: '160px', borderRadius: '50%',
+						background: 'radial-gradient(ellipse, rgba(59,130,246,0.055) 0%, transparent 70%)',
+						pointerEvents: 'none',
+					}} />
 
-					<svg
-						className="pointer-events-none absolute inset-0"
-						viewBox="0 0 960 540"
-						width="100%"
-						height="100%"
-						preserveAspectRatio="xMidYMax slice"
-						xmlns="http://www.w3.org/2000/svg"
-					>
-						<g
-							className="opacity-5"
-							fill="none"
-							stroke="currentColor"
-							strokeWidth="100"
-						>
-							<circle
-								r="234"
-								cx="196"
-								cy="23"
-							/>
-							<circle
-								r="234"
-								cx="790"
-								cy="491"
-							/>
-						</g>
-					</svg>
-				</Box>
-			}
-			content={
-				<div className="mx-auto flex w-full flex-1 flex-col p-4">
-					<div className="flex shrink-0 flex-col items-start justify-between gap-2 sm:flex-row sm:gap-0 md:items-center">
-						<div className="flex w-full items-center gap-2 sm:w-auto">
-							<FormControl
-								className="flex w-full sm:w-34"
-								variant="outlined"
-							>
-								<Select
-									id="category-select"
-									value={selectedCategory}
-									onChange={handleSelectedCategory}
-								>
-									<MenuItem value="all">
-										<em> All </em>
-									</MenuItem>
-									{categories?.map((category) => (
-										<MenuItem
-											value={category.slug}
-											key={category.id}
-										>
-											{category.title}
-										</MenuItem>
-									))}
-								</Select>
-							</FormControl>
-							<FormControl className="flex w-full sm:w-34">
-								<TextField
-									id="search"
-									placeholder="Enter a keyword..."
-									className="flex w-full sm:w-64"
-									value={searchText}
-									slotProps={{
-										input: {
-											'aria-label': 'Search'
-										}
-									}}
-									onChange={handleSearchText}
-								/>
-							</FormControl>
-						</div>
-						<div className="flex w-full items-center gap-2 sm:w-auto">
-							<FormControlLabel
-								className="m-0"
-								label="Hide completed"
-								control={
-									<Switch
-										onChange={(ev) => {
-											setHideCompleted(ev.target.checked);
-										}}
-										checked={hideCompleted}
-										name="hideCompleted"
-									/>
-								}
-							/>
-						</div>
-					</div>
-					{filteredData &&
-						(filteredData.length > 0 ? (
-							<motion.div
-								className="mt-3 grid grid-cols-2 gap-4 sm:mt-4 sm:grid-cols-3 lg:grid-cols-4"
-								variants={container}
-								initial="hidden"
-								animate="show"
-							>
-								{filteredData.map((course) => {
-									return (
-										<motion.div
-											variants={item}
-											key={course.id}
-										>
-											<CourseCard course={course} />
-										</motion.div>
-									);
-								})}
+					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
+						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
+							<Typography component="h1" sx={{
+								fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' },
+								fontWeight: 800, letterSpacing: '-0.025em', lineHeight: 1.15,
+								color: '#dde6f0', textShadow: '0 2px 32px rgba(0,0,0,0.45)',
+							}}>
+								What do you want to listen today?
+							</Typography>
+						</motion.div>
+
+						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
+							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(148,163,184,0.7)', lineHeight: 1.75 }}>
+								Explore our podcast episodes — discover new ideas, one episode at a time.
+							</Typography>
+						</motion.div>
+
+						{courses?.length != null && (
+							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
+								<div style={{
+									display: 'inline-flex', alignItems: 'center', gap: '6px',
+									padding: '4px 14px', borderRadius: '999px',
+									border: '1px solid rgba(148,163,184,0.18)',
+									backgroundColor: 'rgba(148,163,184,0.07)',
+								}}>
+									<FuseSvgIcon size={13} sx={{ color: 'rgba(148,163,184,0.5)' }}>lucide:mic</FuseSvgIcon>
+									<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(148,163,184,0.65)', letterSpacing: '0.025em' }}>
+										{courses.length} episodes available
+									</Typography>
+								</div>
 							</motion.div>
-						) : (
-							<div className="flex flex-1 items-center justify-center">
-								<Typography
-									color="text.secondary"
-									className="my-6 text-3xl"
-								>
-									No courses found!
-								</Typography>
-							</div>
-						))}
+						)}
+					</div>
 				</div>
 			}
-			scroll={isMobile ? 'page' : 'content'}
+			content={
+				<div className="mx-auto flex w-full flex-1 flex-col p-4 pt-6">
+					{/* Filter bar */}
+					<motion.div
+						initial={{ opacity: 0, y: 10 }}
+						animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
+						className="flex w-full flex-wrap items-center gap-2 mb-6"
+					>
+						<FormControl size="small" sx={{ minWidth: 140 }} variant="outlined">
+							<InputLabel id="cat-label">Category</InputLabel>
+							<Select labelId="cat-label" value={selectedCategory} label="Category"
+								onChange={(e: SelectChangeEvent) => setSelectedCategory(e.target.value)}
+								sx={{ borderRadius: '10px' }}>
+								<MenuItem value="all"><em>All</em></MenuItem>
+								{categories?.map((cat) => (
+									<MenuItem value={cat.slug} key={cat.id}>{cat.title}</MenuItem>
+								))}
+							</Select>
+						</FormControl>
+
+						<TextField
+							size="small"
+							placeholder="Search episodes…"
+							value={searchText}
+							onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
+							sx={{ minWidth: 200, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+							slotProps={{
+								input: {
+									startAdornment: (
+										<InputAdornment position="start">
+											<FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon>
+										</InputAdornment>
+									),
+								},
+							}}
+						/>
+
+						{filteredData.length > 0 && (
+							<Typography sx={{ ml: 'auto', fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary' }}>
+								{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+							</Typography>
+						)}
+					</motion.div>
+
+					{/* Grid */}
+					{filteredData.length > 0 ? (
+						<motion.div
+							className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
+							variants={cardContainer} initial="hidden" animate="show"
+						>
+							{filteredData.map((course) => (
+								<motion.div variants={cardItem} key={course.id}>
+									<CourseCard course={course} />
+								</motion.div>
+							))}
+						</motion.div>
+					) : (
+						<div className="flex flex-1 items-center justify-center">
+							<div className="flex flex-col items-center gap-3 py-16">
+								<FuseSvgIcon size={40} sx={{ color: 'text.disabled' }}>lucide:search-x</FuseSvgIcon>
+								<Typography color="text.secondary" className="text-xl font-medium">No episodes found</Typography>
+								<Typography color="text.disabled" className="text-sm">Try adjusting your filters</Typography>
+							</div>
+						</div>
+					)}
+				</div>
+			}
 		/>
 	);
 }
