@@ -55,35 +55,35 @@ const navigationConfig: FuseNavItemType[] = [
 				url: '/administration/dashboard'
 			},
 			{
-				id: 'administration.accounts',
+				id: 'administration-accounts',
 				title: 'Account',
 				type: 'collapse',
 				icon: 'heroicons-outline:user-group',
 				translate: 'ACCOUNTS',
 				children: [
 					{
-						id: 'account-accounts',
+						id: 'accounts-list',
 						title: 'Accounts',
 						auth: authRoles.memberAdmin,
 						type: 'item',
 						url: '/administration/accounts'
 					},
 					{
-						id: 'account-roles',
+						id: 'accounts-roles',
 						title: 'Roles',
 						auth: authRoles.memberAdmin,
 						type: 'item',
 						url: '/administration/roles'
 					},
 					{
-						id: 'account-permissions',
+						id: 'accounts-permissions',
 						title: 'Permissions',
 						auth: authRoles.memberAdmin,
 						type: 'item',
 						url: '/administration/permissions'
 					},
 					{
-						id: 'account-subscriptions',
+						id: 'accounts-subscriptions',
 						title: 'Subscriptions',
 						auth: authRoles.memberAdmin,
 						type: 'item',
@@ -92,14 +92,14 @@ const navigationConfig: FuseNavItemType[] = [
 				]
 			},
 			{
-				id: 'apps.audio',
+				id: 'administration-audio',
 				title: 'Audio',
 				type: 'collapse',
 				icon: 'heroicons-outline:microphone',
 				translate: 'AUDIO',
 				children: [
 					{
-						id: 'audio-audios',
+						id: 'audio-list',
 						title: 'Audios',
 						type: 'item',
 						url: '/administration/audios'
@@ -113,7 +113,7 @@ const navigationConfig: FuseNavItemType[] = [
 				]
 			},
 			{
-				id: 'apps.radio',
+				id: 'administration-radio',
 				title: 'Radio',
 				type: 'collapse',
 				icon: 'heroicons-outline:radio',
@@ -126,7 +126,7 @@ const navigationConfig: FuseNavItemType[] = [
 						url: '/administration/emissions'
 					},
 					{
-						id: 'radio-emission-types',
+						id: 'radio-emissiontypes',
 						title: 'Type des emissions',
 						type: 'item',
 						url: '/administration/emission-types'
@@ -138,7 +138,7 @@ const navigationConfig: FuseNavItemType[] = [
 						url: '/administration/guests'
 					},
 					{
-						id: 'radio-guest-types',
+						id: 'radio-guesttypes',
 						title: 'Guests Types',
 						type: 'item',
 						url: '/administration/guest-types'
@@ -156,14 +156,14 @@ const navigationConfig: FuseNavItemType[] = [
 						url: '/administration/reportage'
 					},
 					{
-						id: 'radio-reportage-type',
-						title: 'REPORTAGE-TYPE',
+						id: 'radio-reportagetype',
+						title: 'Reportage Type',
 						type: 'item',
 						url: '/administration/reportage-type'
 					},
 					{
-						id: 'radio-episode-guests',
-						title: 'EPISODE-GUEST',
+						id: 'radio-episodeguests',
+						title: 'Episode Guests',
 						type: 'item',
 						url: '/administration/episode-guests'
 					},
@@ -198,16 +198,54 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'content',
 		type: 'group',
 		title: 'Content',
-		translate: 'CONTENT',
 		children: [
 			{
-				id: 'content-example',
-				title: 'Example',
-				translate: 'EXAMPLE',
+				id: 'content-lessons',
+				title: 'Lessons',
+				type: 'collapse',
+				icon: 'heroicons-outline:academic-cap',
 				auth: authRoles.contentAdmin,
-				type: 'item',
-				icon: 'heroicons-outline:star',
-				url: '/content/example'
+				children: [
+					{
+						id: 'lessons-list',
+						title: 'All Lessons',
+						auth: authRoles.contentAdmin,
+						type: 'item',
+						url: '/lessons'
+					}
+				]
+			},
+			{
+				id: 'content-podcast',
+				title: 'Podcast',
+				type: 'collapse',
+				icon: 'heroicons-outline:microphone',
+				auth: authRoles.contentAdmin,
+				children: [
+					{
+						id: 'podcast-courses',
+						title: 'Courses',
+						auth: authRoles.contentAdmin,
+						type: 'item',
+						url: '/podcast/courses'
+					}
+				]
+			},
+			{
+				id: 'content-radio',
+				title: 'Radio',
+				type: 'collapse',
+				icon: 'heroicons-outline:radio',
+				auth: authRoles.contentAdmin,
+				children: [
+					{
+						id: 'radio-courses',
+						title: 'Courses',
+						auth: authRoles.contentAdmin,
+						type: 'item',
+						url: '/radio/courses'
+					}
+				]
 			}
 		]
 	},
