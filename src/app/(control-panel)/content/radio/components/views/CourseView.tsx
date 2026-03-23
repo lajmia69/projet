@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import DurationDisplay from '../ui/DurationDisplay';
+import DurationDisplay from '../ui/Durationdisplay';
 import { useRadio } from '../../api/hooks/radio/useRadios';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({

@@ -7,7 +7,7 @@ import Link from '@fuse/core/Link';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Chip from '@mui/material/Chip';
 import { Radio } from '../../api/types';
-import DurationDisplay from '../ui/DurationDisplay';
+import DurationDisplay from '../ui/Durationdisplay';
 
 type RadioCardProps = {
 	radio: Radio;

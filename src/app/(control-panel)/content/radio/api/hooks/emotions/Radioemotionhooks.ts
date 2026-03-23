@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { radioApi } from '../../services/radioApiService';
+import { radioApi } from '../../services/RadioApiService';
 import { SetRadioEmotionPayload } from '../../types';
 import { useSnackbar } from 'notistack';
 

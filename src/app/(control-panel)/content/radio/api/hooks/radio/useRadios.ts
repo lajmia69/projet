@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { radioApi } from '../../services/radioApiService';
+import { radioApi } from '../../services/RadioApiService';
 import { SearchRadios } from '../../types';
 
 // ─── List (search) ───────────────────────────────────────────────────────────
