@@ -72,6 +72,7 @@ export type Module = {
 	level: Level;
 	subject: Subject;
 };
+
 export type Language = {
 	id: number;
 	icon: string;
@@ -125,41 +126,32 @@ export type Lesson = {
 	streaming_version: Audio;
 	teaser_version: Audio;
 	module: Module;
-
-	tags: string[]; // ou bien un type plus complexe si les tags sont des objets
-
+	tags: string[];
 	language: Language;
-
 	lesson_type: LessonType;
-
 	created_by: Account;
-
-	// approved_by: Account;
-
-	// production_project: {
-	// 	id: number;
-	// 	name: string;
-	// 	description: string;
-	// 	start_date: string;
-	// 	end_date: string;
-	// 	note: string;
-	// 	status: {
-	// 		id: number;
-	// 		name: string;
-	// 	};
-	// 	project_type: {
-	// 		id: number;
-	// 		name: string;
-	// 	};
-	// 	studio_leader: Account;
-	// 	created_by: Account;
-	// };
 };
 
 export type LessonList = {
 	items: Lesson[];
 	count: number;
 };
+
+export type LessonEmotion = {
+	id: number;
+	lesson: number;
+	emotion_type: string;
+	emotion_label: string;
+	count: number;
+	user_emotion: string | null;
+};
+
+export type SetLessonEmotionPayload = {
+	lesson_id: number;
+	emotion_type: string;
+};
+
+// ─── Legacy types kept for backward compatibility ────────────────────────────
 
 export type CourseStepContent = {
 	id: string;
