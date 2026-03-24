@@ -113,7 +113,6 @@ function LessonsView() {
             const matchesSearch = lesson.name?.toLowerCase().includes(searchText.toLowerCase());
             const matchesLang = filters.language === 'all' || lesson.language?.name === filters.language;
             const matchesModule = filters.module === 'all' || String(lesson.module?.id) === filters.module;
-            // Add subject/trimester checks here if your Lesson object contains them
             
             return matchesSearch && matchesLang && matchesModule;
         });
@@ -154,9 +153,9 @@ function LessonsView() {
             {
                 name: form.name.trim(),
                 description: form.description.trim(),
-                language: Number(form.language),
-                lesson_type: Number(form.lesson_type),
-                module: Number(form.module),
+                language_id: Number(form.language),
+                lesson_type_id: Number(form.lesson_type),
+                module_id: Number(form.module),
             } as any,
             { onSuccess: () => setAddOpen(false) }
         );
