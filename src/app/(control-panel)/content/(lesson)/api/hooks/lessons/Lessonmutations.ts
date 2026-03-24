@@ -56,14 +56,28 @@ export const lessonApi = {
 		accessToken: string,
 		data: Partial<Lesson>
 	): Promise<Lesson> => {
-		return api
-			.post(`lesson/create/${currentAccountId}/`, {
-				headers: {
-					Authorization: `Bearer ${accessToken}`
-				},
-				json: data
-			})
-			.json();
+		console.log('[createLesson] payload being sent:', JSON.stringify(data, null, 2));
+
+		const response = await api.post(`lesson/create/${currentAccountId}/`, {
+			headers: {
+				Authorization: `Bearer ${accessToken}`
+			},
+			json: data
+		});
+
+		if (!response.ok) {
+			let errorBody: unknown;
+			try {
+				errorBody = await response.json();
+			} catch {
+				errorBody = await response.text();
+			}
+			console.error('[createLesson] Django rejected with status', response.status);
+			console.error('[createLesson] Error body:', JSON.stringify(errorBody, null, 2));
+			throw new Error(`createLesson failed: ${JSON.stringify(errorBody)}`);
+		}
+
+		return response.json();
 	},
 
 	updateLesson: async (
@@ -71,12 +85,26 @@ export const lessonApi = {
 		accessToken: string,
 		data: Partial<Lesson> & { id: number }
 	): Promise<Lesson> => {
-		return api
-			.put(`lesson/update/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
+		console.log('[updateLesson] payload being sent:', JSON.stringify(data, null, 2));
+
+		const response = await api.put(`lesson/update/${currentAccountId}/`, {
+			json: data,
+			...authHeader(accessToken)
+		});
+
+		if (!response.ok) {
+			let errorBody: unknown;
+			try {
+				errorBody = await response.json();
+			} catch {
+				errorBody = await response.text();
+			}
+			console.error('[updateLesson] Django rejected with status', response.status);
+			console.error('[updateLesson] Error body:', JSON.stringify(errorBody, null, 2));
+			throw new Error(`updateLesson failed: ${JSON.stringify(errorBody)}`);
+		}
+
+		return response.json();
 	},
 
 	validateLesson: async (
@@ -440,8 +468,11 @@ export const useCreateLesson = (currentAccountId: string, accessToken: string) =
 			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
 			enqueueSnackbar('Lesson created successfully', { variant: 'success' });
 		},
-		onError: () => {
-			enqueueSnackbar('Error creating lesson', { variant: 'error' });
+		onError: (error: Error) => {
+			// The full Django error body is already logged inside createLesson above.
+			// This surfaces it in the snackbar too so you can see it without opening DevTools.
+			console.error('[useCreateLesson] mutation error:', error.message);
+			enqueueSnackbar(`Error creating lesson: ${error.message}`, { variant: 'error' });
 		}
 	});
 };
@@ -457,8 +488,10 @@ export const useUpdateLesson = (currentAccountId: string, accessToken: string) =
 			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
 			enqueueSnackbar('Lesson updated', { variant: 'success' });
 		},
-		onError: () => {
-			enqueueSnackbar('Error updating lesson', { variant: 'error' });
+		onError: (error: Error) => {
+			// The full Django error body is already logged inside updateLesson above.
+			console.error('[useUpdateLesson] mutation error:', error.message);
+			enqueueSnackbar(`Error updating lesson: ${error.message}`, { variant: 'error' });
 		}
 	});
 };
@@ -474,7 +507,8 @@ export const useDeleteLesson = (currentAccountId: string, accessToken: string) =
 			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
 			enqueueSnackbar('Lesson deleted', { variant: 'success' });
 		},
-		onError: () => {
+		onError: (error: Error) => {
+			console.error('[useDeleteLesson] mutation error:', error.message);
 			enqueueSnackbar('Error deleting lesson', { variant: 'error' });
 		}
 	});

@@ -149,16 +149,17 @@ function LessonsView() {
 
     const handleSubmitAdd = () => {
         if (!validate()) return;
-        createLesson(
-            {
-                name: form.name.trim(),
-                description: form.description.trim(),
-                language_id: Number(form.language),
-                lesson_type_id: Number(form.lesson_type),
-                module_id: Number(form.module),
-            } as any,
-            { onSuccess: () => setAddOpen(false) }
-        );
+// In LessonsView.tsx handleSubmitAdd
+createLesson(
+  {
+    name: form.name.trim(),
+    description: form.description.trim(),
+    language: Number(form.language),       // was language_id
+    lesson_type: Number(form.lesson_type), // was lesson_type_id
+    module: Number(form.module),           // was module_id
+  } as any,
+  { onSuccess: () => setAddOpen(false) }
+);
     };
 
     if (isLoading) return <FuseLoading />;

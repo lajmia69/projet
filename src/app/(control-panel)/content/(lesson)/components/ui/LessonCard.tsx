@@ -93,17 +93,18 @@ function LessonCard({ lesson }: LessonCardProps) {
 
 	const handleSubmitEdit = () => {
 		if (!validate()) return;
-		updateLesson(
-			{
-				id: lesson.id,
-				name: form.name.trim(),
-				description: form.description.trim(),
-				language_id: Number(form.language),
-				lesson_type_id: Number(form.lesson_type),
-				module_id: Number(form.module),
-			} as any,
-			{ onSuccess: () => setEditOpen(false) }
-		);
+// In LessonCard.tsx handleSubmitEdit
+updateLesson(
+  {
+    id: lesson.id,
+    name: form.name.trim(),
+    description: form.description.trim(),
+    language: Number(form.language),       // was language_id
+    lesson_type: Number(form.lesson_type), // was lesson_type_id
+    module: Number(form.module),           // was module_id
+  } as any,
+  { onSuccess: () => setEditOpen(false) }
+);
 	};
 
 	const handleDeleteConfirm = () => {
