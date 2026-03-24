@@ -98,9 +98,9 @@ function LessonCard({ lesson }: LessonCardProps) {
 				id: lesson.id,
 				name: form.name.trim(),
 				description: form.description.trim(),
-				language_id: Number(form.language),
-				lesson_type_id: Number(form.lesson_type),
-				module_id: Number(form.module),
+				language: Number(form.language),
+				lesson_type: Number(form.lesson_type),
+				module: Number(form.module),
 			} as any,
 			{ onSuccess: () => setEditOpen(false) }
 		);
