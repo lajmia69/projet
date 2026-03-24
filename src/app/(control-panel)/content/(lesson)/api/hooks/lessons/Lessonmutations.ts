@@ -10,7 +10,9 @@ import {
 	Module,
 	Language,
 	LanguageList,
-	SearchLessons
+	SearchLessons,
+	LessonCreatePayload,
+	LessonUpdatePayload,
 } from '../../types';
 
 const authHeader = (accessToken: string) => ({
@@ -54,7 +56,7 @@ export const lessonApi = {
 	createLesson: async (
 		currentAccountId: string,
 		accessToken: string,
-		data: Partial<Lesson>
+		data: LessonCreatePayload
 	): Promise<Lesson> => {
 		console.log('[createLesson] payload being sent:', JSON.stringify(data, null, 2));
 
@@ -83,7 +85,7 @@ export const lessonApi = {
 	updateLesson: async (
 		currentAccountId: string,
 		accessToken: string,
-		data: Partial<Lesson> & { id: number }
+		data: LessonUpdatePayload	// must include: id, language_id, lesson_type_id, module_id, transcription, add_tags, remove_tags
 	): Promise<Lesson> => {
 		console.log('[updateLesson] payload being sent:', JSON.stringify(data, null, 2));
 
@@ -462,15 +464,13 @@ export const useCreateLesson = (currentAccountId: string, accessToken: string) =
 	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (data: Partial<Lesson>) =>
+		mutationFn: (data: LessonCreatePayload) =>
 			lessonApi.createLesson(currentAccountId, accessToken, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
 			enqueueSnackbar('Lesson created successfully', { variant: 'success' });
 		},
 		onError: (error: Error) => {
-			// The full Django error body is already logged inside createLesson above.
-			// This surfaces it in the snackbar too so you can see it without opening DevTools.
 			console.error('[useCreateLesson] mutation error:', error.message);
 			enqueueSnackbar(`Error creating lesson: ${error.message}`, { variant: 'error' });
 		}
@@ -482,14 +482,13 @@ export const useUpdateLesson = (currentAccountId: string, accessToken: string) =
 	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (data: Partial<Lesson> & { id: number }) =>
+		mutationFn: (data: LessonUpdatePayload) =>
 			lessonApi.updateLesson(currentAccountId, accessToken, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
 			enqueueSnackbar('Lesson updated', { variant: 'success' });
 		},
 		onError: (error: Error) => {
-			// The full Django error body is already logged inside updateLesson above.
 			console.error('[useUpdateLesson] mutation error:', error.message);
 			enqueueSnackbar(`Error updating lesson: ${error.message}`, { variant: 'error' });
 		}

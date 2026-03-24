@@ -14,7 +14,7 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
 import LessonCard from '../ui/LessonCard';
-import { Lesson, SearchLessons } from '../../api/types';
+import { SearchLessons, LessonCreatePayload } from '../../api/types';
 import { useLanguages } from '../../api/hooks/languages/useLanguages';
 import { useLessonTypes, useModules } from '../../api/hooks/lessons/Lessonmetahooks';
 import useUser from '@auth/useUser';
@@ -108,12 +108,12 @@ function LessonsView() {
     // ── Filter Logic ──────────────────────────────────────────────────────────
     const filteredData = useMemo(() => {
         if (!lessons?.items) return [];
-        
+
         return lessons.items.filter((lesson) => {
             const matchesSearch = lesson.name?.toLowerCase().includes(searchText.toLowerCase());
             const matchesLang = filters.language === 'all' || lesson.language?.name === filters.language;
             const matchesModule = filters.module === 'all' || String(lesson.module?.id) === filters.module;
-            
+
             return matchesSearch && matchesLang && matchesModule;
         });
     }, [lessons, searchText, filters]);
@@ -149,17 +149,18 @@ function LessonsView() {
 
     const handleSubmitAdd = () => {
         if (!validate()) return;
-// In LessonsView.tsx handleSubmitAdd
-createLesson(
-  {
-    name: form.name.trim(),
-    description: form.description.trim(),
-    language: Number(form.language),       // was language_id
-    lesson_type: Number(form.lesson_type), // was lesson_type_id
-    module: Number(form.module),           // was module_id
-  } as any,
-  { onSuccess: () => setAddOpen(false) }
-);
+
+        const payload: LessonCreatePayload = {
+            name: form.name.trim(),
+            description: form.description.trim(),
+            language_id: Number(form.language),
+            lesson_type_id: Number(form.lesson_type),
+            module_id: Number(form.module),
+            transcription: {},
+            tags: [],
+        };
+
+        createLesson(payload, { onSuccess: () => setAddOpen(false) });
     };
 
     if (isLoading) return <FuseLoading />;
@@ -215,7 +216,7 @@ createLesson(
                     <div className="mx-auto flex w-full flex-1 flex-col p-4 pt-6">
                         {/* Filter bar */}
                         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }} className="flex w-full flex-wrap items-center gap-2 mb-6">
-                            
+
                             {/* Language Filter */}
                             <FormControl size="small" sx={{ minWidth: 130 }} variant="outlined">
                                 <InputLabel>Language</InputLabel>
@@ -351,6 +352,7 @@ createLesson(
                                     <MenuItem value={String(type.id)} key={type.id}>{type.name}</MenuItem>
                                 ))}
                             </Select>
+                            {formErrors.lesson_type && <Typography variant="caption" color="error" sx={{ ml: 1.5, mt: 0.5 }}>{formErrors.lesson_type}</Typography>}
                         </FormControl>
 
                         <FormControl size="small" fullWidth required error={!!formErrors.module}>
@@ -367,6 +369,7 @@ createLesson(
                                     </MenuItem>
                                 ))}
                             </Select>
+                            {formErrors.module && <Typography variant="caption" color="error" sx={{ ml: 1.5, mt: 0.5 }}>{formErrors.module}</Typography>}
                         </FormControl>
                     </div>
                 </DialogContent>

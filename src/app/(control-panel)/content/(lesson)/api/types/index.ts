@@ -112,6 +112,8 @@ export type LessonTranscription = {
 	content: LessonTranscriptionContent[];
 };
 
+// ─── Read model (what the API returns) ───────────────────────────────────────
+
 export type Lesson = {
 	id: number;
 	name: string;
@@ -131,6 +133,45 @@ export type Lesson = {
 	lesson_type: LessonType;
 	created_by: Account;
 };
+
+// ─── Write payloads (what the API expects on POST / PUT) ─────────────────────
+
+/**
+ * Payload for lesson/create/<account_id>/
+ * Uses flat integer IDs, not nested objects.
+ */
+export type LessonCreatePayload = {
+	name: string;
+	description?: string;
+	language_id: number;
+	lesson_type_id: number;
+	module_id: number;
+	/** Required by the backend even when empty */
+	transcription: Record<string, unknown>;
+	/** Required by the backend even when empty */
+	tags: string[];
+};
+
+/**
+ * Payload for lesson/update/<account_id>/
+ * The lesson id goes in the body, not the URL.
+ */
+export type LessonUpdatePayload = {
+	id: number;
+	name: string;
+	description?: string;
+	language_id: number;
+	lesson_type_id: number;
+	module_id: number;
+	/** Required by the backend even when empty */
+	transcription: Record<string, unknown>;
+	/** Required by the backend even when empty */
+	add_tags: string[];
+	/** Required by the backend even when empty */
+	remove_tags: string[];
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type LessonList = {
 	items: Lesson[];

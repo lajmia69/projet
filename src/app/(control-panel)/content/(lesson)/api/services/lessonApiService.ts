@@ -8,7 +8,9 @@ import {
 	Module,
 	Language,
 	LanguageList,
-	SearchLessons
+	SearchLessons,
+	LessonCreatePayload,
+	LessonUpdatePayload,
 } from '../types';
 
 const authHeader = (accessToken: string) => ({
@@ -52,24 +54,22 @@ export const lessonApi = {
 	createLesson: async (
 		currentAccountId: string,
 		accessToken: string,
-		data: Partial<Lesson>
+		data: LessonCreatePayload
 	): Promise<Lesson> => {
-		return  api
-			.post(`lesson/create/${currentAccountId}/`,  {
+		return api
+			.post(`lesson/create/${currentAccountId}/`, {
 				headers: {
 					Authorization: `Bearer ${accessToken}`
 				},
 				json: data
 			})
 			.json();
-		//console.log(result.text);
-		//return result;
 	},
 
 	updateLesson: async (
 		currentAccountId: string,
 		accessToken: string,
-		data: Partial<Lesson> & { id: number }
+		data: LessonUpdatePayload
 	): Promise<Lesson> => {
 		return api
 			.put(`lesson/update/${currentAccountId}/`, {

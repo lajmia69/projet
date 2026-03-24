@@ -21,7 +21,7 @@ import Link from '@fuse/core/Link';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Chip from '@mui/material/Chip';
 import { useState } from 'react';
-import { Lesson } from '../../api/types';
+import { Lesson, LessonUpdatePayload } from '../../api/types';
 import DurationDisplay from './DurationDisplay';
 import { useDeleteLesson, useUpdateLesson } from '../../api/hooks/lessons/Lessonmutations';
 import { useLanguages } from '../../api/hooks/languages/useLanguages';
@@ -93,18 +93,20 @@ function LessonCard({ lesson }: LessonCardProps) {
 
 	const handleSubmitEdit = () => {
 		if (!validate()) return;
-// In LessonCard.tsx handleSubmitEdit
-updateLesson(
-  {
-    id: lesson.id,
-    name: form.name.trim(),
-    description: form.description.trim(),
-    language: Number(form.language),       // was language_id
-    lesson_type: Number(form.lesson_type), // was lesson_type_id
-    module: Number(form.module),           // was module_id
-  } as any,
-  { onSuccess: () => setEditOpen(false) }
-);
+
+		const payload: LessonUpdatePayload = {
+			id: lesson.id,
+			name: form.name.trim(),
+			description: form.description.trim(),
+			language_id: Number(form.language),
+			lesson_type_id: Number(form.lesson_type),
+			module_id: Number(form.module),
+			transcription: lesson.transcription ?? {},
+			add_tags: [],
+			remove_tags: [],
+		};
+
+		updateLesson(payload, { onSuccess: () => setEditOpen(false) });
 	};
 
 	const handleDeleteConfirm = () => {
