@@ -1,4 +1,6 @@
 import { api } from '@/utils/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
 import {
 	Lesson,
 	LessonList,
@@ -421,4 +423,59 @@ export type LessonEmotion = {
 export type SetLessonEmotionPayload = {
 	lesson_id: number;
 	emotion_type: string;
+};
+
+// ─── React hooks ─────────────────────────────────────────────────────────────
+
+const lessonsQueryKey = ['lesson', 'search'];
+
+export const useCreateLesson = (currentAccountId: string, accessToken: string) => {
+	const queryClient = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+
+	return useMutation({
+		mutationFn: (data: Partial<Lesson>) =>
+			lessonApi.createLesson(currentAccountId, accessToken, data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
+			enqueueSnackbar('Lesson created successfully', { variant: 'success' });
+		},
+		onError: () => {
+			enqueueSnackbar('Error creating lesson', { variant: 'error' });
+		}
+	});
+};
+
+export const useUpdateLesson = (currentAccountId: string, accessToken: string) => {
+	const queryClient = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+
+	return useMutation({
+		mutationFn: (data: Partial<Lesson> & { id: number }) =>
+			lessonApi.updateLesson(currentAccountId, accessToken, data),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
+			enqueueSnackbar('Lesson updated', { variant: 'success' });
+		},
+		onError: () => {
+			enqueueSnackbar('Error updating lesson', { variant: 'error' });
+		}
+	});
+};
+
+export const useDeleteLesson = (currentAccountId: string, accessToken: string) => {
+	const queryClient = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+
+	return useMutation({
+		mutationFn: (lessonId: number) =>
+			lessonApi.deleteLesson(currentAccountId, accessToken, lessonId),
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
+			enqueueSnackbar('Lesson deleted', { variant: 'success' });
+		},
+		onError: () => {
+			enqueueSnackbar('Error deleting lesson', { variant: 'error' });
+		}
+	});
 };

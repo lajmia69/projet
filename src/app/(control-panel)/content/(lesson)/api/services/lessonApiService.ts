@@ -66,6 +66,19 @@ export const lessonApi = {
 		//return result;
 	},
 
+	updateLesson: async (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Lesson> & { id: number }
+	): Promise<Lesson> => {
+		return api
+			.put(`lesson/update/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
+			.json();
+	},
+
 	validateLesson: async (
 		currentAccountId: string,
 		accessToken: string,
