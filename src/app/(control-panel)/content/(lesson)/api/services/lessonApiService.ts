@@ -54,19 +54,16 @@ export const lessonApi = {
 		accessToken: string,
 		data: Partial<Lesson>
 	): Promise<Lesson> => {
-		return api
-			.post(`lesson/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+		return  api
+			.post(`lesson/create/${currentAccountId}/`,  {
+				headers: {
+					Authorization: `Bearer ${accessToken}`
+				},
+				json: data
+			})
 			.json();
-	},
-
-	updateLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Lesson> & { id: number }
-	): Promise<Lesson> => {
-		return api
-			.put(`lesson/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
+		//console.log(result.text);
+		//return result;
 	},
 
 	validateLesson: async (
