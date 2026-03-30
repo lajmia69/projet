@@ -12,13 +12,20 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
-import { useSearchReportages, useReportageTypes, useSeasons } from '../../api/hooks/Radiohooks';
+import { useSearchReportages, useReportageTypes, useSeasons, useDeleteReportage } from '../../api/hooks/Radiohooks';
 import { Reportage, SearchReportages } from '../../api/types';
 import DurationDisplay from '../ui/Durationdisplay';
 
@@ -34,121 +41,171 @@ const cardItem = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, tran
 const FADE_START = 20;
 const FADE_END = 180;
 
-function ReportageCard({ reportage }: { reportage: Reportage }) {
+function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete: (id: number) => void }) {
+	const [confirmOpen, setConfirmOpen] = useState(false);
+
 	return (
-		<Card
-			sx={(theme) => ({
-				display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
-				height: '100%', position: 'relative',
-				border: theme.palette.mode === 'dark' ? '1px solid rgba(167,139,250,0.18)' : '1px solid rgba(139,92,246,0.18)',
-				background: theme.palette.mode === 'dark'
-					? 'linear-gradient(145deg, rgba(10,8,20,0.98) 0%, rgba(18,12,35,0.98) 100%)'
-					: 'linear-gradient(145deg, #ffffff 0%, #faf5ff 100%)',
-				boxShadow: theme.palette.mode === 'dark'
-					? '0 0 0 1px rgba(167,139,250,0.08), 0 4px 24px rgba(139,92,246,0.1)'
-					: '0 0 0 1px rgba(139,92,246,0.07), 0 4px 20px rgba(139,92,246,0.07)',
-				transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-				'&:hover': {
-					transform: 'translateY(-5px)',
-					borderColor: theme.palette.mode === 'dark' ? 'rgba(167,139,250,0.4)' : 'rgba(139,92,246,0.4)',
+		<>
+			<Card
+				sx={(theme) => ({
+					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
+					height: '100%', position: 'relative',
+					border: theme.palette.mode === 'dark' ? '1px solid rgba(167,139,250,0.18)' : '1px solid rgba(139,92,246,0.18)',
+					background: theme.palette.mode === 'dark'
+						? 'linear-gradient(145deg, rgba(10,8,20,0.98) 0%, rgba(18,12,35,0.98) 100%)'
+						: 'linear-gradient(145deg, #ffffff 0%, #faf5ff 100%)',
 					boxShadow: theme.palette.mode === 'dark'
-						? '0 0 0 1px rgba(167,139,250,0.2), 0 8px 40px rgba(139,92,246,0.25)'
-						: '0 0 0 1px rgba(139,92,246,0.18), 0 8px 40px rgba(139,92,246,0.18)',
-				},
-			})}
-		>
-			<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #6d28d9, #8b5cf6, #c4b5fd)' }} />
-			<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
+						? '0 0 0 1px rgba(167,139,250,0.08), 0 4px 24px rgba(139,92,246,0.1)'
+						: '0 0 0 1px rgba(139,92,246,0.07), 0 4px 20px rgba(139,92,246,0.07)',
+					transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+					'&:hover': {
+						transform: 'translateY(-5px)',
+						borderColor: theme.palette.mode === 'dark' ? 'rgba(167,139,250,0.4)' : 'rgba(139,92,246,0.4)',
+						boxShadow: theme.palette.mode === 'dark'
+							? '0 0 0 1px rgba(167,139,250,0.2), 0 8px 40px rgba(139,92,246,0.25)'
+							: '0 0 0 1px rgba(139,92,246,0.18), 0 8px 40px rgba(139,92,246,0.18)',
+					},
+				})}
+			>
+				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #6d28d9, #8b5cf6, #c4b5fd)' }} />
 
-				{/* Type + Season chips */}
-				<div className="flex flex-wrap gap-1.5">
-					{reportage.reportage_type?.name && (
-						<Chip label={reportage.reportage_type.name} size="small" sx={(theme) => ({
-							fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', height: 20,
-							color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#4c1d95',
-							backgroundColor: theme.palette.mode === 'dark' ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.12)',
-							border: '1px solid rgba(139,92,246,0.3)',
-						})} />
-					)}
-					{reportage.season?.name && (
-						<Chip label={reportage.season.name} size="small" sx={(theme) => ({
-							fontSize: '0.68rem', fontWeight: 600, height: 20,
-							color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-							backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-							border: '1px solid rgba(0,0,0,0.08)',
-						})} />
-					)}
+				{/* Delete button */}
+				<div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
+					<Tooltip title="Delete reportage" placement="top">
+						<IconButton
+							size="small"
+							onClick={() => setConfirmOpen(true)}
+							sx={(theme) => ({
+								color: theme.palette.mode === 'dark' ? 'rgba(248,113,113,0.7)' : 'rgba(220,38,38,0.6)',
+								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)',
+								border: theme.palette.mode === 'dark' ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(239,68,68,0.15)',
+								width: 28, height: 28,
+								'&:hover': {
+									backgroundColor: theme.palette.mode === 'dark' ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.12)',
+									color: theme.palette.mode === 'dark' ? '#f87171' : '#dc2626',
+								},
+							})}
+						>
+							<FuseSvgIcon size={14}>lucide:trash-2</FuseSvgIcon>
+						</IconButton>
+					</Tooltip>
 				</div>
 
-				{/* Title */}
-				<Typography className="font-semibold line-clamp-2 leading-snug"
-					dir={reportage.transcription?.language_orientation}
-					sx={(theme) => ({ fontSize: '0.975rem', color: theme.palette.mode === 'dark' ? '#ede9fe' : '#1a1025', lineHeight: 1.45 })}>
-					{reportage.name}
-				</Typography>
+				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
+					{/* Chips */}
+					<div className="flex flex-wrap gap-1.5 pr-10">
+						{reportage.reportage_type?.name && (
+							<Chip label={reportage.reportage_type.name} size="small" sx={(theme) => ({
+								fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', height: 20,
+								color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#4c1d95',
+								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.12)',
+								border: '1px solid rgba(139,92,246,0.3)',
+							})} />
+						)}
+						{reportage.season?.name && (
+							<Chip label={reportage.season.name} size="small" sx={(theme) => ({
+								fontSize: '0.68rem', fontWeight: 600, height: 20,
+								color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
+								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+								border: '1px solid rgba(0,0,0,0.08)',
+							})} />
+						)}
+					</div>
 
-				{reportage.transcription?.author && (
-					<Typography className="line-clamp-1" dir={reportage.transcription?.language_orientation}
-						sx={(theme) => ({ color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)', fontSize: '0.82rem' })}>
-						{reportage.transcription.author}
+					{/* Title */}
+					<Typography className="font-semibold line-clamp-2 leading-snug"
+						dir={reportage.transcription?.language_orientation}
+						sx={(theme) => ({ fontSize: '0.975rem', color: theme.palette.mode === 'dark' ? '#ede9fe' : '#1a1025', lineHeight: 1.45 })}>
+						{reportage.name}
 					</Typography>
-				)}
 
-				<div className="flex-1" />
-				<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent)' }} />
+					{reportage.transcription?.author && (
+						<Typography className="line-clamp-1" dir={reportage.transcription?.language_orientation}
+							sx={(theme) => ({ color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)', fontSize: '0.82rem' })}>
+							{reportage.transcription.author}
+						</Typography>
+					)}
 
-				{/* Meta */}
-				<div className="flex items-center gap-3 flex-wrap">
-					{(reportage.streaming_version?.duration || reportage.hd_version?.duration) && (
-						<div className="flex items-center gap-1">
-							<FuseSvgIcon size={12} sx={{ color: '#8b5cf6' }}>lucide:clock</FuseSvgIcon>
-							<Typography className="text-xs font-medium" sx={{ color: '#8b5cf6' }}>
-								<DurationDisplay isoDuration={reportage.streaming_version?.duration || reportage.hd_version?.duration} format="short" />
-							</Typography>
-						</div>
-					)}
-					{reportage.language?.name && (
-						<div className="flex items-center gap-1">
-							<FuseSvgIcon size={12} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' })}>lucide:globe</FuseSvgIcon>
-							<Typography className="text-xs" sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' })}>
-								{reportage.language.name}
-							</Typography>
-						</div>
-					)}
-					{reportage.is_published && (
-						<Chip label="On Air" size="small" sx={(t) => ({
-							ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
-							color: t.palette.mode === 'dark' ? '#c4b5fd' : '#4c1d95',
-							backgroundColor: t.palette.mode === 'dark' ? 'rgba(139,92,246,0.12)' : 'rgba(139,92,246,0.15)',
-							border: '1px solid rgba(139,92,246,0.35)',
-						})} />
-					)}
+					<div className="flex-1" />
+					<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent)' }} />
+
+					{/* Meta */}
+					<div className="flex items-center gap-3 flex-wrap">
+						{(reportage.streaming_version?.duration || reportage.hd_version?.duration) && (
+							<div className="flex items-center gap-1">
+								<FuseSvgIcon size={12} sx={{ color: '#8b5cf6' }}>lucide:clock</FuseSvgIcon>
+								<Typography className="text-xs font-medium" sx={{ color: '#8b5cf6' }}>
+									<DurationDisplay isoDuration={reportage.streaming_version?.duration || reportage.hd_version?.duration} format="short" />
+								</Typography>
+							</div>
+						)}
+						{reportage.language?.name && (
+							<div className="flex items-center gap-1">
+								<FuseSvgIcon size={12} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' })}>lucide:globe</FuseSvgIcon>
+								<Typography className="text-xs" sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' })}>
+									{reportage.language.name}
+								</Typography>
+							</div>
+						)}
+						{reportage.is_published && (
+							<Chip label="On Air" size="small" sx={(t) => ({
+								ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
+								color: t.palette.mode === 'dark' ? '#c4b5fd' : '#4c1d95',
+								backgroundColor: t.palette.mode === 'dark' ? 'rgba(139,92,246,0.12)' : 'rgba(139,92,246,0.15)',
+								border: '1px solid rgba(139,92,246,0.35)',
+							})} />
+						)}
+					</div>
+
+					{/* Creator + CTA */}
+					<div className="flex items-center justify-between gap-2 pt-0.5">
+						{reportage.created_by?.full_name && (
+							<div className="flex items-center gap-1.5 min-w-0">
+								<FuseSvgIcon size={13} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', flexShrink: 0 })}>lucide:newspaper</FuseSvgIcon>
+								<Typography className="text-xs truncate" sx={(t) => ({ fontWeight: 500, color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)' })}>
+									{reportage.created_by.full_name}
+								</Typography>
+							</div>
+						)}
+						<Button component={Link} to={`/content/radio/reportage/${reportage.id}`} size="small" variant="contained"
+							sx={(t) => ({
+								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
+								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
+								background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)', color: '#fff',
+								boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(139,92,246,0.45)' : '0 0 12px rgba(139,92,246,0.3)',
+								'&:hover': { background: 'linear-gradient(135deg, #5b21b6, #6d28d9)', transform: 'scale(1.04)' },
+							})}
+							endIcon={<FuseSvgIcon size={13}>{reportage.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
+							Watch
+						</Button>
+					</div>
 				</div>
+			</Card>
 
-				{/* Creator + CTA */}
-				<div className="flex items-center justify-between gap-2 pt-0.5">
-					{reportage.created_by?.full_name && (
-						<div className="flex items-center gap-1.5 min-w-0">
-							<FuseSvgIcon size={13} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', flexShrink: 0 })}>lucide:newspaper</FuseSvgIcon>
-							<Typography className="text-xs truncate" sx={(t) => ({ fontWeight: 500, color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)' })}>
-								{reportage.created_by.full_name}
-							</Typography>
-						</div>
-					)}
-					<Button component={Link} to={`/content/radio/reportage/${reportage.id}`} size="small" variant="contained"
-						sx={(t) => ({
-							borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
-							paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
-							background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)', color: '#fff',
-							boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(139,92,246,0.45)' : '0 0 12px rgba(139,92,246,0.3)',
-							'&:hover': { background: 'linear-gradient(135deg, #5b21b6, #6d28d9)', transform: 'scale(1.04)' },
-						})}
-						endIcon={<FuseSvgIcon size={13}>{reportage.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
-						Watch
+			{/* Delete Confirmation Dialog */}
+			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} PaperProps={{ sx: { borderRadius: '16px', minWidth: 320 } }}>
+				<DialogTitle sx={{ fontWeight: 700, fontSize: '1rem', pb: 1 }}>
+					Delete reportage?
+				</DialogTitle>
+				<DialogContent>
+					<DialogContentText sx={{ fontSize: '0.875rem' }}>
+						<strong>{reportage.name}</strong> will be permanently removed. This action cannot be undone.
+					</DialogContentText>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+					<Button onClick={() => setConfirmOpen(false)} variant="outlined" size="small" sx={{ borderRadius: '9px', textTransform: 'none', fontWeight: 600 }}>
+						Cancel
 					</Button>
-				</div>
-			</div>
-		</Card>
+					<Button
+						onClick={() => { onDelete(reportage.id); setConfirmOpen(false); }}
+						variant="contained" color="error" size="small"
+						sx={{ borderRadius: '9px', textTransform: 'none', fontWeight: 600 }}
+					>
+						Delete
+					</Button>
+				</DialogActions>
+			</Dialog>
+		</>
 	);
 }
 
@@ -159,6 +216,7 @@ function ReportageView() {
 	const { data: reportages, isLoading } = useSearchReportages(account?.id, account?.token?.access, searchParams);
 	const { data: reportageTypesData } = useReportageTypes(account?.id, account?.token?.access);
 	const { data: seasons } = useSeasons(account?.id, account?.token?.access);
+	const { mutate: deleteReportage } = useDeleteReportage(account?.id, account?.token?.access);
 
 	const [searchText, setSearchText] = useState('');
 	const [selectedType, setSelectedType] = useState('all');
@@ -259,7 +317,10 @@ function ReportageView() {
 						<motion.div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" variants={cardContainer} initial="hidden" animate="show">
 							{filteredData.map((reportage) => (
 								<motion.div variants={cardItem} key={reportage.id}>
-									<ReportageCard reportage={reportage} />
+									<ReportageCard
+										reportage={reportage}
+										onDelete={(id) => deleteReportage(id)}
+									/>
 								</motion.div>
 							))}
 						</motion.div>

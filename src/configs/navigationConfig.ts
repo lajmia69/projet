@@ -37,6 +37,21 @@ const navigationConfig: FuseNavItemType[] = [
 		]
 	},
 	{
+		id: 'culture',
+		type: 'group',
+		title: 'Culture',
+		translate: 'CULTURE',
+		children: [
+			{
+				id: 'culture-courses',
+				title: 'Courses',
+				type: 'item',
+				icon: 'heroicons-outline:book-open',
+				url: '/culture/courses'
+			}
+		]
+	},
+	{
 		id: 'administration',
 		type: 'group',
 		title: 'Administration',
