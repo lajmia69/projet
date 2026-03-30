@@ -1,4 +1,4 @@
-import ReportageView from '../../components/views/Emissionsview';
+import ReportageView from '../../components/views/Reportageview';
 
 function ReportagePage() {
 	return <ReportageView />;
