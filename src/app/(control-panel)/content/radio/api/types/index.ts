@@ -330,6 +330,7 @@ export type ReportageTranscriptionContent = EmissionTranscriptionContent;
 export type ReportageTranscription = EmissionTranscription;
 
 export type Reportage = {
+    [x: string]: any;
 	id: number;
 	name: string;
 	description: string;
