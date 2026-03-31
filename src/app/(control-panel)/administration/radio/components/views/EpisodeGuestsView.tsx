@@ -12,7 +12,7 @@ import {
 	useGuestTypes,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
 import { EpisodeGuest } from '@/app/(control-panel)/content/radio/api/types';
-import { RadioAdminTable, SimpleFormDialog } from './RadioAdminTable';
+import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type GuestForm = { full_name: string; biography: string; guest_type_id: string };
 const empty: GuestForm = { full_name: '', biography: '', guest_type_id: '' };

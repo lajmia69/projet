@@ -11,7 +11,7 @@ import {
 	useDeleteReportageType,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
 import { ReportageType } from '@/app/(control-panel)/content/radio/api/types';
-import { RadioAdminTable, SimpleFormDialog } from './RadioAdminTable';
+import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type ReportageTypeForm = { name: string; description: string };
 const empty: ReportageTypeForm = { name: '', description: '' };

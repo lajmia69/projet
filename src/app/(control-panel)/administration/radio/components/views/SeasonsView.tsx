@@ -11,7 +11,7 @@ import {
 	useDeleteSeason,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
 import { Season } from '@/app/(control-panel)/content/radio/api/types';
-import { RadioAdminTable, SimpleFormDialog } from './RadioAdminTable';
+import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type SeasonForm = { name: string; description: string; number: string };
 const empty: SeasonForm = { name: '', description: '', number: '' };

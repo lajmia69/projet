@@ -13,7 +13,6 @@ import FusePageCarded from '@fuse/core/FusePageCarded';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
-import { format, parseISO, isValid } from 'date-fns';
 import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 import {
@@ -25,8 +24,8 @@ import {
 	usePublishEpisode,
 	useEmissions,
 	useSeasons,
-	useEpisodeGuests,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
+import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
 import {
 	Episode,
 	SearchEpisodes,
@@ -36,12 +35,6 @@ import {
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
 }));
-
-function safeFormat(dateStr: string | undefined) {
-	if (!dateStr) return '—';
-	const d = parseISO(dateStr.split('T')[0] + 'T00:00:00');
-	return isValid(d) ? format(d, 'MMM d, yyyy') : '—';
-}
 
 type EpisodeForm = {
 	name: string;
@@ -53,20 +46,6 @@ type EpisodeForm = {
 
 const empty: EpisodeForm = { name: '', description: '', language_id: '', emission_id: '', season_id: '' };
 
-function useDistinctLanguages(episodes: Episode[] | undefined) {
-	return useMemo(() => {
-		if (!episodes) return [];
-		const seen = new Set<number>();
-		return episodes.reduce<{ id: number; name: string }[]>((acc, e) => {
-			if (e.language && !seen.has(e.language.id)) {
-				seen.add(e.language.id);
-				acc.push({ id: e.language.id, name: e.language.name });
-			}
-			return acc;
-		}, []);
-	}, [episodes]);
-}
-
 export default function AdminEpisodesView() {
 	const { data: account } = useUser();
 	const id = account?.id;
@@ -76,13 +55,12 @@ export default function AdminEpisodesView() {
 	const { data: episodesData, isLoading } = useSearchEpisodes(id, token, searchParams);
 	const { data: emissionsData } = useEmissions(id, token);
 	const { data: seasonsData } = useSeasons(id, token);
+	const { data: languagesData } = useLanguages(id, token);
 	const { mutate: create, isPending: isCreating } = useCreateEpisode(id, token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(id, token);
 	const { mutate: remove } = useDeleteEpisode(id, token);
 	const { mutate: validate } = useValidateEpisode(id, token);
 	const { mutate: publish } = usePublishEpisode(id, token);
-
-	const languages = useDistinctLanguages(episodesData?.items);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -185,7 +163,7 @@ export default function AdminEpisodesView() {
 				<FormLabel required>Language</FormLabel>
 				<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
 					<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-					{languages.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
+					{languagesData?.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
 				</Select>
 			</FormControl>
 			<div className="flex gap-3">
@@ -256,6 +234,7 @@ export default function AdminEpisodesView() {
 					)
 				}
 			/>
+
 			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Episode</DialogTitle>
 				<Divider />
@@ -269,6 +248,7 @@ export default function AdminEpisodesView() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Episode</DialogTitle>
 				<Divider />

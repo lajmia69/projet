@@ -11,7 +11,7 @@ import {
 	useDeleteGuestType,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
 import { GuestType } from '@/app/(control-panel)/content/radio/api/types';
-import { RadioAdminTable, SimpleFormDialog } from './RadioAdminTable';
+import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type GuestTypeForm = { name: string; description: string };
 const empty: GuestTypeForm = { name: '', description: '' };

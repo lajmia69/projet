@@ -24,6 +24,7 @@ import {
 	usePublishReportage,
 	useReportageTypes,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
+import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
 import {
 	Reportage,
 	SearchReportages,
@@ -43,20 +44,6 @@ type ReportageForm = {
 
 const empty: ReportageForm = { name: '', description: '', language_id: '', reportage_type_id: '' };
 
-function useDistinctLanguages(reportages: Reportage[] | undefined) {
-	return useMemo(() => {
-		if (!reportages) return [];
-		const seen = new Set<number>();
-		return reportages.reduce<{ id: number; name: string }[]>((acc, r) => {
-			if (r.language && !seen.has(r.language.id)) {
-				seen.add(r.language.id);
-				acc.push({ id: r.language.id, name: r.language.name });
-			}
-			return acc;
-		}, []);
-	}, [reportages]);
-}
-
 export default function AdminReportagesView() {
 	const { data: account } = useUser();
 	const id = account?.id;
@@ -65,13 +52,12 @@ export default function AdminReportagesView() {
 	const searchParams: SearchReportages = { limit: 200, offset: 0 };
 	const { data: reportagesData, isLoading } = useSearchReportages(id, token, searchParams);
 	const { data: reportageTypesData } = useReportageTypes(id, token);
+	const { data: languagesData } = useLanguages(id, token);
 	const { mutate: create, isPending: isCreating } = useCreateReportage(id, token);
 	const { mutate: update, isPending: isUpdating } = useUpdateReportage(id, token);
 	const { mutate: remove } = useDeleteReportage(id, token);
 	const { mutate: validate } = useValidateReportage(id, token);
 	const { mutate: publish } = usePublishReportage(id, token);
-
-	const languages = useDistinctLanguages(reportagesData?.items);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -167,7 +153,7 @@ export default function AdminReportagesView() {
 				<FormLabel required>Language</FormLabel>
 				<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
 					<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-					{languages.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
+					{languagesData?.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
 				</Select>
 			</FormControl>
 			<FormControl fullWidth>
@@ -229,6 +215,7 @@ export default function AdminReportagesView() {
 					)
 				}
 			/>
+
 			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Reportage</DialogTitle>
 				<Divider />
@@ -242,6 +229,7 @@ export default function AdminReportagesView() {
 					</Button>
 				</DialogActions>
 			</Dialog>
+
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Reportage</DialogTitle>
 				<Divider />

@@ -97,14 +97,14 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:radio',
 				translate: 'RADIO',
 				children: [
-					{ id: 'radio-emissions',     title: 'Emissions',       type: 'item', url: '/administration/emissions' },
-					{ id: 'radio-emissiontypes', title: 'Emission Types',   type: 'item', url: '/administration/emission-types' },
-					{ id: 'radio-episodes',      title: 'Episodes',         type: 'item', url: '/administration/episodes' },
-					{ id: 'radio-episodeguests', title: 'Episode Guests',   type: 'item', url: '/administration/episode-guests' },
-					{ id: 'radio-guesttypes',    title: 'Guest Types',      type: 'item', url: '/administration/guest-types' },
-					{ id: 'radio-seasons',       title: 'Seasons',          type: 'item', url: '/administration/seasons' },
-					{ id: 'radio-reportage',     title: 'Reportage',        type: 'item', url: '/administration/reportage' },
-					{ id: 'radio-reportagetype', title: 'Reportage Types',  type: 'item', url: '/administration/reportage-type' }
+					{ id: 'radio-emissions',     title: 'Emissions',      type: 'item', url: '/administration/radio/emissions' },
+					{ id: 'radio-emissiontypes', title: 'Emission Types',  type: 'item', url: '/administration/radio/emission-types' },
+					{ id: 'radio-episodes',      title: 'Episodes',        type: 'item', url: '/administration/radio/episodes' },
+					{ id: 'radio-episodeguests', title: 'Episode Guests',  type: 'item', url: '/administration/radio/episode-guests' },
+					{ id: 'radio-guesttypes',    title: 'Guest Types',     type: 'item', url: '/administration/radio/guest-types' },
+					{ id: 'radio-seasons',       title: 'Seasons',         type: 'item', url: '/administration/radio/seasons' },
+					{ id: 'radio-reportage',     title: 'Reportage',       type: 'item', url: '/administration/radio/reportages' },
+					{ id: 'radio-reportagetype', title: 'Reportage Types', type: 'item', url: '/administration/radio/reportage-types' }
 				]
 			}
 		]

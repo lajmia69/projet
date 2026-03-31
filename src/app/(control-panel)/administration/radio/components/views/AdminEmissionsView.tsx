@@ -26,11 +26,11 @@ import {
 	useEmissionTypes,
 	useSeasons,
 } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
+import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
 import {
 	Emission,
 	CreateEmissionPayload,
 } from '@/app/(control-panel)/content/radio/api/types';
-import useNavigate from '@fuse/hooks/useNavigate';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -52,21 +52,6 @@ type EmissionForm = {
 
 const empty: EmissionForm = { name: '', description: '', language_id: '', emission_type_id: '', season_id: '' };
 
-// Simple language list from the existing languages in emissions
-function useDistinctLanguages(emissions: Emission[] | undefined) {
-	return useMemo(() => {
-		if (!emissions) return [];
-		const seen = new Set<number>();
-		return emissions.reduce<{ id: number; name: string }[]>((acc, e) => {
-			if (e.language && !seen.has(e.language.id)) {
-				seen.add(e.language.id);
-				acc.push({ id: e.language.id, name: e.language.name });
-			}
-			return acc;
-		}, []);
-	}, [emissions]);
-}
-
 export default function AdminEmissionsView() {
 	const { data: account } = useUser();
 	const id = account?.id;
@@ -75,13 +60,12 @@ export default function AdminEmissionsView() {
 	const { data: emissionsData, isLoading } = useEmissions(id, token);
 	const { data: emissionTypesData } = useEmissionTypes(id, token);
 	const { data: seasonsData } = useSeasons(id, token);
+	const { data: languagesData } = useLanguages(id, token);
 	const { mutate: create, isPending: isCreating } = useCreateEmission(id, token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEmission(id, token);
 	const { mutate: remove } = useDeleteEmission(id, token);
 	const { mutate: validate } = useValidateEmission(id, token);
 	const { mutate: publish } = usePublishEmission(id, token);
-
-	const languages = useDistinctLanguages(emissionsData?.items);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -191,7 +175,7 @@ export default function AdminEmissionsView() {
 				<FormLabel required>Language</FormLabel>
 				<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
 					<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-					{languages.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
+					{languagesData?.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
 				</Select>
 			</FormControl>
 			<div className="flex gap-3">
