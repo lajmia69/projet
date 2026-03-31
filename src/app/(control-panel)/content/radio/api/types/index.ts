@@ -251,6 +251,8 @@ export type Episode = {
 	streaming_version: Audio;
 	teaser_version: Audio;
 	emission: Emission;
+	emission_type?: EmissionType;
+	episode_number?: number;
 	season: Season;
 	language: Language;
 	guests: EpisodeGuest[];
@@ -330,7 +332,7 @@ export type ReportageTranscriptionContent = EmissionTranscriptionContent;
 export type ReportageTranscription = EmissionTranscription;
 
 export type Reportage = {
-    [x: string]: any;
+	[x: string]: any;
 	id: number;
 	name: string;
 	description: string;
@@ -390,5 +392,95 @@ export type ReportageEmotionList = {
 
 export type SetReportageEmotionPayload = {
 	reportage_id: number;
+	emotion_type: string;
+};
+
+// ─── Radio Category ───────────────────────────────────────────────────────────
+
+export type RadioCategory = {
+	id: number;
+	name: string;
+	description: string;
+	color: string;
+};
+
+export type RadioCategoryList = {
+	items: RadioCategory[];
+	count: number;
+};
+
+export type CreateRadioCategoryPayload = {
+	name: string;
+	description?: string;
+	color?: string;
+};
+
+export type UpdateRadioCategoryPayload = Partial<CreateRadioCategoryPayload> & { id: number };
+
+// ─── Radio Program ────────────────────────────────────────────────────────────
+
+export type RadioTranscriptionContent = EmissionTranscriptionContent;
+export type RadioTranscription = EmissionTranscription;
+
+export type Radio = {
+	id: number;
+	name: string;
+	description: string;
+	transcription: RadioTranscription;
+	is_approved_content: boolean;
+	is_public_content: boolean;
+	is_published: boolean;
+	publishing_date: string;
+	view_number: number;
+	hd_version: Audio;
+	streaming_version: Audio;
+	teaser_version: Audio;
+	category: RadioCategory;
+	language: Language;
+	tags: string[];
+	created_by: Account;
+};
+
+export type RadioList = {
+	items: Radio[];
+	count: number;
+};
+
+export type SearchRadios = {
+	language?: string;
+	category?: number;
+	limit: number;
+	offset: number;
+};
+
+export type CreateRadioPayload = {
+	name: string;
+	description?: string;
+	language_id: number;
+	category_id?: number;
+	transcription?: Record<string, unknown>;
+	tags?: string[];
+};
+
+export type UpdateRadioPayload = Partial<CreateRadioPayload> & { id: number };
+
+// ─── Radio Emotion ────────────────────────────────────────────────────────────
+
+export type RadioEmotion = {
+	id: number;
+	radio: number;
+	emotion_type: string;
+	emotion_label: string;
+	count: number;
+	user_emotion: string | null;
+};
+
+export type RadioEmotionList = {
+	items: RadioEmotion[];
+	count: number;
+};
+
+export type SetRadioEmotionPayload = {
+	radio_id: number;
 	emotion_type: string;
 };

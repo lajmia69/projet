@@ -19,6 +19,12 @@ import {
 	// Reportage
 	Reportage, ReportageList, SearchReportages, CreateReportagePayload, UpdateReportagePayload,
 	ReportageEmotion, ReportageEmotionList, SetReportageEmotionPayload,
+	// Radio Category
+	RadioCategory, RadioCategoryList, CreateRadioCategoryPayload, UpdateRadioCategoryPayload,
+	// Radio Program
+	Radio, RadioList, SearchRadios, CreateRadioPayload, UpdateRadioPayload,
+	// Radio Emotion
+	RadioEmotion, RadioEmotionList, SetRadioEmotionPayload,
 } from '../types';
 
 const authHeader = (accessToken: string) => ({
@@ -301,5 +307,81 @@ export const radioApi = {
 
 	deleteReportageEmotion: async (id: string, token: string, reportageId: number): Promise<void> => {
 		await api.delete(`radio/reportage/emotion/delete/${id}/${reportageId}/`, authHeader(token));
+	},
+
+	// ════════════════════════════════════════════════════════════════════════════
+	// RADIO CATEGORY
+	// ════════════════════════════════════════════════════════════════════════════
+
+	getRadioCategories: (id: string, token: string): Promise<RadioCategoryList> =>
+		api.get(`radio/category/list/${id}/`, authHeader(token)).json(),
+
+	getRadioCategory: (id: string, token: string, categoryId: number): Promise<RadioCategory> =>
+		api.get(`radio/category/detail/${id}/${categoryId}/`, authHeader(token)).json(),
+
+	createRadioCategory: (id: string, token: string, data: CreateRadioCategoryPayload): Promise<RadioCategory> =>
+		api.post(`radio/category/create/${id}/`, { json: data, ...authHeader(token) }).json(),
+
+	updateRadioCategory: (id: string, token: string, data: UpdateRadioCategoryPayload): Promise<RadioCategory> =>
+		api.put(`radio/category/update/${id}/`, { json: data, ...authHeader(token) }).json(),
+
+	deleteRadioCategory: async (id: string, token: string, categoryId: number): Promise<void> => {
+		await api.delete(`radio/category/delete/${id}/${categoryId}/`, authHeader(token));
+	},
+
+	// ════════════════════════════════════════════════════════════════════════════
+	// RADIO PROGRAM
+	// ════════════════════════════════════════════════════════════════════════════
+
+	searchRadios: (id: string, token: string, search: SearchRadios): Promise<RadioList> => {
+		const params = new URLSearchParams();
+		params.set('limit', String(search.limit ?? 10));
+		params.set('offset', String(search.offset ?? 0));
+		if (search.language) params.set('language', search.language);
+		if (search.category != null) params.set('category', String(search.category));
+		return api.get(`radio/program/search/${id}/?${params.toString()}`, authHeader(token)).json();
+	},
+
+	getRadios: (id: string, token: string): Promise<RadioList> =>
+		api.get(`radio/program/list/${id}/`, authHeader(token)).json(),
+
+	getRadio: (id: string, radioId: string, token: string): Promise<Radio> =>
+		api.get(`radio/program/detail/${id}/${radioId}/`, authHeader(token)).json(),
+
+	createRadio: (id: string, token: string, data: CreateRadioPayload): Promise<Radio> =>
+		api.post(`radio/program/create/${id}/`, { json: data, ...authHeader(token) }).json(),
+
+	updateRadio: (id: string, token: string, data: UpdateRadioPayload): Promise<Radio> =>
+		api.put(`radio/program/update/${id}/`, { json: data, ...authHeader(token) }).json(),
+
+	validateRadio: (id: string, token: string, radioId: number): Promise<Radio> =>
+		api.patch(`radio/program/validate/${id}/`, { json: { id: radioId }, ...authHeader(token) }).json(),
+
+	publicRadio: (id: string, token: string, radioId: number): Promise<Radio> =>
+		api.patch(`radio/program/public/${id}/`, { json: { id: radioId }, ...authHeader(token) }).json(),
+
+	publishRadio: (id: string, token: string, radioId: number): Promise<Radio> =>
+		api.patch(`radio/program/publish/${id}/`, { json: { id: radioId }, ...authHeader(token) }).json(),
+
+	publishReleaseRadio: (id: string, token: string, radioId: number): Promise<Radio> =>
+		api.patch(`radio/program/publish/release/${id}/`, { json: { id: radioId }, ...authHeader(token) }).json(),
+
+	deleteRadio: async (id: string, token: string, radioId: number): Promise<void> => {
+		await api.delete(`radio/program/delete/${id}/${radioId}/`, authHeader(token));
+	},
+
+	// ─── Radio Emotion ────────────────────────────────────────────────────────
+
+	getRadioEmotions: (id: string, token: string): Promise<RadioEmotionList> =>
+		api.get(`radio/program/emotion/list/${id}/`, authHeader(token)).json(),
+
+	getRadioEmotion: (id: string, token: string, radioId: number): Promise<RadioEmotion> =>
+		api.get(`radio/program/emotion/detail/${id}/${radioId}/`, authHeader(token)).json(),
+
+	setRadioEmotion: (id: string, token: string, data: SetRadioEmotionPayload): Promise<RadioEmotion> =>
+		api.post(`radio/program/emotion/set/${id}/`, { json: data, ...authHeader(token) }).json(),
+
+	deleteRadioEmotion: async (id: string, token: string, radioId: number): Promise<void> => {
+		await api.delete(`radio/program/emotion/delete/${id}/${radioId}/`, authHeader(token));
 	},
 };
