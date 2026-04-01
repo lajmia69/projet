@@ -16,20 +16,16 @@ import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 import {
-	useSearchReportages,
+	useRadioAdminReportages,
 	useCreateReportage,
 	useUpdateReportage,
 	useDeleteReportage,
 	useValidateReportage,
 	usePublishReportage,
-	useReportageTypes,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
-import {
-	Reportage,
-	SearchReportages,
-	CreateReportagePayload,
-} from '@/app/(control-panel)/content/radio/api/types';
+	useRadioAdminReportageTypes,
+	useRadioAdminLanguages,
+} from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
+import { Reportage, CreateReportagePayload } from '@/app/(control-panel)/administration/radio/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -40,24 +36,31 @@ type ReportageForm = {
 	description: string;
 	language_id: string;
 	reportage_type_id: string;
+	publishing_date: string;
+	online_date: string;
 };
 
-const empty: ReportageForm = { name: '', description: '', language_id: '', reportage_type_id: '' };
+const empty: ReportageForm = {
+	name: '',
+	description: '',
+	language_id: '',
+	reportage_type_id: '',
+	publishing_date: '',
+	online_date: '',
+};
 
 export default function AdminReportagesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const searchParams: SearchReportages = { limit: 200, offset: 0 };
-	const { data: reportagesData, isLoading } = useSearchReportages(id, token, searchParams);
-	const { data: reportageTypesData } = useReportageTypes(id, token);
-	const { data: languagesData, isLoading: isLanguagesLoading, error: languagesError } = useLanguages(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateReportage(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateReportage(id, token);
-	const { mutate: remove } = useDeleteReportage(id, token);
-	const { mutate: validate } = useValidateReportage(id, token);
-	const { mutate: publish } = usePublishReportage(id, token);
+	const { data: reportagesData, isLoading } = useRadioAdminReportages(token);
+	const { data: reportageTypesData } = useRadioAdminReportageTypes(token);
+	const { data: languagesData, isLoading: isLanguagesLoading, isError: isLanguagesError } = useRadioAdminLanguages(token);
+	const { mutate: create, isPending: isCreating } = useCreateReportage(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateReportage(token);
+	const { mutate: remove } = useDeleteReportage(token);
+	const { mutate: validate } = useValidateReportage(token);
+	const { mutate: publish } = usePublishReportage(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -74,20 +77,22 @@ export default function AdminReportagesView() {
 			description: row.description ?? '',
 			language_id: String(row.language?.id ?? ''),
 			reportage_type_id: String(row.reportage_type?.id ?? ''),
+			publishing_date: row.publishing_date ?? '',
+			online_date: (row as any).online_date ?? '',
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
-	// FIX 1: omit transcription and tags entirely on create — backend rejects empty {} and []
 	const buildPayload = (): CreateReportagePayload => ({
 		name: form.name.trim(),
 		description: form.description.trim() || undefined,
 		language_id: Number(form.language_id),
 		reportage_type_id: form.reportage_type_id ? Number(form.reportage_type_id) : undefined,
+		...(form.publishing_date ? { publishing_date: form.publishing_date } : {}),
+		...(form.online_date ? { online_date: form.online_date } : {}),
 	});
 
-	// FIX 5: log errors at call site to surface backend rejection messages
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
 		onError: (err) => console.error('Create reportage failed:', err),
@@ -159,14 +164,14 @@ export default function AdminReportagesView() {
 				<FormLabel required>Language</FormLabel>
 				{isLanguagesLoading ? (
 					<CircularProgress size={20} />
-				) : languagesError ? (
-					<Typography color="error">Error loading languages: {languagesError.message}</Typography>
-				) : languagesData?.items.length === 0 ? (
+				) : isLanguagesError ? (
+					<Typography color="error">Error loading languages</Typography>
+				) : !languagesData?.items?.length ? (
 					<Typography color="textSecondary">No languages available</Typography>
 				) : (
 					<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
 						<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-						{languagesData?.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
+						{languagesData.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
 					</Select>
 				)}
 			</FormControl>
@@ -177,6 +182,30 @@ export default function AdminReportagesView() {
 					{reportageTypesData?.items.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
 				</Select>
 			</FormControl>
+			<div className="flex gap-3">
+				<FormControl fullWidth>
+					<FormLabel>Publishing Date</FormLabel>
+					<TextField
+						size="small"
+						type="date"
+						value={form.publishing_date}
+						onChange={(e) => setField('publishing_date', e.target.value)}
+						InputLabelProps={{ shrink: true }}
+						inputProps={{ placeholder: 'yyyy-mm-dd' }}
+					/>
+				</FormControl>
+				<FormControl fullWidth>
+					<FormLabel>Online Date</FormLabel>
+					<TextField
+						size="small"
+						type="date"
+						value={form.online_date}
+						onChange={(e) => setField('online_date', e.target.value)}
+						InputLabelProps={{ shrink: true }}
+						inputProps={{ placeholder: 'yyyy-mm-dd' }}
+					/>
+				</FormControl>
+			</div>
 		</>
 	);
 

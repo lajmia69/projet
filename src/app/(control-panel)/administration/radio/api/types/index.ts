@@ -87,13 +87,22 @@ export type UpdateEmissionTypePayload = Partial<CreateEmissionTypePayload> & { i
 export type Season = {
 	id: number;
 	name: string;
+	slug?: string;
 	description: string;
 	number: number;
+	start_date?: string;
+	end_date?: string;
 };
 
 export type SeasonList = { items: Season[]; count: number };
 
-export type CreateSeasonPayload = { name: string; description?: string; number?: number };
+export type CreateSeasonPayload = {
+	name: string;
+	description?: string;
+	number?: number;
+	start_date?: string;
+	end_date?: string;
+};
 export type UpdateSeasonPayload = Partial<CreateSeasonPayload> & { id: number };
 
 // ─── Guest Type ───────────────────────────────────────────────────────────────
@@ -132,9 +141,12 @@ export type UpdateEpisodeGuestPayload = Partial<CreateEpisodeGuestPayload> & { i
 export type Emission = {
 	id: number;
 	name: string;
+	slug?: string;
 	description: string;
 	transcription: RadioTranscription;
 	poster: string;
+	poster_description?: string;
+	start_date?: string;
 	is_approved_content: boolean;
 	is_public_content: boolean;
 	is_published: boolean;
@@ -146,8 +158,9 @@ export type Emission = {
 	emission_type: EmissionType;
 	season: Season;
 	language: RadioLanguage;
-	tags: string[];
+	tags: { id: number; name: string }[];
 	created_by: RadioAccount;
+	approved_by?: RadioAccount;
 };
 
 export type EmissionList = { items: Emission[]; count: number };
@@ -168,6 +181,7 @@ export type CreateEmissionPayload = {
 	season_id?: number;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
+	publishing_date?: string;
 };
 
 export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & { id: number };
@@ -191,12 +205,14 @@ export type SetEmissionEmotionPayload = { emission_id: number; emotion_type: str
 export type Episode = {
 	id: number;
 	name: string;
+	slug?: string;
 	description: string;
 	transcription: RadioTranscription;
 	is_approved_content: boolean;
 	is_public_content: boolean;
 	is_published: boolean;
 	publishing_date: string;
+	online_date?: string;
 	view_number: number;
 	hd_version: RadioAudio;
 	streaming_version: RadioAudio;
@@ -207,8 +223,9 @@ export type Episode = {
 	season: Season;
 	language: RadioLanguage;
 	guests: EpisodeGuest[];
-	tags: string[];
+	tags: { id: number; name: string }[];
 	created_by: RadioAccount;
+	approved_by?: RadioAccount;
 };
 
 export type EpisodeList = { items: Episode[]; count: number };
@@ -229,6 +246,8 @@ export type CreateEpisodePayload = {
 	season_id?: number;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
+	publishing_date?: string;
+	online_date?: string;
 };
 
 export type UpdateEpisodePayload = Partial<CreateEpisodePayload> & { id: number };
@@ -265,19 +284,21 @@ export type UpdateReportageTypePayload = Partial<CreateReportageTypePayload> & {
 export type Reportage = {
 	id: number;
 	name: string;
+	slug?: string;
 	description: string;
 	transcription: RadioTranscription;
 	is_approved_content: boolean;
 	is_public_content: boolean;
 	is_published: boolean;
 	publishing_date: string;
+	online_date?: string;
 	view_number: number;
 	hd_version: RadioAudio;
 	streaming_version: RadioAudio;
 	teaser_version: RadioAudio;
 	reportage_type: ReportageType;
 	language: RadioLanguage;
-	tags: string[];
+	tags: { id: number; name: string }[];
 	created_by: RadioAccount;
 };
 
@@ -297,6 +318,8 @@ export type CreateReportagePayload = {
 	reportage_type_id?: number;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
+	publishing_date?: string;
+	online_date?: string;
 };
 
 export type UpdateReportagePayload = Partial<CreateReportagePayload> & { id: number };

@@ -16,21 +16,17 @@ import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 import {
-	useSearchEpisodes,
+	useRadioAdminEpisodes,
 	useCreateEpisode,
 	useUpdateEpisode,
 	useDeleteEpisode,
 	useValidateEpisode,
 	usePublishEpisode,
-	useEmissions,
-	useSeasons,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
-import {
-	Episode,
-	SearchEpisodes,
-	CreateEpisodePayload,
-} from '@/app/(control-panel)/content/radio/api/types';
+	useRadioAdminEmissions,
+	useRadioAdminSeasons,
+	useRadioAdminLanguages,
+} from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
+import { Episode, CreateEpisodePayload } from '@/app/(control-panel)/administration/radio/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -48,19 +44,17 @@ const empty: EpisodeForm = { name: '', description: '', language_id: '', emissio
 
 export default function AdminEpisodesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const searchParams: SearchEpisodes = { limit: 200, offset: 0 };
-	const { data: episodesData, isLoading } = useSearchEpisodes(id, token, searchParams);
-	const { data: emissionsData } = useEmissions(id, token);
-	const { data: seasonsData } = useSeasons(id, token);
-	const { data: languagesData, isLoading: isLanguagesLoading, error: languagesError } = useLanguages(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateEpisode(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(id, token);
-	const { mutate: remove } = useDeleteEpisode(id, token);
-	const { mutate: validate } = useValidateEpisode(id, token);
-	const { mutate: publish } = usePublishEpisode(id, token);
+	const { data: episodesData, isLoading } = useRadioAdminEpisodes(token);
+	const { data: emissionsData } = useRadioAdminEmissions(token);
+	const { data: seasonsData } = useRadioAdminSeasons(token);
+	const { data: languagesData, isLoading: isLanguagesLoading, isError: isLanguagesError } = useRadioAdminLanguages(token);
+	const { mutate: create, isPending: isCreating } = useCreateEpisode(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(token);
+	const { mutate: remove } = useDeleteEpisode(token);
+	const { mutate: validate } = useValidateEpisode(token);
+	const { mutate: publish } = usePublishEpisode(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -83,7 +77,6 @@ export default function AdminEpisodesView() {
 		setEditOpen(true);
 	};
 
-	// FIX 1: omit transcription and tags entirely on create — backend rejects empty {} and []
 	const buildPayload = (): CreateEpisodePayload => ({
 		name: form.name.trim(),
 		description: form.description.trim() || undefined,
@@ -92,7 +85,6 @@ export default function AdminEpisodesView() {
 		season_id: form.season_id ? Number(form.season_id) : undefined,
 	});
 
-	// FIX 5: log errors at call site to surface backend rejection messages
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
 		onError: (err) => console.error('Create episode failed:', err),
@@ -169,14 +161,14 @@ export default function AdminEpisodesView() {
 				<FormLabel required>Language</FormLabel>
 				{isLanguagesLoading ? (
 					<CircularProgress size={20} />
-				) : languagesError ? (
-					<Typography color="error">Error loading languages: {languagesError.message}</Typography>
-				) : languagesData?.items.length === 0 ? (
+				) : isLanguagesError ? (
+					<Typography color="error">Error loading languages</Typography>
+				) : !languagesData?.items?.length ? (
 					<Typography color="textSecondary">No languages available</Typography>
 				) : (
 					<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
 						<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-						{languagesData?.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
+						{languagesData.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
 					</Select>
 				)}
 			</FormControl>
