@@ -5,12 +5,12 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useEmissionTypes,
+	useRadioAdminEmissionTypes,
 	useCreateEmissionType,
 	useUpdateEmissionType,
 	useDeleteEmissionType,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { EmissionType } from '@/app/(control-panel)/content/radio/api/types';
+} from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
+import { EmissionType } from '@/app/(control-panel)/administration/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type EmissionTypeForm = { name: string; description: string };
@@ -18,13 +18,12 @@ const empty: EmissionTypeForm = { name: '', description: '' };
 
 export default function EmissionTypesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const { data, isLoading } = useEmissionTypes(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateEmissionType(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEmissionType(id, token);
-	const { mutate: remove } = useDeleteEmissionType(id, token);
+	const { data, isLoading } = useRadioAdminEmissionTypes(token);
+	const { mutate: create, isPending: isCreating } = useCreateEmissionType(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEmissionType(token);
+	const { mutate: remove } = useDeleteEmissionType(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -38,9 +37,20 @@ export default function EmissionTypesView() {
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
-	const buildPayload = () => ({ name: form.name.trim(), description: form.description.trim() || undefined });
-	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
+
+	const buildPayload = () => ({
+		name: form.name.trim(),
+		description: form.description.trim(),
+	});
+
+	const handleAdd = () => create(buildPayload(), {
+		onSuccess: () => setAddOpen(false),
+		onError: (err) => console.error('Create emission type failed:', err),
+	});
+	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+		onSuccess: () => setEditOpen(false),
+		onError: (err) => console.error('Update emission type failed:', err),
+	});
 
 	const columns = useMemo<MRT_ColumnDef<EmissionType>[]>(() => [
 		{ accessorKey: 'id', header: 'ID', size: 70 },

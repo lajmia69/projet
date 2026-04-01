@@ -86,7 +86,7 @@ export default function AdminEmissionsView() {
 
 	const buildPayload = (): CreateEmissionPayload => ({
 		name: form.name.trim(),
-		description: form.description.trim() || undefined,
+		description: form.description.trim(),
 		language_id: Number(form.language_id),
 		emission_type_id: form.emission_type_id ? Number(form.emission_type_id) : undefined,
 		season_id: form.season_id ? Number(form.season_id) : undefined,
@@ -255,7 +255,6 @@ export default function AdminEmissionsView() {
 				}
 			/>
 
-			{/* Add Dialog */}
 			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Emission</DialogTitle>
 				<Divider />
@@ -270,7 +269,6 @@ export default function AdminEmissionsView() {
 				</DialogActions>
 			</Dialog>
 
-			{/* Edit Dialog */}
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Emission</DialogTitle>
 				<Divider />

@@ -5,13 +5,13 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import { FormControl, FormLabel, MenuItem, Select, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useEpisodeGuests,
+	useRadioAdminEpisodeGuests,
 	useCreateEpisodeGuest,
 	useUpdateEpisodeGuest,
 	useDeleteEpisodeGuest,
-	useGuestTypes,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { EpisodeGuest } from '@/app/(control-panel)/content/radio/api/types';
+	useRadioAdminGuestTypes,
+} from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
+import { EpisodeGuest } from '@/app/(control-panel)/administration/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type GuestForm = { full_name: string; biography: string; guest_type_id: string };
@@ -19,14 +19,13 @@ const empty: GuestForm = { full_name: '', biography: '', guest_type_id: '' };
 
 export default function EpisodeGuestsView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const { data, isLoading } = useEpisodeGuests(id, token);
-	const { data: guestTypes } = useGuestTypes(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateEpisodeGuest(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEpisodeGuest(id, token);
-	const { mutate: remove } = useDeleteEpisodeGuest(id, token);
+	const { data, isLoading } = useRadioAdminEpisodeGuests(token);
+	const { data: guestTypes } = useRadioAdminGuestTypes(token);
+	const { mutate: create, isPending: isCreating } = useCreateEpisodeGuest(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEpisodeGuest(token);
+	const { mutate: remove } = useDeleteEpisodeGuest(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -49,14 +48,12 @@ export default function EpisodeGuestsView() {
 
 	const buildPayload = () => ({
 		full_name: form.full_name.trim(),
-		biography: form.biography.trim() || undefined,
-		// FIX 2: guard against Number('') === 0 — send undefined instead of 0
-		guest_type_id: form.guest_type_id ? Number(form.guest_type_id) : undefined,
+		biography: form.biography.trim(),
+		guest_type_id: Number(form.guest_type_id),
 	});
 
 	const canSubmit = !!form.full_name.trim() && !!form.guest_type_id;
 
-	// FIX 5: log errors at call site to surface backend rejection messages
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
 		onError: (err) => console.error('Create episode guest failed:', err),

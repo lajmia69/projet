@@ -78,7 +78,7 @@ export default function AdminReportagesView() {
 			language_id: String(row.language?.id ?? ''),
 			reportage_type_id: String(row.reportage_type?.id ?? ''),
 			publishing_date: row.publishing_date ?? '',
-			online_date: (row as any).online_date ?? '',
+			online_date: row.online_date ?? '',
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
@@ -86,11 +86,11 @@ export default function AdminReportagesView() {
 
 	const buildPayload = (): CreateReportagePayload => ({
 		name: form.name.trim(),
-		description: form.description.trim() || undefined,
+		description: form.description.trim(),
 		language_id: Number(form.language_id),
 		reportage_type_id: form.reportage_type_id ? Number(form.reportage_type_id) : undefined,
-		...(form.publishing_date ? { publishing_date: form.publishing_date } : {}),
-		...(form.online_date ? { online_date: form.online_date } : {}),
+		publishing_date: form.publishing_date || undefined,
+		online_date: form.online_date || undefined,
 	});
 
 	const handleAdd = () => create(buildPayload(), {

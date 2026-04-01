@@ -5,12 +5,12 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useReportageTypes,
+	useRadioAdminReportageTypes,
 	useCreateReportageType,
 	useUpdateReportageType,
 	useDeleteReportageType,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { ReportageType } from '@/app/(control-panel)/content/radio/api/types';
+} from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
+import { ReportageType } from '@/app/(control-panel)/administration/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type ReportageTypeForm = { name: string; description: string };
@@ -18,13 +18,12 @@ const empty: ReportageTypeForm = { name: '', description: '' };
 
 export default function ReportageTypesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const { data, isLoading } = useReportageTypes(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateReportageType(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateReportageType(id, token);
-	const { mutate: remove } = useDeleteReportageType(id, token);
+	const { data, isLoading } = useRadioAdminReportageTypes(token);
+	const { mutate: create, isPending: isCreating } = useCreateReportageType(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateReportageType(token);
+	const { mutate: remove } = useDeleteReportageType(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -43,11 +42,17 @@ export default function ReportageTypesView() {
 
 	const buildPayload = () => ({
 		name: form.name.trim(),
-		description: form.description.trim() || undefined,
+		description: form.description.trim(),
 	});
 
-	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
+	const handleAdd = () => create(buildPayload(), {
+		onSuccess: () => setAddOpen(false),
+		onError: (err) => console.error('Create reportage type failed:', err),
+	});
+	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+		onSuccess: () => setEditOpen(false),
+		onError: (err) => console.error('Update reportage type failed:', err),
+	});
 
 	const columns = useMemo<MRT_ColumnDef<ReportageType>[]>(() => [
 		{ accessorKey: 'id', header: 'ID', size: 70 },

@@ -52,8 +52,8 @@ export default function SeasonsView() {
 			name: row.name,
 			description: row.description ?? '',
 			number: String(row.number ?? ''),
-			start_date: (row as any).start_date ?? '',
-			end_date: (row as any).end_date ?? '',
+			start_date: row.start_date ?? '',
+			end_date: row.end_date ?? '',
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
@@ -61,14 +61,20 @@ export default function SeasonsView() {
 
 	const buildPayload = () => ({
 		name: form.name.trim(),
-		description: form.description.trim() || undefined,
+		description: form.description.trim(),
 		number: form.number ? Number(form.number) : undefined,
-		...(form.start_date ? { start_date: form.start_date } : {}),
-		...(form.end_date ? { end_date: form.end_date } : {}),
+		start_date: form.start_date || undefined,
+		end_date: form.end_date || undefined,
 	});
 
-	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
+	const handleAdd = () => create(buildPayload(), {
+		onSuccess: () => setAddOpen(false),
+		onError: (err) => console.error('Create season failed:', err),
+	});
+	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+		onSuccess: () => setEditOpen(false),
+		onError: (err) => console.error('Update season failed:', err),
+	});
 
 	const columns = useMemo<MRT_ColumnDef<Season>[]>(() => [
 		{ accessorKey: 'id', header: 'ID', size: 70 },
@@ -78,12 +84,12 @@ export default function SeasonsView() {
 		{
 			id: 'start_date',
 			header: 'Start Date',
-			accessorFn: (row) => (row as any).start_date ?? '',
+			accessorFn: (row) => row.start_date ?? '',
 		},
 		{
 			id: 'end_date',
 			header: 'End Date',
-			accessorFn: (row) => (row as any).end_date ?? '',
+			accessorFn: (row) => row.end_date ?? '',
 		},
 	], []);
 
