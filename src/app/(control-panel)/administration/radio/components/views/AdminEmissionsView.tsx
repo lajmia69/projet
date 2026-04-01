@@ -86,7 +86,7 @@ export default function AdminEmissionsView() {
 
 	const buildPayload = (): CreateEmissionPayload => ({
 		name: form.name.trim(),
-		description: form.description.trim(),
+		description: form.description.trim() || undefined,
 		language_id: Number(form.language_id),
 		emission_type_id: form.emission_type_id ? Number(form.emission_type_id) : undefined,
 		season_id: form.season_id ? Number(form.season_id) : undefined,

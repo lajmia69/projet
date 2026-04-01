@@ -300,6 +300,7 @@ export type Reportage = {
 	language: RadioLanguage;
 	tags: { id: number; name: string }[];
 	created_by: RadioAccount;
+	episode?: Episode;
 };
 
 export type ReportageList = { items: Reportage[]; count: number };
@@ -313,9 +314,11 @@ export type SearchReportagesParams = {
 
 export type CreateReportagePayload = {
 	name: string;
+	slug?: string;
 	description?: string;
 	language_id: number;
 	reportage_type_id?: number;
+	episode_id?: number;          // ← required by backend (send 0 or omit when none)
 	transcription?: Record<string, unknown>;
 	tags?: string[];
 	publishing_date?: string;

@@ -79,7 +79,7 @@ export default function AdminEpisodesView() {
 
 	const buildPayload = (): CreateEpisodePayload => ({
 		name: form.name.trim(),
-		description: form.description.trim(),
+		description: form.description.trim() || undefined,
 		language_id: Number(form.language_id),
 		emission_id: form.emission_id ? Number(form.emission_id) : undefined,
 		season_id: form.season_id ? Number(form.season_id) : undefined,

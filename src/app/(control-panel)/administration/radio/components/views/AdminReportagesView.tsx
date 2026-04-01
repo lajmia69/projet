@@ -24,6 +24,7 @@ import {
 	usePublishReportage,
 	useRadioAdminReportageTypes,
 	useRadioAdminLanguages,
+	useRadioAdminEpisodes,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 import { Reportage, CreateReportagePayload } from '@/app/(control-panel)/administration/radio/api/types';
 
@@ -31,20 +32,44 @@ const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
 }));
 
+async function logHttpError(label: string, err: unknown) {
+	if (err && typeof err === 'object' && 'response' in err) {
+		const res = (err as { response: Response }).response;
+		try {
+			const body = await res.clone().json();
+			console.error(`${label} — server validation errors:`, body);
+		} catch {
+			const text = await res.clone().text();
+			console.error(`${label} — server said:`, text);
+		}
+	} else {
+		console.error(label, err);
+	}
+}
+
+function toDateOnly(value: string | undefined): string | undefined {
+	if (!value) return undefined;
+	return value.split('T')[0] || undefined;
+}
+
 type ReportageForm = {
 	name: string;
+	slug: string;
 	description: string;
 	language_id: string;
 	reportage_type_id: string;
+	episode_id: string;
 	publishing_date: string;
 	online_date: string;
 };
 
 const empty: ReportageForm = {
 	name: '',
+	slug: '',
 	description: '',
 	language_id: '',
 	reportage_type_id: '',
+	episode_id: '',
 	publishing_date: '',
 	online_date: '',
 };
@@ -56,6 +81,7 @@ export default function AdminReportagesView() {
 	const { data: reportagesData, isLoading } = useRadioAdminReportages(token);
 	const { data: reportageTypesData } = useRadioAdminReportageTypes(token);
 	const { data: languagesData, isLoading: isLanguagesLoading, isError: isLanguagesError } = useRadioAdminLanguages(token);
+	const { data: episodesData } = useRadioAdminEpisodes(token);
 	const { mutate: create, isPending: isCreating } = useCreateReportage(token);
 	const { mutate: update, isPending: isUpdating } = useUpdateReportage(token);
 	const { mutate: remove } = useDeleteReportage(token);
@@ -74,32 +100,48 @@ export default function AdminReportagesView() {
 	const openEdit = (row: Reportage) => {
 		setForm({
 			name: row.name,
+			slug: row.slug ?? '',
 			description: row.description ?? '',
 			language_id: String(row.language?.id ?? ''),
 			reportage_type_id: String(row.reportage_type?.id ?? ''),
-			publishing_date: row.publishing_date ?? '',
-			online_date: row.online_date ?? '',
+			episode_id: String(row.episode?.id ?? ''),
+			publishing_date: toDateOnly(row.publishing_date) ?? '',
+			online_date: toDateOnly(row.online_date) ?? '',
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
-	const buildPayload = (): CreateReportagePayload => ({
-		name: form.name.trim(),
-		description: form.description.trim(),
-		language_id: Number(form.language_id),
-		reportage_type_id: form.reportage_type_id ? Number(form.reportage_type_id) : undefined,
-		publishing_date: form.publishing_date || undefined,
-		online_date: form.online_date || undefined,
-	});
+	const buildPayload = (): CreateReportagePayload => {
+		const languageId = Number(form.language_id);
+		const reportageTypeId = form.reportage_type_id ? Number(form.reportage_type_id) : undefined;
+		const episodeId = form.episode_id ? Number(form.episode_id) : 0;
+
+		const payload: CreateReportagePayload = {
+			name: form.name.trim(),
+			slug: form.slug.trim() || undefined,
+			description: form.description.trim() || undefined,
+			language_id: Number.isFinite(languageId) ? languageId : 0,
+			reportage_type_id: reportageTypeId && Number.isFinite(reportageTypeId) ? reportageTypeId : undefined,
+			// Backend requires episode_id; send 0 when none selected (matches the schema default)
+			episode_id: Number.isFinite(episodeId) ? episodeId : 0,
+			transcription: {},
+			tags: [],
+			publishing_date: toDateOnly(form.publishing_date),
+			online_date: toDateOnly(form.online_date),
+		};
+		console.log('Reportage payload:', JSON.stringify(payload, null, 2));
+		return payload;
+	};
 
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
-		onError: (err) => console.error('Create reportage failed:', err),
+		onError: (err) => logHttpError('Create reportage failed', err),
 	});
+
 	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
 		onSuccess: () => setEditOpen(false),
-		onError: (err) => console.error('Update reportage failed:', err),
+		onError: (err) => logHttpError('Update reportage failed', err),
 	});
 
 	const columns = useMemo<MRT_ColumnDef<Reportage>[]>(() => [
@@ -126,6 +168,14 @@ export default function AdminReportagesView() {
 			id: 'language',
 			header: 'Language',
 			accessorFn: (row) => row.language?.name ?? '',
+		},
+		{
+			id: 'episode',
+			header: 'Episode',
+			accessorFn: (row) => row.episode?.name ?? '',
+			Cell: ({ row }) => (
+				<span className="text-sm truncate max-w-[160px] block">{row.original.episode?.name ?? '—'}</span>
+			),
 		},
 		{
 			id: 'status',
@@ -157,6 +207,15 @@ export default function AdminReportagesView() {
 				<TextField size="small" value={form.name} onChange={(e) => setField('name', e.target.value)} />
 			</FormControl>
 			<FormControl fullWidth>
+				<FormLabel>Slug</FormLabel>
+				<TextField
+					size="small"
+					value={form.slug}
+					onChange={(e) => setField('slug', e.target.value)}
+					placeholder="auto-generated if left blank"
+				/>
+			</FormControl>
+			<FormControl fullWidth>
 				<FormLabel>Description</FormLabel>
 				<TextField size="small" multiline minRows={2} value={form.description} onChange={(e) => setField('description', e.target.value)} />
 			</FormControl>
@@ -175,13 +234,22 @@ export default function AdminReportagesView() {
 					</Select>
 				)}
 			</FormControl>
-			<FormControl fullWidth>
-				<FormLabel>Reportage Type</FormLabel>
-				<Select size="small" value={form.reportage_type_id} onChange={(e) => setField('reportage_type_id', e.target.value)} displayEmpty>
-					<MenuItem value=""><em>None</em></MenuItem>
-					{reportageTypesData?.items.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
-				</Select>
-			</FormControl>
+			<div className="flex gap-3">
+				<FormControl fullWidth>
+					<FormLabel>Reportage Type</FormLabel>
+					<Select size="small" value={form.reportage_type_id} onChange={(e) => setField('reportage_type_id', e.target.value)} displayEmpty>
+						<MenuItem value=""><em>None</em></MenuItem>
+						{reportageTypesData?.items.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
+					</Select>
+				</FormControl>
+				<FormControl fullWidth>
+					<FormLabel>Episode</FormLabel>
+					<Select size="small" value={form.episode_id} onChange={(e) => setField('episode_id', e.target.value)} displayEmpty>
+						<MenuItem value=""><em>None</em></MenuItem>
+						{episodesData?.items.map((e) => <MenuItem key={e.id} value={String(e.id)}>{e.name}</MenuItem>)}
+					</Select>
+				</FormControl>
+			</div>
 			<div className="flex gap-3">
 				<FormControl fullWidth>
 					<FormLabel>Publishing Date</FormLabel>
@@ -191,7 +259,6 @@ export default function AdminReportagesView() {
 						value={form.publishing_date}
 						onChange={(e) => setField('publishing_date', e.target.value)}
 						InputLabelProps={{ shrink: true }}
-						inputProps={{ placeholder: 'yyyy-mm-dd' }}
 					/>
 				</FormControl>
 				<FormControl fullWidth>
@@ -202,7 +269,6 @@ export default function AdminReportagesView() {
 						value={form.online_date}
 						onChange={(e) => setField('online_date', e.target.value)}
 						InputLabelProps={{ shrink: true }}
-						inputProps={{ placeholder: 'yyyy-mm-dd' }}
 					/>
 				</FormControl>
 			</div>
