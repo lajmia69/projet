@@ -83,18 +83,24 @@ export default function AdminEpisodesView() {
 		setEditOpen(true);
 	};
 
+	// FIX 1: omit transcription and tags entirely on create — backend rejects empty {} and []
 	const buildPayload = (): CreateEpisodePayload => ({
 		name: form.name.trim(),
 		description: form.description.trim() || undefined,
 		language_id: Number(form.language_id),
 		emission_id: form.emission_id ? Number(form.emission_id) : undefined,
 		season_id: form.season_id ? Number(form.season_id) : undefined,
-		transcription: {},
-		tags: [],
 	});
 
-	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
+	// FIX 5: log errors at call site to surface backend rejection messages
+	const handleAdd = () => create(buildPayload(), {
+		onSuccess: () => setAddOpen(false),
+		onError: (err) => console.error('Create episode failed:', err),
+	});
+	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+		onSuccess: () => setEditOpen(false),
+		onError: (err) => console.error('Update episode failed:', err),
+	});
 
 	const columns = useMemo<MRT_ColumnDef<Episode>[]>(() => [
 		{

@@ -79,17 +79,23 @@ export default function AdminReportagesView() {
 		setEditOpen(true);
 	};
 
+	// FIX 1: omit transcription and tags entirely on create — backend rejects empty {} and []
 	const buildPayload = (): CreateReportagePayload => ({
 		name: form.name.trim(),
 		description: form.description.trim() || undefined,
 		language_id: Number(form.language_id),
 		reportage_type_id: form.reportage_type_id ? Number(form.reportage_type_id) : undefined,
-		transcription: {},
-		tags: [],
 	});
 
-	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
+	// FIX 5: log errors at call site to surface backend rejection messages
+	const handleAdd = () => create(buildPayload(), {
+		onSuccess: () => setAddOpen(false),
+		onError: (err) => console.error('Create reportage failed:', err),
+	});
+	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+		onSuccess: () => setEditOpen(false),
+		onError: (err) => console.error('Update reportage failed:', err),
+	});
 
 	const columns = useMemo<MRT_ColumnDef<Reportage>[]>(() => [
 		{

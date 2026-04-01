@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { FormControl, FormLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { FormControl, FormLabel, MenuItem, Select, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
 	useEpisodeGuests,
@@ -50,12 +50,21 @@ export default function EpisodeGuestsView() {
 	const buildPayload = () => ({
 		full_name: form.full_name.trim(),
 		biography: form.biography.trim() || undefined,
-		guest_type_id: Number(form.guest_type_id),
+		// FIX 2: guard against Number('') === 0 — send undefined instead of 0
+		guest_type_id: form.guest_type_id ? Number(form.guest_type_id) : undefined,
 	});
 
 	const canSubmit = !!form.full_name.trim() && !!form.guest_type_id;
-	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
+
+	// FIX 5: log errors at call site to surface backend rejection messages
+	const handleAdd = () => create(buildPayload(), {
+		onSuccess: () => setAddOpen(false),
+		onError: (err) => console.error('Create episode guest failed:', err),
+	});
+	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+		onSuccess: () => setEditOpen(false),
+		onError: (err) => console.error('Update episode guest failed:', err),
+	});
 
 	const columns = useMemo<MRT_ColumnDef<EpisodeGuest>[]>(() => [
 		{ accessorKey: 'id', header: 'ID', size: 70 },
