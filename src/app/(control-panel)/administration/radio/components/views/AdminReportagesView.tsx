@@ -16,20 +16,20 @@ import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 import {
-	useSearchReportages,
+	useSearchRadioAdminReportages,
 	useCreateReportage,
 	useUpdateReportage,
 	useDeleteReportage,
 	useValidateReportage,
 	usePublishReportage,
-	useReportageTypes,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
+	useRadioAdminReportageTypes,
+	useRadioAdminLanguages,
+} from '../../api/hooks/useRadioAdmin';
 import {
 	Reportage,
-	SearchReportages,
+	SearchReportagesParams,
 	CreateReportagePayload,
-} from '@/app/(control-panel)/content/radio/api/types';
+} from '../../api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -46,18 +46,17 @@ const empty: ReportageForm = { name: '', description: '', language_id: '', repor
 
 export default function AdminReportagesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const searchParams: SearchReportages = { limit: 200, offset: 0 };
-	const { data: reportagesData, isLoading } = useSearchReportages(id, token, searchParams);
-	const { data: reportageTypesData } = useReportageTypes(id, token);
-	const { data: languagesData } = useLanguages(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateReportage(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateReportage(id, token);
-	const { mutate: remove } = useDeleteReportage(id, token);
-	const { mutate: validate } = useValidateReportage(id, token);
-	const { mutate: publish } = usePublishReportage(id, token);
+	const searchParams: SearchReportagesParams = { limit: 200, offset: 0 };
+	const { data: reportagesData, isLoading } = useSearchRadioAdminReportages(token, searchParams);
+	const { data: reportageTypesData } = useRadioAdminReportageTypes(token);
+	const { data: languagesData } = useRadioAdminLanguages(token);
+	const { mutate: create, isPending: isCreating } = useCreateReportage(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateReportage(token);
+	const { mutate: remove } = useDeleteReportage(token);
+	const { mutate: validate } = useValidateReportage(token);
+	const { mutate: publish } = usePublishReportage(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);

@@ -17,20 +17,20 @@ import { format, parseISO, isValid } from 'date-fns';
 import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 import {
-	useEmissions,
+	useRadioAdminEmissions,
 	useCreateEmission,
 	useUpdateEmission,
 	useDeleteEmission,
 	useValidateEmission,
 	usePublishEmission,
-	useEmissionTypes,
-	useSeasons,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
+	useRadioAdminEmissionTypes,
+	useRadioAdminSeasons,
+	useRadioAdminLanguages,
+} from '../../api/hooks/useRadioAdmin';
 import {
 	Emission,
 	CreateEmissionPayload,
-} from '@/app/(control-panel)/content/radio/api/types';
+} from '../../api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -54,18 +54,17 @@ const empty: EmissionForm = { name: '', description: '', language_id: '', emissi
 
 export default function AdminEmissionsView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const { data: emissionsData, isLoading } = useEmissions(id, token);
-	const { data: emissionTypesData } = useEmissionTypes(id, token);
-	const { data: seasonsData } = useSeasons(id, token);
-	const { data: languagesData } = useLanguages(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateEmission(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEmission(id, token);
-	const { mutate: remove } = useDeleteEmission(id, token);
-	const { mutate: validate } = useValidateEmission(id, token);
-	const { mutate: publish } = usePublishEmission(id, token);
+	const { data: emissionsData, isLoading } = useRadioAdminEmissions(token);
+	const { data: emissionTypesData } = useRadioAdminEmissionTypes(token);
+	const { data: seasonsData } = useRadioAdminSeasons(token);
+	const { data: languagesData } = useRadioAdminLanguages(token);
+	const { mutate: create, isPending: isCreating } = useCreateEmission(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEmission(token);
+	const { mutate: remove } = useDeleteEmission(token);
+	const { mutate: validate } = useValidateEmission(token);
+	const { mutate: publish } = usePublishEmission(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);

@@ -5,12 +5,12 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useEmissionTypes,
+	useRadioAdminEmissionTypes,
 	useCreateEmissionType,
 	useUpdateEmissionType,
 	useDeleteEmissionType,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { EmissionType } from '@/app/(control-panel)/content/radio/api/types';
+} from '../../api/hooks/useRadioAdmin';
+import { EmissionType } from '../../api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type EmissionTypeForm = { name: string; description: string };
@@ -18,13 +18,12 @@ const empty: EmissionTypeForm = { name: '', description: '' };
 
 export default function EmissionTypesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const { data, isLoading } = useEmissionTypes(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateEmissionType(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEmissionType(id, token);
-	const { mutate: remove } = useDeleteEmissionType(id, token);
+	const { data, isLoading } = useRadioAdminEmissionTypes(token);
+	const { mutate: create, isPending: isCreating } = useCreateEmissionType(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEmissionType(token);
+	const { mutate: remove } = useDeleteEmissionType(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -32,13 +31,19 @@ export default function EmissionTypesView() {
 	const [editingId, setEditingId] = useState<number | null>(null);
 
 	const setField = (f: keyof EmissionTypeForm, v: string) => setForm((p) => ({ ...p, [f]: v }));
+
 	const openAdd = () => { setForm(empty); setAddOpen(true); };
 	const openEdit = (row: EmissionType) => {
 		setForm({ name: row.name, description: row.description ?? '' });
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
-	const buildPayload = () => ({ name: form.name.trim(), description: form.description.trim() || undefined });
+
+	const buildPayload = () => ({
+		name: form.name.trim(),
+		description: form.description.trim() || undefined,
+	});
+
 	const handleAdd = () => create(buildPayload(), { onSuccess: () => setAddOpen(false) });
 	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, { onSuccess: () => setEditOpen(false) });
 

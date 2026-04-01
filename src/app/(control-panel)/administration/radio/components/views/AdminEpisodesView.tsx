@@ -16,21 +16,21 @@ import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 import {
-	useSearchEpisodes,
+	useSearchRadioAdminEpisodes,
 	useCreateEpisode,
 	useUpdateEpisode,
 	useDeleteEpisode,
 	useValidateEpisode,
 	usePublishEpisode,
-	useEmissions,
-	useSeasons,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
+	useRadioAdminEmissions,
+	useRadioAdminSeasons,
+	useRadioAdminLanguages,
+} from '../../api/hooks/useRadioAdmin';
 import {
 	Episode,
-	SearchEpisodes,
+	SearchEpisodesParams,
 	CreateEpisodePayload,
-} from '@/app/(control-panel)/content/radio/api/types';
+} from '../../api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -48,19 +48,18 @@ const empty: EpisodeForm = { name: '', description: '', language_id: '', emissio
 
 export default function AdminEpisodesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const searchParams: SearchEpisodes = { limit: 200, offset: 0 };
-	const { data: episodesData, isLoading } = useSearchEpisodes(id, token, searchParams);
-	const { data: emissionsData } = useEmissions(id, token);
-	const { data: seasonsData } = useSeasons(id, token);
-	const { data: languagesData } = useLanguages(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateEpisode(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(id, token);
-	const { mutate: remove } = useDeleteEpisode(id, token);
-	const { mutate: validate } = useValidateEpisode(id, token);
-	const { mutate: publish } = usePublishEpisode(id, token);
+	const searchParams: SearchEpisodesParams = { limit: 200, offset: 0 };
+	const { data: episodesData, isLoading } = useSearchRadioAdminEpisodes(token, searchParams);
+	const { data: emissionsData } = useRadioAdminEmissions(token);
+	const { data: seasonsData } = useRadioAdminSeasons(token);
+	const { data: languagesData } = useRadioAdminLanguages(token);
+	const { mutate: create, isPending: isCreating } = useCreateEpisode(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(token);
+	const { mutate: remove } = useDeleteEpisode(token);
+	const { mutate: validate } = useValidateEpisode(token);
+	const { mutate: publish } = usePublishEpisode(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);

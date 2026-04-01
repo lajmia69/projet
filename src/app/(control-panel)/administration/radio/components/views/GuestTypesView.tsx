@@ -5,12 +5,12 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useGuestTypes,
+	useRadioAdminGuestTypes,
 	useCreateGuestType,
 	useUpdateGuestType,
 	useDeleteGuestType,
-} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
-import { GuestType } from '@/app/(control-panel)/content/radio/api/types';
+} from '../../api/hooks/useRadioAdmin';
+import { GuestType } from '../../api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type GuestTypeForm = { name: string; description: string };
@@ -18,13 +18,12 @@ const empty: GuestTypeForm = { name: '', description: '' };
 
 export default function GuestTypesView() {
 	const { data: account } = useUser();
-	const id = account?.id;
-	const token = account?.token?.access;
+	const token = account?.token;
 
-	const { data, isLoading } = useGuestTypes(id, token);
-	const { mutate: create, isPending: isCreating } = useCreateGuestType(id, token);
-	const { mutate: update, isPending: isUpdating } = useUpdateGuestType(id, token);
-	const { mutate: remove } = useDeleteGuestType(id, token);
+	const { data, isLoading } = useRadioAdminGuestTypes(token);
+	const { mutate: create, isPending: isCreating } = useCreateGuestType(token);
+	const { mutate: update, isPending: isUpdating } = useUpdateGuestType(token);
+	const { mutate: remove } = useDeleteGuestType(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
