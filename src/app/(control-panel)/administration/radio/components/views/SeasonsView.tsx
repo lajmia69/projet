@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { FormControl, FormLabel, TextField } from '@mui/material';
+import { Button, FormControl, FormLabel, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useRadioAdminSeasons,
+	useSeasons,
 	useCreateSeason,
 	useUpdateSeason,
 	useDeleteSeason,
-} from '../../api/hooks/useRadioAdmin';
-import { Season } from '../../api/types';
+} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
+import { Season } from '@/app/(control-panel)/content/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type SeasonForm = { name: string; description: string; number: string };
@@ -18,12 +18,13 @@ const empty: SeasonForm = { name: '', description: '', number: '' };
 
 export default function SeasonsView() {
 	const { data: account } = useUser();
-	const token = account?.token;
+	const id = account?.id;
+	const token = account?.token?.access;
 
-	const { data, isLoading } = useRadioAdminSeasons(token);
-	const { mutate: create, isPending: isCreating } = useCreateSeason(token);
-	const { mutate: update, isPending: isUpdating } = useUpdateSeason(token);
-	const { mutate: remove } = useDeleteSeason(token);
+	const { data, isLoading } = useSeasons(id, token);
+	const { mutate: create, isPending: isCreating } = useCreateSeason(id, token);
+	const { mutate: update, isPending: isUpdating } = useUpdateSeason(id, token);
+	const { mutate: remove } = useDeleteSeason(id, token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);

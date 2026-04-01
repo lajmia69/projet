@@ -2,16 +2,16 @@
 
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import { FormControl, FormLabel, MenuItem, Select, TextField } from '@mui/material';
+import { FormControl, FormLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useRadioAdminEpisodeGuests,
+	useEpisodeGuests,
 	useCreateEpisodeGuest,
 	useUpdateEpisodeGuest,
 	useDeleteEpisodeGuest,
-	useRadioAdminGuestTypes,
-} from '../../api/hooks/useRadioAdmin';
-import { EpisodeGuest } from '../../api/types';
+	useGuestTypes,
+} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
+import { EpisodeGuest } from '@/app/(control-panel)/content/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type GuestForm = { full_name: string; biography: string; guest_type_id: string };
@@ -19,13 +19,14 @@ const empty: GuestForm = { full_name: '', biography: '', guest_type_id: '' };
 
 export default function EpisodeGuestsView() {
 	const { data: account } = useUser();
-	const token = account?.token;
+	const id = account?.id;
+	const token = account?.token?.access;
 
-	const { data, isLoading } = useRadioAdminEpisodeGuests(token);
-	const { data: guestTypes } = useRadioAdminGuestTypes(token);
-	const { mutate: create, isPending: isCreating } = useCreateEpisodeGuest(token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEpisodeGuest(token);
-	const { mutate: remove } = useDeleteEpisodeGuest(token);
+	const { data, isLoading } = useEpisodeGuests(id, token);
+	const { data: guestTypes } = useGuestTypes(id, token);
+	const { mutate: create, isPending: isCreating } = useCreateEpisodeGuest(id, token);
+	const { mutate: update, isPending: isUpdating } = useUpdateEpisodeGuest(id, token);
+	const { mutate: remove } = useDeleteEpisodeGuest(id, token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -64,11 +65,7 @@ export default function EpisodeGuestsView() {
 			header: 'Type',
 			accessorFn: (row) => row.guest_type?.name ?? '',
 		},
-		{
-			accessorKey: 'biography',
-			header: 'Biography',
-			Cell: ({ cell }) => <span className="line-clamp-1">{cell.getValue<string>()}</span>,
-		},
+		{ accessorKey: 'biography', header: 'Biography', Cell: ({ cell }) => <span className="line-clamp-1">{cell.getValue<string>()}</span> },
 	], []);
 
 	const formContent = (

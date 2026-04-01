@@ -5,12 +5,12 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import { FormControl, FormLabel, TextField } from '@mui/material';
 import useUser from '@auth/useUser';
 import {
-	useRadioAdminReportageTypes,
+	useReportageTypes,
 	useCreateReportageType,
 	useUpdateReportageType,
 	useDeleteReportageType,
-} from '../../api/hooks/useRadioAdmin';
-import { ReportageType } from '../../api/types';
+} from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';
+import { ReportageType } from '@/app/(control-panel)/content/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type ReportageTypeForm = { name: string; description: string };
@@ -18,12 +18,13 @@ const empty: ReportageTypeForm = { name: '', description: '' };
 
 export default function ReportageTypesView() {
 	const { data: account } = useUser();
-	const token = account?.token;
+	const id = account?.id;
+	const token = account?.token?.access;
 
-	const { data, isLoading } = useRadioAdminReportageTypes(token);
-	const { mutate: create, isPending: isCreating } = useCreateReportageType(token);
-	const { mutate: update, isPending: isUpdating } = useUpdateReportageType(token);
-	const { mutate: remove } = useDeleteReportageType(token);
+	const { data, isLoading } = useReportageTypes(id, token);
+	const { mutate: create, isPending: isCreating } = useCreateReportageType(id, token);
+	const { mutate: update, isPending: isUpdating } = useUpdateReportageType(id, token);
+	const { mutate: remove } = useDeleteReportageType(id, token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);

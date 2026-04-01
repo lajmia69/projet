@@ -6,6 +6,7 @@ export const languagesQueryKey = ['lesson', 'languages'];
 export const useLanguages = (current_account_id: string, accessToken: string) => {
 	return useQuery({
 		queryKey: languagesQueryKey,
-		queryFn: () => lessonApi.getLanguages(current_account_id, accessToken)
+		queryFn: () => lessonApi.getLanguages(current_account_id, accessToken),
+		enabled: !!current_account_id && !!accessToken
 	});
 };
