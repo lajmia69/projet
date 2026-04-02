@@ -205,9 +205,10 @@ export const radioAdminApi = {
 			.get(`radio/emission/detail/${accountId(token)}/${emissionId}/`, { headers: authHeaders(token) })
 			.json(),
 
+	// ── FIX: wrap data in { payload } to match backend schema ─────────────────
 	createEmission: (token: Token | undefined, data: CreateEmissionPayload): Promise<Emission> =>
 		radioApi
-			.post(`radio/emission/create/${accountId(token)}/`, { json: data, headers: authHeaders(token) })
+			.post(`radio/emission/create/${accountId(token)}/`, { json: { payload: data }, headers: authHeaders(token) })
 			.json(),
 
 	updateEmission: (token: Token | undefined, data: UpdateEmissionPayload): Promise<Emission> =>

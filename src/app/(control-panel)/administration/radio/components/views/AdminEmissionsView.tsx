@@ -30,7 +30,7 @@ import {
 	useRadioAdminTags,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 import { radioAdminApi } from '@/app/(control-panel)/administration/radio/api/services/radioAdminApiService';
-import { Emission, CreateEmissionPayload } from '@/app/(control-panel)/administration/radio/api/types';
+import { Emission, CreateEmissionPayload, RadioTag } from '@/app/(control-panel)/administration/radio/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -76,7 +76,8 @@ type EmissionForm = {
 	publishing_date: string;
 	start_date: string;
 	end_date: string;
-	tags: string[];           // array of tag names
+	/** Selected tags — can be existing RadioTag objects or plain strings for new ones */
+	tags: (RadioTag | string)[];
 	is_pubic_content: boolean;
 	is_published: boolean;
 };
@@ -95,6 +96,11 @@ const empty: EmissionForm = {
 	is_pubic_content: false,
 	is_published: false,
 };
+
+/** Extract the display name from a tag option (object or string) */
+function tagLabel(tag: RadioTag | string): string {
+	return typeof tag === 'string' ? tag : tag.name;
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -123,7 +129,6 @@ export default function AdminEmissionsView() {
 	const [isPosterUploading, setIsPosterUploading] = useState(false);
 	const posterInputRef = useRef<HTMLInputElement>(null);
 
-	// Helpers to update individual fields
 	const setField = <K extends keyof EmissionForm>(f: K, v: EmissionForm[K]) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
@@ -137,9 +142,9 @@ export default function AdminEmissionsView() {
 
 	const isPending = isCreating || isUpdating || isPosterUploading;
 
-	// All tag names available from the backend
-	const tagOptions: string[] = useMemo(
-		() => tagsData?.items.map((t) => t.name) ?? [],
+	/** All tags from the backend — used as Autocomplete options */
+	const tagOptions: RadioTag[] = useMemo(
+		() => tagsData?.items ?? [],
 		[tagsData]
 	);
 
@@ -156,8 +161,12 @@ export default function AdminEmissionsView() {
 			publishing_date: toDateOnly(row.publishing_date) ?? '',
 			start_date: toDateOnly(row.start_date) ?? '',
 			end_date: toDateOnly(row.end_date) ?? '',
-			// Populate tags from the existing emission's tag names
-			tags: row.tags?.map((t) => t.name) ?? [],
+			// Rehydrate tags: match by name against fetched tag objects so the
+			// Autocomplete can display them as chips properly.
+			tags: (row.tags ?? []).map((rt) => {
+				const found = tagOptions.find((t) => t.name === rt.name || t.id === rt.id);
+				return found ?? rt.name;
+			}),
 			is_pubic_content: row.is_pubic_content ?? false,
 			is_published: row.is_published ?? false,
 		});
@@ -166,12 +175,15 @@ export default function AdminEmissionsView() {
 		setEditOpen(true);
 	};
 
+	/** Convert the mixed tags array (RadioTag | string) to an array of name strings for the payload */
+	const resolveTagNames = (): string[] => form.tags.map(tagLabel);
+
 	const buildPayload = (): CreateEmissionPayload => {
 		const payload: CreateEmissionPayload = {
 			name: form.name.trim(),
 			created_by_id: accountId!,
 			language_id: Number(form.language_id),
-			tags: form.tags,
+			tags: resolveTagNames(),
 			transcription: {},
 		};
 
@@ -457,22 +469,34 @@ export default function AdminEmissionsView() {
 				/>
 			</FormControl>
 
-			{/* ── Tags — fetched from backend, multi-select with freeSolo fallback ── */}
+			{/* ── Tags ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Tags</FormLabel>
 				<Autocomplete
 					multiple
 					freeSolo
 					options={tagOptions}
+					// Use the RadioTag object (or string) for value tracking
 					value={form.tags}
-					onChange={(_, newValue) => setField('tags', newValue as string[])}
+					onChange={(_, newValue) => setField('tags', newValue as (RadioTag | string)[])}
 					loading={isTagsLoading}
+					// How to display each option in the dropdown list
+					getOptionLabel={(option) => tagLabel(option as RadioTag | string)}
+					// Deduplicate: treat two options as equal if same name
+					isOptionEqualToValue={(option, value) =>
+						tagLabel(option as RadioTag | string) === tagLabel(value as RadioTag | string)
+					}
+					renderOption={(props, option) => (
+						<li {...props} key={typeof option === 'string' ? option : option.id}>
+							{tagLabel(option as RadioTag | string)}
+						</li>
+					)}
 					renderTags={(value, getTagProps) =>
 						value.map((option, index) => (
 							<Chip
 								{...getTagProps({ index })}
-								key={option}
-								label={option}
+								key={tagLabel(option as RadioTag | string)}
+								label={tagLabel(option as RadioTag | string)}
 								size="small"
 								sx={{ fontSize: '0.75rem' }}
 							/>
@@ -482,7 +506,7 @@ export default function AdminEmissionsView() {
 						<TextField
 							{...params}
 							size="small"
-							placeholder={form.tags.length === 0 ? 'Select or type tags…' : ''}
+							placeholder={form.tags.length === 0 ? 'Pick existing tags or type a new one…' : ''}
 							InputProps={{
 								...params.InputProps,
 								endAdornment: (
@@ -496,7 +520,7 @@ export default function AdminEmissionsView() {
 					)}
 				/>
 				<Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-					Choose from existing tags or type a new one and press Enter.
+					Select from existing tags or type a new name and press Enter to add it.
 				</Typography>
 			</FormControl>
 
