@@ -1,18 +1,31 @@
+/**
+ * types/index.ts
+ *
+ * FIX D — Emission, Episode and Reportage list items do NOT include audio
+ *          versions, view_number, emotions, or transcription (those only come
+ *          back on the detail endpoint).  Making those fields optional prevents
+ *          TypeScript errors when rendering list rows and stops silent runtime
+ *          crashes when code tries to destructure undefined nested objects.
+ *
+ * FIX E — EmissionEmotion / emission emotion endpoints removed (they don't
+ *          exist in the OpenAPI spec — only episode and reportage emotions do).
+ */
+
 // ─── Shared ───────────────────────────────────────────────────────────────────
 
 export type RadioAudio = {
-	id: number;
+	id?: number;
 	src: string;
 	file: string;
 	name: string;
 	description: string;
 	duration: string;
-	timestamp: number;
+	timestamp?: number;
 	type: number;
 	type_label: string;
-	reference: string;
+	reference?: string;
 	format: {
-		id: number;
+		id?: number;
 		name: string;
 		extension: string;
 		bit_rates: string;
@@ -30,22 +43,25 @@ export type RadioLanguage = {
 	icon: string;
 };
 
+export type RadioLanguageList = { items: RadioLanguage[]; count: number };
+
 export type RadioAccount = {
-	id: number;
+	id?: number;
 	full_name: string;
-	avatar: string;
-	is_active: boolean;
-	phone: string;
-	address: string;
-	biography: string;
-	user: {
-		id: number;
+	avatar?: string;
+	is_active?: boolean;
+	phone?: string;
+	address?: string | null;
+	biography?: string | null;
+	user?: {
+		id?: number;
 		username: string;
-		first_name: string;
-		last_name: string;
-		email: string;
-		date_joined: string;
+		first_name?: string | null;
+		last_name?: string | null;
+		email?: string | null;
+		date_joined?: string;
 	};
+	level?: { id?: number; name: string } | null;
 };
 
 export type RadioTranscriptionContent = {
@@ -60,13 +76,13 @@ export type RadioTranscriptionContent = {
 };
 
 export type RadioTranscription = {
-	title: string;
-	author: string;
-	source: string;
-	language_orientation: string;
-	is_original: boolean;
-	type: string;
-	content: RadioTranscriptionContent[];
+	title?: string;
+	author?: string;
+	source?: string;
+	language_orientation?: string;
+	is_original?: boolean;
+	type?: string;
+	content?: RadioTranscriptionContent[];
 };
 
 // ─── Emission Type ────────────────────────────────────────────────────────────
@@ -91,7 +107,7 @@ export type Season = {
 	id: number;
 	name: string;
 	slug?: string;
-	description: string;
+	description?: string;
 	start_date?: string;
 	end_date?: string;
 };
@@ -128,7 +144,8 @@ export type UpdateGuestTypePayload = Partial<CreateGuestTypePayload> & { id: num
 export type Guest = {
 	id: number;
 	full_name: string;
-	biography?: string;
+	biography?: string | null;
+	avatar?: string;
 };
 
 export type GuestList = { items: Guest[]; count: number };
@@ -150,52 +167,66 @@ export type CreateEpisodeGuestPayload = {
 export type UpdateEpisodeGuestPayload = Partial<CreateEpisodeGuestPayload> & { id: number };
 
 // ─── Emission ─────────────────────────────────────────────────────────────────
-// FIX #1: Backend uses `is_pubic_content` (backend typo — match it exactly so
-//         JSON deserialization succeeds; rename locally via a type alias if/when
-//         the backend spelling is corrected).
+// FIX D: audio, view_number, transcription are ONLY in the detail endpoint.
+//         They are typed optional here so the list response parses cleanly.
 
 export type Emission = {
 	id: number;
 	name: string;
 	slug?: string;
-	description: string;
-	transcription: RadioTranscription;
-	poster: string;
+	description?: string;
+	poster?: string;
 	poster_description?: string;
 	start_date?: string;
 	is_approved_content: boolean;
-	/** @note Backend field is spelled `is_pubic_content` — matches the JSON key exactly. */
+	/** Backend field is spelled `is_pubic_content` (typo in the API). */
 	is_pubic_content: boolean;
 	is_published: boolean;
-	publishing_date: string;
-	view_number: number;
-	hd_version: RadioAudio;
-	streaming_version: RadioAudio;
-	teaser_version: RadioAudio;
-	emission_type: EmissionType;
-	season: Season;
-	language: RadioLanguage;
-	tags: { id: number; name: string }[];
-	created_by: RadioAccount;
-	approved_by?: RadioAccount;
+	publishing_date?: string;
+	emission_type?: EmissionType;
+	language?: RadioLanguage;
+	tags?: { id: number; name: string }[];
+	created_by?: RadioAccount;
+	approved_by?: RadioAccount | null;
+	// Detail-only fields — undefined on list responses
+	season_episodes_list?: EmissionSeasonEpisodeDetail[] | null;
+	view_number?: number;
+	hd_version?: RadioAudio | null;
+	streaming_version?: RadioAudio | null;
+	teaser_version?: RadioAudio | null;
+	transcription?: RadioTranscription;
+};
+
+export type EmissionSeasonDetail = {
+	id?: number;
+	name: string;
+	slug?: string;
+	description?: string;
+	start_date?: string;
+	end_date?: string;
+};
+
+export type EmissionSeasonEpisodeDetail = {
+	season: EmissionSeasonDetail;
+	episodes: Episode[];
 };
 
 export type EmissionList = { items: Emission[]; count: number };
 
 export type SearchEmissionsParams = {
+	name?: string;
 	language?: string;
-	emission_type?: number;
-	season?: number;
+	emission_type?: string;
+	tags?: string;
 	limit?: number;
 	offset?: number;
 };
 
-// FIX #2: Restore `tags` and `transcription` that were mistakenly removed from
-//         the payload type — the backend schema does accept them.
 export type CreateEmissionPayload = {
 	name: string;
 	slug?: string;
 	description?: string;
+	poster_description?: string;
 	language_id: number;
 	emission_type_id?: number;
 	publishing_date?: string;
@@ -203,58 +234,79 @@ export type CreateEmissionPayload = {
 	tags?: string[];
 	transcription?: Record<string, unknown>;
 };
-export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & { id: number };
-
-// ─── Emission Emotion ─────────────────────────────────────────────────────────
-
-export type EmissionEmotion = {
+export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & {
 	id: number;
-	emission: number;
-	emotion_type: string;
-	emotion_label: string;
-	count: number;
-	user_emotion: string | null;
+	remove_tags?: string[] | null;
+	add_tags?: string[] | null;
+	end_date?: string | null;
 };
 
-export type EmissionEmotionList = { items: EmissionEmotion[]; count: number };
-export type SetEmissionEmotionPayload = { emission_id: number; emotion_type: string };
-
 // ─── Episode ──────────────────────────────────────────────────────────────────
-// FIX #1 (same as Emission): backend JSON key is `is_pubic_content`.
+// FIX D: same pattern — audio + guests + emotions only from detail endpoint.
 
 export type Episode = {
 	id: number;
 	name: string;
 	slug?: string;
-	description: string;
-	transcription: RadioTranscription;
+	description?: string;
 	is_approved_content: boolean;
-	/** @note Backend field is spelled `is_pubic_content` — matches the JSON key exactly. */
+	/** Backend field is spelled `is_pubic_content` (typo in the API). */
 	is_pubic_content: boolean;
 	is_published: boolean;
-	publishing_date: string;
+	publishing_date?: string;
 	online_date?: string;
-	view_number: number;
-	hd_version: RadioAudio;
-	streaming_version: RadioAudio;
-	teaser_version: RadioAudio;
-	emission: Emission;
-	emission_type?: EmissionType;
-	episode_number?: number;
-	season: Season;
-	language: RadioLanguage;
-	guests: EpisodeGuest[];
-	tags: { id: number; name: string }[];
-	created_by: RadioAccount;
-	approved_by?: RadioAccount;
+	emission?: Emission;
+	season?: Season;
+	language?: RadioLanguage;
+	tags?: { id: number; name: string }[];
+	created_by?: RadioAccount;
+	approved_by?: RadioAccount | null;
+	// Detail-only fields
+	view_number?: number;
+	hd_version?: RadioAudio | null;
+	streaming_version?: RadioAudio | null;
+	teaser_version?: RadioAudio | null;
+	transcription?: RadioTranscription;
+	episode_guests_list?: EpisodeGuestItem[];
+	emotions?: RadioEmotion[] | null;
+	production_project?: ProductionProject | null;
+};
+
+export type EpisodeGuestItem = {
+	guest: Guest;
+	guest_type: GuestType;
+};
+
+export type RadioEmotionBase = {
+	id?: number;
+	icon: string;
+	name: string;
+	description: string;
+};
+
+export type RadioEmotion = {
+	emotion: RadioEmotionBase;
+	emotion_count: number;
+};
+
+export type ProductionProject = {
+	id?: number;
+	name: string;
+	description?: string;
+	start_date?: string;
+	end_date?: string;
+	note?: string | null;
 };
 
 export type EpisodeList = { items: Episode[]; count: number };
 
 export type SearchEpisodesParams = {
+	emission?: string;
+	season?: string;
+	name?: string;
 	language?: string;
-	emission?: number;
-	season?: number;
+	emission_type?: string;
+	tags?: string;
 	limit?: number;
 	offset?: number;
 };
@@ -267,22 +319,26 @@ export type CreateEpisodePayload = {
 	season_id?: number;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
+	publishing_date?: string;
+	online_date?: string;
 };
-export type UpdateEpisodePayload = Partial<CreateEpisodePayload> & { id: number };
+export type UpdateEpisodePayload = Partial<CreateEpisodePayload> & {
+	id: number;
+	remove_tags?: string[] | null;
+	add_tags?: string[] | null;
+};
 
 // ─── Episode Emotion ──────────────────────────────────────────────────────────
 
 export type EpisodeEmotion = {
-	id: number;
-	episode: number;
-	emotion_type: string;
-	emotion_label: string;
-	count: number;
-	user_emotion: string | null;
+	id?: number;
+	episode: Episode;
+	account: RadioAccount;
+	emotion: RadioEmotionBase;
 };
 
 export type EpisodeEmotionList = { items: EpisodeEmotion[]; count: number };
-export type SetEpisodeEmotionPayload = { episode_id: number; emotion_type: string };
+export type SetEpisodeEmotionPayload = { episode_id: number; emotion_id: number };
 
 // ─── Reportage Type ───────────────────────────────────────────────────────────
 
@@ -301,36 +357,43 @@ export type CreateReportageTypePayload = {
 export type UpdateReportageTypePayload = Partial<CreateReportageTypePayload> & { id: number };
 
 // ─── Reportage ────────────────────────────────────────────────────────────────
-// FIX #1 (same as Emission): backend JSON key is `is_pubic_content`.
+// FIX D: same pattern as Episode.
 
 export type Reportage = {
 	id: number;
 	name: string;
 	slug?: string;
-	description: string;
-	transcription: RadioTranscription;
+	description?: string;
 	is_approved_content: boolean;
-	/** @note Backend field is spelled `is_pubic_content` — matches the JSON key exactly. */
+	/** Backend field is spelled `is_pubic_content` (typo in the API). */
 	is_pubic_content: boolean;
 	is_published: boolean;
-	publishing_date: string;
+	publishing_date?: string;
 	online_date?: string;
-	view_number: number;
-	hd_version: RadioAudio;
-	streaming_version: RadioAudio;
-	teaser_version: RadioAudio;
-	reportage_type: ReportageType;
-	language: RadioLanguage;
-	tags: { id: number; name: string }[];
-	created_by: RadioAccount;
-	episode?: Episode;
+	reportage_type?: ReportageType;
+	language?: RadioLanguage;
+	tags?: { id: number; name: string }[];
+	created_by?: RadioAccount;
+	approved_by?: RadioAccount | null;
+	episode?: Episode | null;
+	// Detail-only fields
+	view_number?: number;
+	hd_version?: RadioAudio | null;
+	streaming_version?: RadioAudio | null;
+	teaser_version?: RadioAudio | null;
+	transcription?: RadioTranscription;
+	emotions?: RadioEmotion[] | null;
+	production_project?: ProductionProject | null;
 };
 
 export type ReportageList = { items: Reportage[]; count: number };
 
 export type SearchReportagesParams = {
+	episode?: string;
+	name?: string;
 	language?: string;
-	reportage_type?: number;
+	reportage_type?: string;
+	tags?: string;
 	limit?: number;
 	offset?: number;
 };
@@ -341,28 +404,26 @@ export type CreateReportagePayload = {
 	description?: string;
 	language_id: number;
 	reportage_type_id?: number;
-	episode_id?: number;
+	episode_id?: number | null;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
 	publishing_date?: string;
 	online_date?: string;
 };
-export type UpdateReportagePayload = Partial<CreateReportagePayload> & { id: number };
+export type UpdateReportagePayload = Partial<CreateReportagePayload> & {
+	id: number;
+	remove_tags?: string[] | null;
+	add_tags?: string[] | null;
+};
 
 // ─── Reportage Emotion ────────────────────────────────────────────────────────
 
 export type ReportageEmotion = {
-	id: number;
-	reportage: number;
-	emotion_type: string;
-	emotion_label: string;
-	count: number;
-	user_emotion: string | null;
+	id?: number;
+	reportage: Reportage;
+	account: RadioAccount;
+	emotion: RadioEmotionBase;
 };
 
 export type ReportageEmotionList = { items: ReportageEmotion[]; count: number };
-export type SetReportageEmotionPayload = { reportage_id: number; emotion_type: string };
-
-// ─── Radio Language List ──────────────────────────────────────────────────────
-
-export type RadioLanguageList = { items: RadioLanguage[]; count: number };
+export type SetReportageEmotionPayload = { reportage_id: number; emotion_id: number };

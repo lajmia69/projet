@@ -1,3 +1,17 @@
+/**
+ * useRadioAdmin.ts
+ *
+ * FIX B — Every hook now accepts `Token | undefined`.
+ *          Query keys use `token?.id` so they never throw when the session
+ *          hasn't loaded yet (the old `token.id` was crashing silently and
+ *          preventing ALL queries from registering with React Query).
+ *
+ * FIX C — Removed the non-existent `/radio/emission/emotion/*` hooks.
+ *          Those routes do not exist in the OpenAPI spec; calling them was
+ *          producing 404s that polluted the query cache and caused unhandled
+ *          rejections.
+ */
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { Token } from '@auth/user';
@@ -8,7 +22,6 @@ import {
 	CreateGuestTypePayload, UpdateGuestTypePayload,
 	CreateEpisodeGuestPayload, UpdateEpisodeGuestPayload,
 	SearchEmissionsParams, CreateEmissionPayload, UpdateEmissionPayload,
-	SetEmissionEmotionPayload,
 	SearchEpisodesParams, CreateEpisodePayload, UpdateEpisodePayload,
 	SetEpisodeEmotionPayload,
 	CreateReportageTypePayload, UpdateReportageTypePayload,
@@ -17,94 +30,82 @@ import {
 } from '../types';
 
 // =============================================================================
-// QUERY KEYS
+// QUERY KEYS  — all use `token?.id` (safe when token is undefined)
 // =============================================================================
 
 export const radioAdminKeys = {
-	// languages
-	languages: (token: Token) => ['radio-admin', 'languages', token.id],
+	languages:        (token: Token | undefined) => ['radio-admin', 'languages',        token?.id] as const,
 
-	// emission types
-	emissionTypes: (token: Token) => ['radio-admin', 'emission-types', token.id],
-	emissionType: (token: Token, id: number) => ['radio-admin', 'emission-type', token.id, id],
+	emissionTypes:    (token: Token | undefined) => ['radio-admin', 'emission-types',   token?.id] as const,
+	emissionType:     (token: Token | undefined, id: number) => ['radio-admin', 'emission-type',    token?.id, id] as const,
 
-	// seasons
-	seasons: (token: Token) => ['radio-admin', 'seasons', token.id],
-	season: (token: Token, id: number) => ['radio-admin', 'season', token.id, id],
+	seasons:          (token: Token | undefined) => ['radio-admin', 'seasons',          token?.id] as const,
+	season:           (token: Token | undefined, id: number) => ['radio-admin', 'season',           token?.id, id] as const,
 
-	// guest types
-	guestTypes: (token: Token) => ['radio-admin', 'guest-types', token.id],
-	guestType: (token: Token, id: number) => ['radio-admin', 'guest-type', token.id, id],
+	guestTypes:       (token: Token | undefined) => ['radio-admin', 'guest-types',      token?.id] as const,
+	guestType:        (token: Token | undefined, id: number) => ['radio-admin', 'guest-type',       token?.id, id] as const,
 
-	// episode guests
-	episodeGuests: (token: Token) => ['radio-admin', 'episode-guests', token.id],
-	episodeGuest: (token: Token, id: number) => ['radio-admin', 'episode-guest', token.id, id],
+	episodeGuests:    (token: Token | undefined) => ['radio-admin', 'episode-guests',   token?.id] as const,
+	episodeGuest:     (token: Token | undefined, id: number) => ['radio-admin', 'episode-guest',    token?.id, id] as const,
 
-	// emissions
-	emissions: (token: Token) => ['radio-admin', 'emissions', token.id],
-	emission: (token: Token, id: number) => ['radio-admin', 'emission', token.id, id],
-	emissionsSearch: (token: Token, params: SearchEmissionsParams) =>
-		['radio-admin', 'emissions-search', token.id, params],
+	emissions:        (token: Token | undefined) => ['radio-admin', 'emissions',        token?.id] as const,
+	emission:         (token: Token | undefined, id: number) => ['radio-admin', 'emission',         token?.id, id] as const,
+	emissionsSearch:  (token: Token | undefined, params: SearchEmissionsParams) =>
+		['radio-admin', 'emissions-search', token?.id, params] as const,
 
-	// emission emotions
-	emissionEmotions: (token: Token) => ['radio-admin', 'emission-emotions', token.id],
-	emissionEmotion: (token: Token, id: number) => ['radio-admin', 'emission-emotion', token.id, id],
+	episodes:         (token: Token | undefined) => ['radio-admin', 'episodes',         token?.id] as const,
+	episode:          (token: Token | undefined, id: number) => ['radio-admin', 'episode',          token?.id, id] as const,
+	episodesSearch:   (token: Token | undefined, params: SearchEpisodesParams) =>
+		['radio-admin', 'episodes-search',  token?.id, params] as const,
 
-	// episodes
-	episodes: (token: Token) => ['radio-admin', 'episodes', token.id],
-	episode: (token: Token, id: number) => ['radio-admin', 'episode', token.id, id],
-	episodesSearch: (token: Token, params: SearchEpisodesParams) =>
-		['radio-admin', 'episodes-search', token.id, params],
+	episodeEmotions:  (token: Token | undefined) => ['radio-admin', 'episode-emotions', token?.id] as const,
+	episodeEmotion:   (token: Token | undefined, id: number) => ['radio-admin', 'episode-emotion',  token?.id, id] as const,
 
-	// episode emotions
-	episodeEmotions: (token: Token) => ['radio-admin', 'episode-emotions', token.id],
-	episodeEmotion: (token: Token, id: number) => ['radio-admin', 'episode-emotion', token.id, id],
+	reportageTypes:   (token: Token | undefined) => ['radio-admin', 'reportage-types',  token?.id] as const,
+	reportageType:    (token: Token | undefined, id: number) => ['radio-admin', 'reportage-type',   token?.id, id] as const,
 
-	// reportage types
-	reportageTypes: (token: Token) => ['radio-admin', 'reportage-types', token.id],
-	reportageType: (token: Token, id: number) => ['radio-admin', 'reportage-type', token.id, id],
+	reportages:       (token: Token | undefined) => ['radio-admin', 'reportages',       token?.id] as const,
+	reportage:        (token: Token | undefined, id: number) => ['radio-admin', 'reportage',        token?.id, id] as const,
+	reportagesSearch: (token: Token | undefined, params: SearchReportagesParams) =>
+		['radio-admin', 'reportages-search', token?.id, params] as const,
 
-	// reportages
-	reportages: (token: Token) => ['radio-admin', 'reportages', token.id],
-	reportage: (token: Token, id: number) => ['radio-admin', 'reportage', token.id, id],
-	reportagesSearch: (token: Token, params: SearchReportagesParams) =>
-		['radio-admin', 'reportages-search', token.id, params],
-
-	// reportage emotions
-	reportageEmotions: (token: Token) => ['radio-admin', 'reportage-emotions', token.id],
-	reportageEmotion: (token: Token, id: number) => ['radio-admin', 'reportage-emotion', token.id, id],
+	reportageEmotions: (token: Token | undefined) => ['radio-admin', 'reportage-emotions', token?.id] as const,
+	reportageEmotion:  (token: Token | undefined, id: number) => ['radio-admin', 'reportage-emotion', token?.id, id] as const,
 } as const;
+
+// Convenience: enabled guard — same expression used everywhere
+const enabled = (token: Token | undefined) => !!token?.access;
 
 // =============================================================================
 // LANGUAGES
 // =============================================================================
 
-export const useRadioAdminLanguages = (token: Token) =>
+export const useRadioAdminLanguages = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.languages(token),
-		queryFn: () => radioAdminApi.getLanguages(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getLanguages(token),
+		enabled:  enabled(token),
 	});
 
 // =============================================================================
 // EMISSION TYPES
 // =============================================================================
 
-export const useRadioAdminEmissionTypes = (token: Token) =>
+export const useRadioAdminEmissionTypes = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.emissionTypes(token),
-		queryFn: () => radioAdminApi.getEmissionTypes(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getEmissionTypes(token),
+		enabled:  enabled(token),
 	});
 
-export const useRadioAdminEmissionType = (token: Token, typeId: number) =>
+export const useRadioAdminEmissionType = (token: Token | undefined, typeId: number) =>
 	useQuery({
 		queryKey: radioAdminKeys.emissionType(token, typeId),
-		queryFn: () => radioAdminApi.getEmissionType(token, typeId),
-		enabled: !!token?.access && !!typeId,
+		queryFn:  () => radioAdminApi.getEmissionType(token, typeId),
+		enabled:  enabled(token) && !!typeId,
 	});
 
-export const useCreateEmissionType = (token: Token) => {
+export const useCreateEmissionType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -117,7 +118,7 @@ export const useCreateEmissionType = (token: Token) => {
 	});
 };
 
-export const useUpdateEmissionType = (token: Token) => {
+export const useUpdateEmissionType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -131,7 +132,7 @@ export const useUpdateEmissionType = (token: Token) => {
 	});
 };
 
-export const useDeleteEmissionType = (token: Token) => {
+export const useDeleteEmissionType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -148,14 +149,14 @@ export const useDeleteEmissionType = (token: Token) => {
 // SEASONS
 // =============================================================================
 
-export const useRadioAdminSeasons = (token: Token) =>
+export const useRadioAdminSeasons = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.seasons(token),
-		queryFn: () => radioAdminApi.getSeasons(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getSeasons(token),
+		enabled:  enabled(token),
 	});
 
-export const useCreateSeason = (token: Token) => {
+export const useCreateSeason = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -168,7 +169,7 @@ export const useCreateSeason = (token: Token) => {
 	});
 };
 
-export const useUpdateSeason = (token: Token) => {
+export const useUpdateSeason = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -182,7 +183,7 @@ export const useUpdateSeason = (token: Token) => {
 	});
 };
 
-export const useDeleteSeason = (token: Token) => {
+export const useDeleteSeason = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -199,14 +200,14 @@ export const useDeleteSeason = (token: Token) => {
 // GUEST TYPES
 // =============================================================================
 
-export const useRadioAdminGuestTypes = (token: Token) =>
+export const useRadioAdminGuestTypes = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.guestTypes(token),
-		queryFn: () => radioAdminApi.getGuestTypes(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getGuestTypes(token),
+		enabled:  enabled(token),
 	});
 
-export const useCreateGuestType = (token: Token) => {
+export const useCreateGuestType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -219,7 +220,7 @@ export const useCreateGuestType = (token: Token) => {
 	});
 };
 
-export const useUpdateGuestType = (token: Token) => {
+export const useUpdateGuestType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -233,7 +234,7 @@ export const useUpdateGuestType = (token: Token) => {
 	});
 };
 
-export const useDeleteGuestType = (token: Token) => {
+export const useDeleteGuestType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -250,14 +251,14 @@ export const useDeleteGuestType = (token: Token) => {
 // EPISODE GUESTS
 // =============================================================================
 
-export const useRadioAdminEpisodeGuests = (token: Token) =>
+export const useRadioAdminEpisodeGuests = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.episodeGuests(token),
-		queryFn: () => radioAdminApi.getEpisodeGuests(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getEpisodeGuests(token),
+		enabled:  enabled(token),
 	});
 
-export const useCreateEpisodeGuest = (token: Token) => {
+export const useCreateEpisodeGuest = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -270,7 +271,7 @@ export const useCreateEpisodeGuest = (token: Token) => {
 	});
 };
 
-export const useUpdateEpisodeGuest = (token: Token) => {
+export const useUpdateEpisodeGuest = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -284,7 +285,7 @@ export const useUpdateEpisodeGuest = (token: Token) => {
 	});
 };
 
-export const useDeleteEpisodeGuest = (token: Token) => {
+export const useDeleteEpisodeGuest = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -301,28 +302,28 @@ export const useDeleteEpisodeGuest = (token: Token) => {
 // EMISSIONS
 // =============================================================================
 
-export const useRadioAdminEmissions = (token: Token) =>
+export const useRadioAdminEmissions = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.emissions(token),
-		queryFn: () => radioAdminApi.getEmissions(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getEmissions(token),
+		enabled:  enabled(token),
 	});
 
-export const useSearchRadioAdminEmissions = (token: Token, params: SearchEmissionsParams) =>
+export const useSearchRadioAdminEmissions = (token: Token | undefined, params: SearchEmissionsParams) =>
 	useQuery({
 		queryKey: radioAdminKeys.emissionsSearch(token, params),
-		queryFn: () => radioAdminApi.searchEmissions(token, params),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.searchEmissions(token, params),
+		enabled:  enabled(token),
 	});
 
-export const useRadioAdminEmission = (token: Token, emissionId: number) =>
+export const useRadioAdminEmission = (token: Token | undefined, emissionId: number) =>
 	useQuery({
 		queryKey: radioAdminKeys.emission(token, emissionId),
-		queryFn: () => radioAdminApi.getEmission(token, emissionId),
-		enabled: !!token?.access && !!emissionId,
+		queryFn:  () => radioAdminApi.getEmission(token, emissionId),
+		enabled:  enabled(token) && !!emissionId,
 	});
 
-export const useCreateEmission = (token: Token) => {
+export const useCreateEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -335,21 +336,21 @@ export const useCreateEmission = (token: Token) => {
 	});
 };
 
-export const useUpdateEmission = (token: Token) => {
+export const useUpdateEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateEmissionPayload) => radioAdminApi.updateEmission(token, data),
 		onSuccess: (_, d) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, d.id) });
+			if (d.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, d.id) });
 			enqueueSnackbar('Emission updated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error updating emission', { variant: 'error' }),
 	});
 };
 
-export const useDeleteEmission = (token: Token) => {
+export const useDeleteEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -362,108 +363,73 @@ export const useDeleteEmission = (token: Token) => {
 	});
 };
 
-export const useValidateEmission = (token: Token) => {
+export const useValidateEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioAdminApi.validateEmission(token, emissionId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
 			enqueueSnackbar('Emission validated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error validating emission', { variant: 'error' }),
 	});
 };
 
-export const useMakePublicEmission = (token: Token) => {
+export const useMakePublicEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioAdminApi.makePublicEmission(token, emissionId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
 			enqueueSnackbar('Emission made public', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error making emission public', { variant: 'error' }),
 	});
 };
 
-export const usePublishEmission = (token: Token) => {
+export const usePublishEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioAdminApi.publishEmission(token, emissionId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
 			enqueueSnackbar('Emission published', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error publishing emission', { variant: 'error' }),
 	});
 };
 
-export const usePublishReleaseEmission = (token: Token) => {
+export const usePublishReleaseEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioAdminApi.publishReleaseEmission(token, emissionId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
 			enqueueSnackbar('Emission published & released', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error publishing emission', { variant: 'error' }),
 	});
 };
 
-export const useEndEmission = (token: Token) => {
+export const useEndEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioAdminApi.endEmission(token, emissionId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
 			enqueueSnackbar('Emission ended', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error ending emission', { variant: 'error' }),
-	});
-};
-
-// ── Emission Emotions ─────────────────────────────────────────────────────────
-
-export const useRadioAdminEmissionEmotions = (token: Token) =>
-	useQuery({
-		queryKey: radioAdminKeys.emissionEmotions(token),
-		queryFn: () => radioAdminApi.getEmissionEmotions(token),
-		enabled: !!token?.access,
-	});
-
-export const useSetEmissionEmotion = (token: Token) => {
-	const qc = useQueryClient();
-	const { enqueueSnackbar } = useSnackbar();
-	return useMutation({
-		mutationFn: (data: SetEmissionEmotionPayload) => radioAdminApi.setEmissionEmotion(token, data),
-		onSuccess: (_, d) => {
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emissionEmotions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emissionEmotion(token, d.emission_id) });
-		},
-		onError: () => enqueueSnackbar('Error setting emotion', { variant: 'error' }),
-	});
-};
-
-export const useDeleteEmissionEmotion = (token: Token) => {
-	const qc = useQueryClient();
-	const { enqueueSnackbar } = useSnackbar();
-	return useMutation({
-		mutationFn: (emissionId: number) => radioAdminApi.deleteEmissionEmotion(token, emissionId),
-		onSuccess: (_, emissionId) => {
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emissionEmotions(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.emissionEmotion(token, emissionId) });
-		},
-		onError: () => enqueueSnackbar('Error removing emotion', { variant: 'error' }),
 	});
 };
 
@@ -471,28 +437,28 @@ export const useDeleteEmissionEmotion = (token: Token) => {
 // EPISODES
 // =============================================================================
 
-export const useRadioAdminEpisodes = (token: Token) =>
+export const useRadioAdminEpisodes = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.episodes(token),
-		queryFn: () => radioAdminApi.getEpisodes(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getEpisodes(token),
+		enabled:  enabled(token),
 	});
 
-export const useSearchRadioAdminEpisodes = (token: Token, params: SearchEpisodesParams) =>
+export const useSearchRadioAdminEpisodes = (token: Token | undefined, params: SearchEpisodesParams) =>
 	useQuery({
 		queryKey: radioAdminKeys.episodesSearch(token, params),
-		queryFn: () => radioAdminApi.searchEpisodes(token, params),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.searchEpisodes(token, params),
+		enabled:  enabled(token),
 	});
 
-export const useRadioAdminEpisode = (token: Token, episodeId: number) =>
+export const useRadioAdminEpisode = (token: Token | undefined, episodeId: number) =>
 	useQuery({
 		queryKey: radioAdminKeys.episode(token, episodeId),
-		queryFn: () => radioAdminApi.getEpisode(token, episodeId),
-		enabled: !!token?.access && !!episodeId,
+		queryFn:  () => radioAdminApi.getEpisode(token, episodeId),
+		enabled:  enabled(token) && !!episodeId,
 	});
 
-export const useCreateEpisode = (token: Token) => {
+export const useCreateEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -505,21 +471,21 @@ export const useCreateEpisode = (token: Token) => {
 	});
 };
 
-export const useUpdateEpisode = (token: Token) => {
+export const useUpdateEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateEpisodePayload) => radioAdminApi.updateEpisode(token, data),
 		onSuccess: (_, d) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.episodes(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, d.id) });
+			if (d.id) qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, d.id) });
 			enqueueSnackbar('Episode updated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error updating episode', { variant: 'error' }),
 	});
 };
 
-export const useDeleteEpisode = (token: Token) => {
+export const useDeleteEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -532,56 +498,56 @@ export const useDeleteEpisode = (token: Token) => {
 	});
 };
 
-export const useValidateEpisode = (token: Token) => {
+export const useValidateEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (episodeId: number) => radioAdminApi.validateEpisode(token, episodeId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.episodes(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
 			enqueueSnackbar('Episode validated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error validating episode', { variant: 'error' }),
 	});
 };
 
-export const useMakePublicEpisode = (token: Token) => {
+export const useMakePublicEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (episodeId: number) => radioAdminApi.makePublicEpisode(token, episodeId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.episodes(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
 			enqueueSnackbar('Episode made public', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error making episode public', { variant: 'error' }),
 	});
 };
 
-export const usePublishEpisode = (token: Token) => {
+export const usePublishEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (episodeId: number) => radioAdminApi.publishEpisode(token, episodeId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.episodes(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
 			enqueueSnackbar('Episode published', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error publishing episode', { variant: 'error' }),
 	});
 };
 
-export const usePublishReleaseEpisode = (token: Token) => {
+export const usePublishReleaseEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (episodeId: number) => radioAdminApi.publishReleaseEpisode(token, episodeId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.episodes(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
 			enqueueSnackbar('Episode published & released', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error publishing episode', { variant: 'error' }),
@@ -590,7 +556,14 @@ export const usePublishReleaseEpisode = (token: Token) => {
 
 // ── Episode Emotions ──────────────────────────────────────────────────────────
 
-export const useSetEpisodeEmotion = (token: Token) => {
+export const useRadioAdminEpisodeEmotions = (token: Token | undefined) =>
+	useQuery({
+		queryKey: radioAdminKeys.episodeEmotions(token),
+		queryFn:  () => radioAdminApi.getEpisodeEmotions(token),
+		enabled:  enabled(token),
+	});
+
+export const useSetEpisodeEmotion = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -603,7 +576,7 @@ export const useSetEpisodeEmotion = (token: Token) => {
 	});
 };
 
-export const useDeleteEpisodeEmotion = (token: Token) => {
+export const useDeleteEpisodeEmotion = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -620,14 +593,14 @@ export const useDeleteEpisodeEmotion = (token: Token) => {
 // REPORTAGE TYPES
 // =============================================================================
 
-export const useRadioAdminReportageTypes = (token: Token) =>
+export const useRadioAdminReportageTypes = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.reportageTypes(token),
-		queryFn: () => radioAdminApi.getReportageTypes(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getReportageTypes(token),
+		enabled:  enabled(token),
 	});
 
-export const useCreateReportageType = (token: Token) => {
+export const useCreateReportageType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -640,21 +613,21 @@ export const useCreateReportageType = (token: Token) => {
 	});
 };
 
-export const useUpdateReportageType = (token: Token) => {
+export const useUpdateReportageType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateReportageTypePayload) => radioAdminApi.updateReportageType(token, data),
 		onSuccess: (_, d) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.reportageTypes(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.reportageType(token, d.id) });
+			if (d.id) qc.invalidateQueries({ queryKey: radioAdminKeys.reportageType(token, d.id) });
 			enqueueSnackbar('Reportage type updated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error updating reportage type', { variant: 'error' }),
 	});
 };
 
-export const useDeleteReportageType = (token: Token) => {
+export const useDeleteReportageType = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -671,28 +644,28 @@ export const useDeleteReportageType = (token: Token) => {
 // REPORTAGES
 // =============================================================================
 
-export const useRadioAdminReportages = (token: Token) =>
+export const useRadioAdminReportages = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.reportages(token),
-		queryFn: () => radioAdminApi.getReportages(token),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.getReportages(token),
+		enabled:  enabled(token),
 	});
 
-export const useSearchRadioAdminReportages = (token: Token, params: SearchReportagesParams) =>
+export const useSearchRadioAdminReportages = (token: Token | undefined, params: SearchReportagesParams) =>
 	useQuery({
 		queryKey: radioAdminKeys.reportagesSearch(token, params),
-		queryFn: () => radioAdminApi.searchReportages(token, params),
-		enabled: !!token?.access,
+		queryFn:  () => radioAdminApi.searchReportages(token, params),
+		enabled:  enabled(token),
 	});
 
-export const useRadioAdminReportage = (token: Token, reportageId: number) =>
+export const useRadioAdminReportage = (token: Token | undefined, reportageId: number) =>
 	useQuery({
 		queryKey: radioAdminKeys.reportage(token, reportageId),
-		queryFn: () => radioAdminApi.getReportage(token, reportageId),
-		enabled: !!token?.access && !!reportageId,
+		queryFn:  () => radioAdminApi.getReportage(token, reportageId),
+		enabled:  enabled(token) && !!reportageId,
 	});
 
-export const useCreateReportage = (token: Token) => {
+export const useCreateReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -705,21 +678,21 @@ export const useCreateReportage = (token: Token) => {
 	});
 };
 
-export const useUpdateReportage = (token: Token) => {
+export const useUpdateReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateReportagePayload) => radioAdminApi.updateReportage(token, data),
 		onSuccess: (_, d) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.reportages(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, d.id) });
+			if (d.id) qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, d.id) });
 			enqueueSnackbar('Reportage updated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error updating reportage', { variant: 'error' }),
 	});
 };
 
-export const useDeleteReportage = (token: Token) => {
+export const useDeleteReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -732,56 +705,56 @@ export const useDeleteReportage = (token: Token) => {
 	});
 };
 
-export const useValidateReportage = (token: Token) => {
+export const useValidateReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioAdminApi.validateReportage(token, reportageId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.reportages(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
 			enqueueSnackbar('Reportage validated', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error validating reportage', { variant: 'error' }),
 	});
 };
 
-export const useMakePublicReportage = (token: Token) => {
+export const useMakePublicReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioAdminApi.makePublicReportage(token, reportageId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.reportages(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
 			enqueueSnackbar('Reportage made public', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error making reportage public', { variant: 'error' }),
 	});
 };
 
-export const usePublishReportage = (token: Token) => {
+export const usePublishReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioAdminApi.publishReportage(token, reportageId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.reportages(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
 			enqueueSnackbar('Reportage published', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error publishing reportage', { variant: 'error' }),
 	});
 };
 
-export const usePublishReleaseReportage = (token: Token) => {
+export const usePublishReleaseReportage = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioAdminApi.publishReleaseReportage(token, reportageId),
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.reportages(token) });
-			qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
+			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.reportage(token, res.id) });
 			enqueueSnackbar('Reportage published & released', { variant: 'success' });
 		},
 		onError: () => enqueueSnackbar('Error publishing reportage', { variant: 'error' }),
@@ -790,7 +763,14 @@ export const usePublishReleaseReportage = (token: Token) => {
 
 // ── Reportage Emotions ────────────────────────────────────────────────────────
 
-export const useSetReportageEmotion = (token: Token) => {
+export const useRadioAdminReportageEmotions = (token: Token | undefined) =>
+	useQuery({
+		queryKey: radioAdminKeys.reportageEmotions(token),
+		queryFn:  () => radioAdminApi.getReportageEmotions(token),
+		enabled:  enabled(token),
+	});
+
+export const useSetReportageEmotion = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
@@ -803,7 +783,7 @@ export const useSetReportageEmotion = (token: Token) => {
 	});
 };
 
-export const useDeleteReportageEmotion = (token: Token) => {
+export const useDeleteReportageEmotion = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
