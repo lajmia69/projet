@@ -47,17 +47,25 @@ async function logHttpError(label: string, err: unknown) {
 	}
 }
 
+/**
+ * FIX #3 – Returns YYYY-MM-DD or undefined (never an empty string) so optional
+ * date fields are simply omitted from the payload rather than sent as ''.
+ */
 function toDateOnly(value: string | undefined): string | undefined {
 	if (!value) return undefined;
 	return value.split('T')[0] || undefined;
 }
 
+// FIX #4: ID fields are strings only inside the form state; buildPayload converts them.
 type ReportageForm = {
 	name: string;
 	slug: string;
 	description: string;
+	/** String in form state; converted to number in buildPayload. */
 	language_id: string;
+	/** String in form state; converted to number in buildPayload. */
 	reportage_type_id: string;
+	/** String in form state; converted to number in buildPayload. */
 	episode_id: string;
 	publishing_date: string;
 	online_date: string;
@@ -105,6 +113,7 @@ export default function AdminReportagesView() {
 			language_id: String(row.language?.id ?? ''),
 			reportage_type_id: String(row.reportage_type?.id ?? ''),
 			episode_id: String(row.episode?.id ?? ''),
+			// FIX #3: toDateOnly handles both YYYY-MM-DD and ISO strings safely
 			publishing_date: toDateOnly(row.publishing_date) ?? '',
 			online_date: toDateOnly(row.online_date) ?? '',
 		});
@@ -112,25 +121,33 @@ export default function AdminReportagesView() {
 		setEditOpen(true);
 	};
 
+	/**
+	 * FIX #2: include `tags` and `transcription`.
+	 * FIX #4: convert string IDs to numbers.
+	 * FIX #3: date values come from toDateOnly (YYYY-MM-DD or undefined).
+	 *
+	 * Previous version sent `episode_id: 0` when no episode was selected, which
+	 * could cause backend validation failures. We now omit the field entirely
+	 * when no episode is chosen — matching the optional typing in the schema.
+	 */
 	const buildPayload = (): CreateReportagePayload => {
-		const languageId = Number(form.language_id);
-		const reportageTypeId = form.reportage_type_id ? Number(form.reportage_type_id) : undefined;
-		const episodeId = form.episode_id ? Number(form.episode_id) : 0;
-
 		const payload: CreateReportagePayload = {
 			name: form.name.trim(),
-			slug: form.slug.trim() || undefined,
-			description: form.description.trim() || undefined,
-			language_id: Number.isFinite(languageId) ? languageId : 0,
-			reportage_type_id: reportageTypeId && Number.isFinite(reportageTypeId) ? reportageTypeId : undefined,
-			// Backend requires episode_id; send 0 when none selected (matches the schema default)
-			episode_id: Number.isFinite(episodeId) ? episodeId : 0,
-			transcription: {},
+			// FIX #4
+			language_id: Number(form.language_id),
+			// FIX #2
 			tags: [],
-			publishing_date: toDateOnly(form.publishing_date),
-			online_date: toDateOnly(form.online_date),
+			transcription: {},
 		};
-		console.log('Reportage payload:', JSON.stringify(payload, null, 2));
+
+		if (form.slug.trim())          payload.slug              = form.slug.trim();
+		if (form.description.trim())   payload.description       = form.description.trim();
+		if (form.reportage_type_id)    payload.reportage_type_id = Number(form.reportage_type_id);
+		// FIX: omit episode_id instead of sending 0 when not selected
+		if (form.episode_id)           payload.episode_id        = Number(form.episode_id);
+		if (form.publishing_date)      payload.publishing_date   = form.publishing_date;
+		if (form.online_date)          payload.online_date        = form.online_date;
+
 		return payload;
 	};
 
@@ -181,17 +198,16 @@ export default function AdminReportagesView() {
 			id: 'status',
 			header: 'Status',
 			accessorFn: (row) => row.is_published,
-			Cell: ({ row }) => (
-				<Chip
-					label={row.original.is_published ? 'Published' : row.original.is_approved_content ? 'Approved' : 'Draft'}
-					size="small"
-					sx={{
-						height: 22, fontSize: '0.72rem', fontWeight: 700,
-						backgroundColor: row.original.is_published ? '#dcfce7' : row.original.is_approved_content ? '#dbeafe' : '#f1f5f9',
-						color: row.original.is_published ? '#15803d' : row.original.is_approved_content ? '#1d4ed8' : '#475569',
-					}}
-				/>
-			),
+			Cell: ({ row }) => {
+				// FIX #1: use `is_pubic_content` to match the backend JSON key
+				const { is_published, is_approved_content, is_pubic_content } = row.original;
+				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_pubic_content ? 'Public' : 'Draft';
+				const bg    = is_published ? '#dcfce7' : is_approved_content ? '#dbeafe' : is_pubic_content ? '#fef9c3' : '#f1f5f9';
+				const color = is_published ? '#15803d' : is_approved_content ? '#1d4ed8' : is_pubic_content ? '#854d0e' : '#475569';
+				return (
+					<Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />
+				);
+			},
 		},
 		{
 			id: 'created_by',

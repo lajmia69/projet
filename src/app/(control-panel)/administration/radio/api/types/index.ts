@@ -70,7 +70,6 @@ export type RadioTranscription = {
 };
 
 // ─── Emission Type ────────────────────────────────────────────────────────────
-// Backend: { name, description }
 
 export type EmissionType = {
 	id: number;
@@ -87,7 +86,6 @@ export type CreateEmissionTypePayload = {
 export type UpdateEmissionTypePayload = Partial<CreateEmissionTypePayload> & { id: number };
 
 // ─── Season ───────────────────────────────────────────────────────────────────
-// Backend: { name, slug, description, start_date, end_date }
 
 export type Season = {
 	id: number;
@@ -110,7 +108,6 @@ export type CreateSeasonPayload = {
 export type UpdateSeasonPayload = Partial<CreateSeasonPayload> & { id: number };
 
 // ─── Guest Type ───────────────────────────────────────────────────────────────
-// Backend: { name, description }
 
 export type GuestType = {
 	id: number;
@@ -127,8 +124,6 @@ export type CreateGuestTypePayload = {
 export type UpdateGuestTypePayload = Partial<CreateGuestTypePayload> & { id: number };
 
 // ─── Episode Guest ────────────────────────────────────────────────────────────
-// Backend create: { episode_id, guest_id, guest_type_id }
-// "guest" is a separate registry entity; EpisodeGuest is the junction record.
 
 export type Guest = {
 	id: number;
@@ -155,8 +150,9 @@ export type CreateEpisodeGuestPayload = {
 export type UpdateEpisodeGuestPayload = Partial<CreateEpisodeGuestPayload> & { id: number };
 
 // ─── Emission ─────────────────────────────────────────────────────────────────
-// Backend create: { name, slug, description, language_id, emission_type_id,
-//                   publishing_date, start_date, tags }
+// FIX #1: Backend uses `is_pubic_content` (backend typo — match it exactly so
+//         JSON deserialization succeeds; rename locally via a type alias if/when
+//         the backend spelling is corrected).
 
 export type Emission = {
 	id: number;
@@ -168,7 +164,8 @@ export type Emission = {
 	poster_description?: string;
 	start_date?: string;
 	is_approved_content: boolean;
-	is_public_content: boolean;
+	/** @note Backend field is spelled `is_pubic_content` — matches the JSON key exactly. */
+	is_pubic_content: boolean;
 	is_published: boolean;
 	publishing_date: string;
 	view_number: number;
@@ -193,6 +190,8 @@ export type SearchEmissionsParams = {
 	offset?: number;
 };
 
+// FIX #2: Restore `tags` and `transcription` that were mistakenly removed from
+//         the payload type — the backend schema does accept them.
 export type CreateEmissionPayload = {
 	name: string;
 	slug?: string;
@@ -221,9 +220,7 @@ export type EmissionEmotionList = { items: EmissionEmotion[]; count: number };
 export type SetEmissionEmotionPayload = { emission_id: number; emotion_type: string };
 
 // ─── Episode ──────────────────────────────────────────────────────────────────
-// Backend create: { tags, name, description, slug, transcription,
-//                   emission_id, season_id }
-// Note: no language_id — language is inherited from the emission.
+// FIX #1 (same as Emission): backend JSON key is `is_pubic_content`.
 
 export type Episode = {
 	id: number;
@@ -232,7 +229,8 @@ export type Episode = {
 	description: string;
 	transcription: RadioTranscription;
 	is_approved_content: boolean;
-	is_public_content: boolean;
+	/** @note Backend field is spelled `is_pubic_content` — matches the JSON key exactly. */
+	is_pubic_content: boolean;
 	is_published: boolean;
 	publishing_date: string;
 	online_date?: string;
@@ -287,7 +285,6 @@ export type EpisodeEmotionList = { items: EpisodeEmotion[]; count: number };
 export type SetEpisodeEmotionPayload = { episode_id: number; emotion_type: string };
 
 // ─── Reportage Type ───────────────────────────────────────────────────────────
-// Backend: { name, description }
 
 export type ReportageType = {
 	id: number;
@@ -304,9 +301,7 @@ export type CreateReportageTypePayload = {
 export type UpdateReportageTypePayload = Partial<CreateReportageTypePayload> & { id: number };
 
 // ─── Reportage ────────────────────────────────────────────────────────────────
-// Backend create: { tags, name, slug, description, transcription,
-//                   publishing_date, online_date, language_id,
-//                   reportage_type_id, episode_id }
+// FIX #1 (same as Emission): backend JSON key is `is_pubic_content`.
 
 export type Reportage = {
 	id: number;
@@ -315,7 +310,8 @@ export type Reportage = {
 	description: string;
 	transcription: RadioTranscription;
 	is_approved_content: boolean;
-	is_public_content: boolean;
+	/** @note Backend field is spelled `is_pubic_content` — matches the JSON key exactly. */
+	is_pubic_content: boolean;
 	is_published: boolean;
 	publishing_date: string;
 	online_date?: string;

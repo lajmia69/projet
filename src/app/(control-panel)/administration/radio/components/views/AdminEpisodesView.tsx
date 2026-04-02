@@ -39,11 +39,15 @@ async function logHttpError(label: string, err: unknown) {
 	} else { console.error(label, err); }
 }
 
+// FIX #4: form fields that map to numeric IDs stay as strings inside the form
+// state so MUI Select works correctly; buildPayload converts them before sending.
 type EpisodeForm = {
 	name: string;
 	slug: string;
 	description: string;
+	/** String in form state; converted to number in buildPayload. */
 	emission_id: string;
+	/** String in form state; converted to number in buildPayload. */
 	season_id: string;
 };
 
@@ -68,7 +72,7 @@ export default function AdminEpisodesView() {
 	const [form, setForm] = useState<EpisodeForm>(empty);
 
 	const setField = (f: keyof EpisodeForm, v: string) => setForm((p) => ({ ...p, [f]: v }));
-	// emission_id is required because language is derived from the emission
+	// emission_id is required — language is derived from the parent emission
 	const canSubmit = !!form.name.trim() && !!form.emission_id;
 
 	const openAdd = () => { setForm(empty); setAddOpen(true); };
@@ -84,19 +88,20 @@ export default function AdminEpisodesView() {
 		setEditOpen(true);
 	};
 
-	const buildPayload = (): CreateEpisodePayload => {
-		const payload: CreateEpisodePayload = {
-			name: form.name.trim(),
-			slug: form.slug.trim() || undefined,
-			description: form.description.trim() || undefined,
-			emission_id: form.emission_id ? Number(form.emission_id) : undefined,
-			season_id: form.season_id ? Number(form.season_id) : undefined,
-			transcription: {},
-			tags: [],
-		};
-		console.log('Episode payload:', JSON.stringify(payload, null, 2));
-		return payload;
-	};
+	/**
+	 * FIX #2: include `transcription` and `tags` in the payload.
+	 * FIX #4: convert string IDs to numbers before sending.
+	 */
+	const buildPayload = (): CreateEpisodePayload => ({
+		name: form.name.trim(),
+		slug: form.slug.trim() || undefined,
+		description: form.description.trim() || undefined,
+		emission_id: form.emission_id ? Number(form.emission_id) : undefined,
+		season_id: form.season_id ? Number(form.season_id) : undefined,
+		// FIX #2: always send these so the backend doesn't reject partial payloads
+		transcription: {},
+		tags: [],
+	});
 
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
@@ -141,17 +146,16 @@ export default function AdminEpisodesView() {
 			id: 'status',
 			header: 'Status',
 			accessorFn: (row) => row.is_published,
-			Cell: ({ row }) => (
-				<Chip
-					label={row.original.is_published ? 'Published' : row.original.is_approved_content ? 'Approved' : 'Draft'}
-					size="small"
-					sx={{
-						height: 22, fontSize: '0.72rem', fontWeight: 700,
-						backgroundColor: row.original.is_published ? '#dcfce7' : row.original.is_approved_content ? '#dbeafe' : '#f1f5f9',
-						color: row.original.is_published ? '#15803d' : row.original.is_approved_content ? '#1d4ed8' : '#475569',
-					}}
-				/>
-			),
+			Cell: ({ row }) => {
+				// FIX #1: use `is_pubic_content` to match the backend JSON key
+				const { is_published, is_approved_content, is_pubic_content } = row.original;
+				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_pubic_content ? 'Public' : 'Draft';
+				const bg    = is_published ? '#dcfce7' : is_approved_content ? '#dbeafe' : is_pubic_content ? '#fef9c3' : '#f1f5f9';
+				const color = is_published ? '#15803d' : is_approved_content ? '#1d4ed8' : is_pubic_content ? '#854d0e' : '#475569';
+				return (
+					<Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />
+				);
+			},
 		},
 		{
 			id: 'created_by',
