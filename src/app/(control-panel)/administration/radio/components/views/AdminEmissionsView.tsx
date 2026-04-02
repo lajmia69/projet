@@ -26,7 +26,7 @@ import {
 	useRadioAdminEmissionTypes,
 	useRadioAdminLanguages,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
-import { Emission } from '@/app/(control-panel)/administration/radio/api/types';
+import { Emission, CreateEmissionPayload } from '@/app/(control-panel)/administration/radio/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -110,10 +110,10 @@ export default function AdminEmissionsView() {
 		setEditOpen(true);
 	};
 
-	const buildPayload = () => {
+	const buildPayload = (): CreateEmissionPayload => {
 		// Only send fields the backend explicitly listed in its create schema.
 		// No transcription, no tags — emission schema didn't show those.
-		const payload: Record<string, unknown> = {
+		const payload: CreateEmissionPayload = {
 			name: form.name.trim(),
 			language_id: Number(form.language_id),
 		};
@@ -129,13 +129,13 @@ export default function AdminEmissionsView() {
 	};
 
 	const handleAdd = () =>
-		create(buildPayload() as never, {
+		create(buildPayload(), {
 			onSuccess: () => setAddOpen(false),
 			onError:   (err) => logHttpError('Create emission failed', err),
 		});
 
 	const handleEdit = () =>
-		update({ id: editingId!, ...(buildPayload() as never) }, {
+		update({ id: editingId!, ...buildPayload() }, {
 			onSuccess: () => setEditOpen(false),
 			onError:   (err) => logHttpError('Update emission failed', err),
 		});
