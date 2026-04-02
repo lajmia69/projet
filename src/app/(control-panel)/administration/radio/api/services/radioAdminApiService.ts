@@ -1,13 +1,5 @@
 /**
  * radioAdminApiService.ts
- *
- * FIX A — Uses a dedicated ky instance (`radioApi`) whose prefixUrl points to
- *          the radio backend (radio.backend.ecocloud.tn), NOT the main app API.
- *          Previously every call was silently hitting the wrong host and 404-ing.
- *
- * FIX B — All public methods now accept `Token | undefined` and guard early,
- *          so callers don't need a non-null assertion and there are no runtime
- *          crashes when the session hasn't loaded yet.
  */
 
 import ky from 'ky';
@@ -41,29 +33,27 @@ import {
 	ReportageEmotion, ReportageEmotionList, SetReportageEmotionPayload,
 	// Language
 	RadioLanguage, RadioLanguageList,
+	// Tag
+	RadioTagList,
 } from '../types';
 
-// ─── FIX A: dedicated radio ky instance ───────────────────────────────────────
-// The main `api` utility points to your app's primary backend.  The radio API
-// lives at a completely different origin, so it needs its own client.
+// ─── Dedicated radio ky instance ──────────────────────────────────────────────
 
 const radioApi = ky.create({
 	prefixUrl: 'https://radio.backend.ecocloud.tn/',
 	timeout: 30_000,
 });
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Returns the Authorization header object, or throws if token is missing. */
 function authHeaders(token: Token | undefined) {
 	if (!token?.access) throw new Error('No auth token — query should be disabled');
 	return { Authorization: `Bearer ${token.access}` };
 }
 
-/** Returns the account ID, or throws if token is missing. */
 function accountId(token: Token | undefined): number {
 	if (!token?.id) throw new Error('No account ID — query should be disabled');
-	return token.id;
+	return Number(token.id);
 }
 
 function buildSearchParams(params: Record<string, string | number | undefined>): string {
@@ -80,18 +70,19 @@ function buildSearchParams(params: Record<string, string | number | undefined>):
 
 export const radioAdminApi = {
 
-	// ── Languages (read-only reference) ──────────────────────────────────────
-	// Uses the main app's setting endpoint — keep using the shared `api` here,
-	// or proxy through the radio backend if your setup differs.
+	// ── Languages ─────────────────────────────────────────────────────────────
 
-	getLanguages: (token: Token | undefined): Promise<RadioLanguageList> => {
-		// If your main `api` utility handles languages, import and use it here.
-		// We call the radio backend's own language list as a fallback — adjust
-		// the path if your languages live elsewhere.
-		return radioApi
+	getLanguages: (token: Token | undefined): Promise<RadioLanguageList> =>
+		radioApi
 			.get(`setting/language/list/${accountId(token)}/`, { headers: authHeaders(token) })
-			.json<RadioLanguageList>();
-	},
+			.json<RadioLanguageList>(),
+
+	// ── Tags ──────────────────────────────────────────────────────────────────
+
+	getTags: (token: Token | undefined): Promise<RadioTagList> =>
+		radioApi
+			.get(`radio/tag/list/${accountId(token)}/`, { headers: authHeaders(token) })
+			.json<RadioTagList>(),
 
 	// ── Emission Types ────────────────────────────────────────────────────────
 

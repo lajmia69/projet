@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@auth/*": [
@@ -23,9 +24,9 @@
       "@schema": [
         "./src/@schema"
       ],
-    "@/*": [
-      "./src/*"
-    ]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "declaration": true,
     "target": "esnext",

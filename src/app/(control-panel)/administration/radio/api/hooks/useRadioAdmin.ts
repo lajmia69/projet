@@ -1,17 +1,3 @@
-/**
- * useRadioAdmin.ts
- *
- * FIX B — Every hook now accepts `Token | undefined`.
- *          Query keys use `token?.id` so they never throw when the session
- *          hasn't loaded yet (the old `token.id` was crashing silently and
- *          preventing ALL queries from registering with React Query).
- *
- * FIX C — Removed the non-existent `/radio/emission/emotion/*` hooks.
- *          Those routes do not exist in the OpenAPI spec; calling them was
- *          producing 404s that polluted the query cache and caused unhandled
- *          rejections.
- */
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { Token } from '@auth/user';
@@ -30,11 +16,12 @@ import {
 } from '../types';
 
 // =============================================================================
-// QUERY KEYS  — all use `token?.id` (safe when token is undefined)
+// QUERY KEYS
 // =============================================================================
 
 export const radioAdminKeys = {
 	languages:        (token: Token | undefined) => ['radio-admin', 'languages',        token?.id] as const,
+	tags:             (token: Token | undefined) => ['radio-admin', 'tags',             token?.id] as const,
 
 	emissionTypes:    (token: Token | undefined) => ['radio-admin', 'emission-types',   token?.id] as const,
 	emissionType:     (token: Token | undefined, id: number) => ['radio-admin', 'emission-type',    token?.id, id] as const,
@@ -73,7 +60,6 @@ export const radioAdminKeys = {
 	reportageEmotion:  (token: Token | undefined, id: number) => ['radio-admin', 'reportage-emotion', token?.id, id] as const,
 } as const;
 
-// Convenience: enabled guard — same expression used everywhere
 const enabled = (token: Token | undefined) => !!token?.access;
 
 // =============================================================================
@@ -84,6 +70,17 @@ export const useRadioAdminLanguages = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.languages(token),
 		queryFn:  () => radioAdminApi.getLanguages(token),
+		enabled:  enabled(token),
+	});
+
+// =============================================================================
+// TAGS
+// =============================================================================
+
+export const useRadioAdminTags = (token: Token | undefined) =>
+	useQuery({
+		queryKey: radioAdminKeys.tags(token),
+		queryFn:  () => radioAdminApi.getTags(token),
 		enabled:  enabled(token),
 	});
 
@@ -554,8 +551,6 @@ export const usePublishReleaseEpisode = (token: Token | undefined) => {
 	});
 };
 
-// ── Episode Emotions ──────────────────────────────────────────────────────────
-
 export const useRadioAdminEpisodeEmotions = (token: Token | undefined) =>
 	useQuery({
 		queryKey: radioAdminKeys.episodeEmotions(token),
@@ -760,8 +755,6 @@ export const usePublishReleaseReportage = (token: Token | undefined) => {
 		onError: () => enqueueSnackbar('Error publishing reportage', { variant: 'error' }),
 	});
 };
-
-// ── Reportage Emotions ────────────────────────────────────────────────────────
 
 export const useRadioAdminReportageEmotions = (token: Token | undefined) =>
 	useQuery({

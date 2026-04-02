@@ -1,14 +1,5 @@
 /**
  * types/index.ts
- *
- * FIX D — Emission, Episode and Reportage list items do NOT include audio
- *          versions, view_number, emotions, or transcription (those only come
- *          back on the detail endpoint).  Making those fields optional prevents
- *          TypeScript errors when rendering list rows and stops silent runtime
- *          crashes when code tries to destructure undefined nested objects.
- *
- * FIX E — EmissionEmotion / emission emotion endpoints removed (they don't
- *          exist in the OpenAPI spec — only episode and reportage emotions do).
  */
 
 // ─── Shared ───────────────────────────────────────────────────────────────────
@@ -44,6 +35,13 @@ export type RadioLanguage = {
 };
 
 export type RadioLanguageList = { items: RadioLanguage[]; count: number };
+
+export type RadioTag = {
+	id: number;
+	name: string;
+};
+
+export type RadioTagList = { items: RadioTag[]; count: number };
 
 export type RadioAccount = {
 	id?: number;
@@ -167,8 +165,6 @@ export type CreateEpisodeGuestPayload = {
 export type UpdateEpisodeGuestPayload = Partial<CreateEpisodeGuestPayload> & { id: number };
 
 // ─── Emission ─────────────────────────────────────────────────────────────────
-// FIX D: audio, view_number, transcription are ONLY in the detail endpoint.
-//         They are typed optional here so the list response parses cleanly.
 
 export type Emission = {
 	id: number;
@@ -178,6 +174,7 @@ export type Emission = {
 	poster?: string;
 	poster_description?: string;
 	start_date?: string;
+	end_date?: string;
 	is_approved_content: boolean;
 	/** Backend field is spelled `is_pubic_content` (typo in the API). */
 	is_pubic_content: boolean;
@@ -185,7 +182,7 @@ export type Emission = {
 	publishing_date?: string;
 	emission_type?: EmissionType;
 	language?: RadioLanguage;
-	tags?: { id: number; name: string }[];
+	tags?: RadioTag[];
 	created_by?: RadioAccount;
 	approved_by?: RadioAccount | null;
 	// Detail-only fields — undefined on list responses
@@ -223,17 +220,30 @@ export type SearchEmissionsParams = {
 };
 
 export type CreateEmissionPayload = {
+	// ── Required ──────────────────────────────────────────────────────────────
 	name: string;
+	/** Account PK of the creator — required by backend ("Created by *"). */
+	created_by_id: number;
+	language_id: number;
+	/** Tag names — required; send at least an empty array. */
+	tags: string[];
+
+	// ── Shown as required (*) in Django admin ─────────────────────────────────
+	emission_type_id?: number;
+	publishing_date?: string;   // YYYY-MM-DD
+	start_date?: string;        // YYYY-MM-DD
+
+	// ── Optional ──────────────────────────────────────────────────────────────
 	slug?: string;
 	description?: string;
 	poster_description?: string;
-	language_id: number;
-	emission_type_id?: number;
-	publishing_date?: string;
-	start_date?: string;
-	tags?: string[];
+	end_date?: string;
+	/** Backend field is spelled `is_pubic_content` (typo in the API). */
+	is_pubic_content?: boolean;
+	is_published?: boolean;
 	transcription?: Record<string, unknown>;
 };
+
 export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & {
 	id: number;
 	remove_tags?: string[] | null;
@@ -242,7 +252,6 @@ export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & {
 };
 
 // ─── Episode ──────────────────────────────────────────────────────────────────
-// FIX D: same pattern — audio + guests + emotions only from detail endpoint.
 
 export type Episode = {
 	id: number;
@@ -258,7 +267,7 @@ export type Episode = {
 	emission?: Emission;
 	season?: Season;
 	language?: RadioLanguage;
-	tags?: { id: number; name: string }[];
+	tags?: RadioTag[];
 	created_by?: RadioAccount;
 	approved_by?: RadioAccount | null;
 	// Detail-only fields
@@ -357,7 +366,6 @@ export type CreateReportageTypePayload = {
 export type UpdateReportageTypePayload = Partial<CreateReportageTypePayload> & { id: number };
 
 // ─── Reportage ────────────────────────────────────────────────────────────────
-// FIX D: same pattern as Episode.
 
 export type Reportage = {
 	id: number;
@@ -372,7 +380,7 @@ export type Reportage = {
 	online_date?: string;
 	reportage_type?: ReportageType;
 	language?: RadioLanguage;
-	tags?: { id: number; name: string }[];
+	tags?: RadioTag[];
 	created_by?: RadioAccount;
 	approved_by?: RadioAccount | null;
 	episode?: Episode | null;

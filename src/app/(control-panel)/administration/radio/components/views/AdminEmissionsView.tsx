@@ -6,8 +6,9 @@ import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
 	DialogActions, Button, Typography, FormControl, FormLabel,
 	TextField, Select, Chip, CircularProgress, Divider, Box,
-	IconButton, Tooltip,
+	IconButton, Tooltip, Switch, FormControlLabel,
 } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
@@ -26,6 +27,7 @@ import {
 	usePublishEmission,
 	useRadioAdminEmissionTypes,
 	useRadioAdminLanguages,
+	useRadioAdminTags,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 import { radioAdminApi } from '@/app/(control-panel)/administration/radio/api/services/radioAdminApiService';
 import { Emission, CreateEmissionPayload } from '@/app/(control-panel)/administration/radio/api/types';
@@ -36,25 +38,15 @@ const Root = styled(FusePageCarded)(() => ({
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * FIX #3 – Date formatting.
- * The backend sends simple YYYY-MM-DD strings. `parseISO` handles them
- * correctly as-is; we no longer need to append a fake time component.
- */
 function safeFormat(dateStr: string | undefined): string {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
 	return isValid(d) ? format(d, 'MMM d, yyyy') : '—';
 }
 
-/**
- * Strips any time component so <input type="date"> always receives YYYY-MM-DD.
- * Returns undefined (not '') so optional date fields are omitted from payloads.
- */
 function toDateOnly(v: string | undefined): string | undefined {
 	if (!v) return undefined;
-	const part = v.split('T')[0];
-	return part || undefined;
+	return v.split('T')[0] || undefined;
 }
 
 async function logHttpError(label: string, err: unknown) {
@@ -74,27 +66,34 @@ async function logHttpError(label: string, err: unknown) {
 
 // ─── Form state ───────────────────────────────────────────────────────────────
 
-/**
- * FIX #4 – ID fields are kept as strings only inside the form state (required
- * by MUI Select). `buildPayload` converts them to numbers before sending.
- * No other part of the app should read raw form IDs as numeric values.
- */
 type EmissionForm = {
 	name: string;
 	slug: string;
 	description: string;
-	/** String in form state; converted to number in buildPayload. */
+	poster_description: string;
 	language_id: string;
-	/** String in form state; converted to number in buildPayload. */
 	emission_type_id: string;
 	publishing_date: string;
 	start_date: string;
+	end_date: string;
+	tags: string[];           // array of tag names
+	is_pubic_content: boolean;
+	is_published: boolean;
 };
 
 const empty: EmissionForm = {
-	name: '', slug: '', description: '',
-	language_id: '', emission_type_id: '',
-	publishing_date: '', start_date: '',
+	name: '',
+	slug: '',
+	description: '',
+	poster_description: '',
+	language_id: '',
+	emission_type_id: '',
+	publishing_date: '',
+	start_date: '',
+	end_date: '',
+	tags: [],
+	is_pubic_content: false,
+	is_published: false,
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -102,14 +101,12 @@ const empty: EmissionForm = {
 export default function AdminEmissionsView() {
 	const { data: account } = useUser();
 	const token = account?.token;
+	const accountId = token?.id ? Number(token.id) : undefined;
 
 	const { data: emissionsData, isLoading } = useRadioAdminEmissions(token);
 	const { data: emissionTypesData } = useRadioAdminEmissionTypes(token);
-	const {
-		data: languagesData,
-		isLoading: isLanguagesLoading,
-		isError: isLanguagesError,
-	} = useRadioAdminLanguages(token);
+	const { data: languagesData, isLoading: isLanguagesLoading, isError: isLanguagesError } = useRadioAdminLanguages(token);
+	const { data: tagsData, isLoading: isTagsLoading } = useRadioAdminTags(token);
 
 	const { mutate: create, isPending: isCreating } = useCreateEmission(token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEmission(token);
@@ -122,61 +119,75 @@ export default function AdminEmissionsView() {
 	const [editingId, setEditingId] = useState<number | null>(null);
 	const [form, setForm] = useState<EmissionForm>(empty);
 
-	// FIX #5 – Poster upload state (separate from the text-field form so the
-	// File object never gets serialised into the JSON payload by accident).
 	const [posterFile, setPosterFile] = useState<File | null>(null);
 	const [isPosterUploading, setIsPosterUploading] = useState(false);
 	const posterInputRef = useRef<HTMLInputElement>(null);
 
-	const setField = (f: keyof EmissionForm, v: string) =>
+	// Helpers to update individual fields
+	const setField = <K extends keyof EmissionForm>(f: K, v: EmissionForm[K]) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
-	const canSubmit = !!form.name.trim() && !!form.language_id;
+	const canSubmit =
+		!!form.name.trim() &&
+		!!form.language_id &&
+		!!form.emission_type_id &&
+		!!form.publishing_date &&
+		!!form.start_date &&
+		!!accountId;
+
 	const isPending = isCreating || isUpdating || isPosterUploading;
 
+	// All tag names available from the backend
+	const tagOptions: string[] = useMemo(
+		() => tagsData?.items.map((t) => t.name) ?? [],
+		[tagsData]
+	);
+
 	const openAdd = () => { setForm(empty); setPosterFile(null); setAddOpen(true); };
+
 	const openEdit = (row: Emission) => {
 		setForm({
 			name: row.name,
 			slug: row.slug ?? '',
 			description: row.description ?? '',
+			poster_description: row.poster_description ?? '',
 			language_id: String(row.language?.id ?? ''),
 			emission_type_id: String(row.emission_type?.id ?? ''),
-			// FIX #3 – use toDateOnly; backend already sends YYYY-MM-DD
 			publishing_date: toDateOnly(row.publishing_date) ?? '',
 			start_date: toDateOnly(row.start_date) ?? '',
+			end_date: toDateOnly(row.end_date) ?? '',
+			// Populate tags from the existing emission's tag names
+			tags: row.tags?.map((t) => t.name) ?? [],
+			is_pubic_content: row.is_pubic_content ?? false,
+			is_published: row.is_published ?? false,
 		});
 		setPosterFile(null);
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
-	/**
-	 * FIX #2 – Include `tags` and `transcription` in the payload.
-	 * FIX #4 – language_id and emission_type_id are numbers, not strings.
-	 * FIX #3 – Dates come back as YYYY-MM-DD; toDateOnly keeps them stable.
-	 */
 	const buildPayload = (): CreateEmissionPayload => {
 		const payload: CreateEmissionPayload = {
 			name: form.name.trim(),
-			// FIX #4: explicit Number() conversion — the form holds a string
+			created_by_id: accountId!,
 			language_id: Number(form.language_id),
-			// FIX #2: always send tags array (empty when none chosen)
-			tags: [],
-			// FIX #2: always send transcription object (empty when not set)
+			tags: form.tags,
 			transcription: {},
 		};
 
-		if (form.slug.trim())       payload.slug             = form.slug.trim();
-		if (form.description.trim()) payload.description     = form.description.trim();
-		if (form.emission_type_id)  payload.emission_type_id = Number(form.emission_type_id);
-		if (form.publishing_date)   payload.publishing_date  = form.publishing_date;
-		if (form.start_date)        payload.start_date       = form.start_date;
+		if (form.slug.trim())               payload.slug               = form.slug.trim();
+		if (form.description.trim())        payload.description        = form.description.trim();
+		if (form.poster_description.trim()) payload.poster_description = form.poster_description.trim();
+		if (form.emission_type_id)          payload.emission_type_id   = Number(form.emission_type_id);
+		if (form.publishing_date)           payload.publishing_date    = form.publishing_date;
+		if (form.start_date)                payload.start_date         = form.start_date;
+		if (form.end_date)                  payload.end_date           = form.end_date;
+		payload.is_pubic_content = form.is_pubic_content;
+		payload.is_published     = form.is_published;
 
 		return payload;
 	};
 
-	/** Upload the poster image via the dedicated multipart endpoint. */
 	const uploadPosterIfNeeded = async (emissionId: number) => {
 		if (!posterFile || !token) return;
 		setIsPosterUploading(true);
@@ -210,7 +221,7 @@ export default function AdminEmissionsView() {
 			onError: (err) => logHttpError('Update emission failed', err),
 		});
 
-	// ─── Columns ────────────────────────────────────────────────────────────────
+	// ─── Table columns ────────────────────────────────────────────────────────
 
 	const columns = useMemo<MRT_ColumnDef<Emission>[]>(() => [
 		{
@@ -242,24 +253,35 @@ export default function AdminEmissionsView() {
 			accessorFn: (row) => row.language?.name ?? '',
 		},
 		{
+			id: 'tags',
+			header: 'Tags',
+			accessorFn: (row) => row.tags?.map((t) => t.name).join(', ') ?? '',
+			Cell: ({ row }) => (
+				<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+					{row.original.tags?.slice(0, 3).map((t) => (
+						<Chip key={t.id} label={t.name} size="small" sx={{ fontSize: '0.68rem', height: 20 }} />
+					))}
+					{(row.original.tags?.length ?? 0) > 3 && (
+						<Chip label={`+${(row.original.tags?.length ?? 0) - 3}`} size="small" sx={{ fontSize: '0.68rem', height: 20 }} />
+					)}
+				</Box>
+			),
+		},
+		{
 			id: 'status',
 			header: 'Status',
 			accessorFn: (row) => row.is_published,
 			Cell: ({ row }) => {
-				// FIX #1: use `is_pubic_content` (backend field name) instead of `is_public_content`
 				const { is_published, is_approved_content, is_pubic_content } = row.original;
 				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_pubic_content ? 'Public' : 'Draft';
 				const bg    = is_published ? '#dcfce7' : is_approved_content ? '#dbeafe' : is_pubic_content ? '#fef9c3' : '#f1f5f9';
 				const color = is_published ? '#15803d' : is_approved_content ? '#1d4ed8' : is_pubic_content ? '#854d0e' : '#475569';
-				return (
-					<Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />
-				);
+				return <Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />;
 			},
 		},
 		{
 			id: 'publishing_date',
 			header: 'Published',
-			// FIX #3: safeFormat now correctly handles plain YYYY-MM-DD strings
 			accessorFn: (row) => row.publishing_date ?? '',
 			Cell: ({ row }) => safeFormat(row.original.publishing_date),
 		},
@@ -270,19 +292,22 @@ export default function AdminEmissionsView() {
 		},
 	], []);
 
-	// ─── Shared form fields ──────────────────────────────────────────────────────
+	// ─── Shared form fields ───────────────────────────────────────────────────
 
 	const formContent = (
 		<>
+			{/* ── Name ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Name</FormLabel>
 				<TextField
 					size="small"
 					value={form.name}
 					onChange={(e) => setField('name', e.target.value)}
+					placeholder="Emission name"
 				/>
 			</FormControl>
 
+			{/* ── Slug ── */}
 			<FormControl fullWidth>
 				<FormLabel>Slug</FormLabel>
 				<TextField
@@ -293,17 +318,70 @@ export default function AdminEmissionsView() {
 				/>
 			</FormControl>
 
+			{/* ── Description ── */}
 			<FormControl fullWidth>
-				<FormLabel>Description</FormLabel>
+				<FormLabel required>Description</FormLabel>
+				<TextField
+					size="small"
+					multiline
+					minRows={3}
+					value={form.description}
+					onChange={(e) => setField('description', e.target.value)}
+					placeholder="Emission description"
+				/>
+			</FormControl>
+
+			{/* ── Poster image ── */}
+			<FormControl fullWidth>
+				<FormLabel>Poster Image</FormLabel>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+					<Button
+						variant="outlined"
+						size="small"
+						onClick={() => posterInputRef.current?.click()}
+						startIcon={<FuseSvgIcon size={16}>lucide:image</FuseSvgIcon>}
+					>
+						{posterFile ? 'Change image' : 'Choose image'}
+					</Button>
+					{posterFile && (
+						<>
+							<Typography variant="caption" noWrap sx={{ maxWidth: 180 }}>
+								{posterFile.name}
+							</Typography>
+							<Tooltip title="Remove">
+								<IconButton size="small" onClick={() => setPosterFile(null)}>
+									<FuseSvgIcon size={14}>lucide:x</FuseSvgIcon>
+								</IconButton>
+							</Tooltip>
+						</>
+					)}
+				</Box>
+				<input
+					ref={posterInputRef}
+					type="file"
+					accept="image/*"
+					style={{ display: 'none' }}
+					onChange={(e) => { setPosterFile(e.target.files?.[0] ?? null); e.target.value = ''; }}
+				/>
+				<Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+					Uploaded via multipart after saving.
+				</Typography>
+			</FormControl>
+
+			{/* ── Poster description ── */}
+			<FormControl fullWidth>
+				<FormLabel required>Poster Description</FormLabel>
 				<TextField
 					size="small"
 					multiline
 					minRows={2}
-					value={form.description}
-					onChange={(e) => setField('description', e.target.value)}
+					value={form.poster_description}
+					onChange={(e) => setField('poster_description', e.target.value)}
+					placeholder="Alt text / caption for the poster image"
 				/>
 			</FormControl>
 
+			{/* ── Language ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Language</FormLabel>
 				{isLanguagesLoading ? (
@@ -327,24 +405,26 @@ export default function AdminEmissionsView() {
 				)}
 			</FormControl>
 
+			{/* ── Emission Type ── */}
 			<FormControl fullWidth>
-				<FormLabel>Emission Type</FormLabel>
+				<FormLabel required>Emission Type</FormLabel>
 				<Select
 					size="small"
 					value={form.emission_type_id}
 					onChange={(e) => setField('emission_type_id', e.target.value)}
 					displayEmpty
 				>
-					<MenuItem value=""><em>None</em></MenuItem>
+					<MenuItem value="" disabled><em>Select a type…</em></MenuItem>
 					{emissionTypesData?.items.map((t) => (
 						<MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>
 					))}
 				</Select>
 			</FormControl>
 
-			<div className="flex gap-3">
+			{/* ── Dates row ── */}
+			<Box sx={{ display: 'flex', gap: 2 }}>
 				<FormControl fullWidth>
-					<FormLabel>Start Date</FormLabel>
+					<FormLabel required>Start Date</FormLabel>
 					<TextField
 						size="small"
 						type="date"
@@ -354,58 +434,105 @@ export default function AdminEmissionsView() {
 					/>
 				</FormControl>
 				<FormControl fullWidth>
-					<FormLabel>Publishing Date</FormLabel>
+					<FormLabel>End Date</FormLabel>
 					<TextField
 						size="small"
 						type="date"
-						value={form.publishing_date}
-						onChange={(e) => setField('publishing_date', e.target.value)}
+						value={form.end_date}
+						onChange={(e) => setField('end_date', e.target.value)}
 						InputLabelProps={{ shrink: true }}
 					/>
 				</FormControl>
-			</div>
+			</Box>
 
-			{/* FIX #5 – Poster upload field */}
+			{/* ── Publishing date ── */}
 			<FormControl fullWidth>
-				<FormLabel>Poster Image</FormLabel>
-				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-					<Button
-						variant="outlined"
-						size="small"
-						onClick={() => posterInputRef.current?.click()}
-						startIcon={<FuseSvgIcon size={16}>lucide:image</FuseSvgIcon>}
-					>
-						{posterFile ? 'Change image' : 'Choose image'}
-					</Button>
-					{posterFile && (
-						<>
-							<Typography variant="caption" noWrap sx={{ maxWidth: 180 }}>
-								{posterFile.name}
-							</Typography>
-							<Tooltip title="Remove selection">
-								<IconButton size="small" onClick={() => setPosterFile(null)}>
-									<FuseSvgIcon size={14}>lucide:x</FuseSvgIcon>
-								</IconButton>
-							</Tooltip>
-						</>
+				<FormLabel required>Publishing Date</FormLabel>
+				<TextField
+					size="small"
+					type="date"
+					value={form.publishing_date}
+					onChange={(e) => setField('publishing_date', e.target.value)}
+					InputLabelProps={{ shrink: true }}
+				/>
+			</FormControl>
+
+			{/* ── Tags — fetched from backend, multi-select with freeSolo fallback ── */}
+			<FormControl fullWidth>
+				<FormLabel required>Tags</FormLabel>
+				<Autocomplete
+					multiple
+					freeSolo
+					options={tagOptions}
+					value={form.tags}
+					onChange={(_, newValue) => setField('tags', newValue as string[])}
+					loading={isTagsLoading}
+					renderTags={(value, getTagProps) =>
+						value.map((option, index) => (
+							<Chip
+								{...getTagProps({ index })}
+								key={option}
+								label={option}
+								size="small"
+								sx={{ fontSize: '0.75rem' }}
+							/>
+						))
+					}
+					renderInput={(params) => (
+						<TextField
+							{...params}
+							size="small"
+							placeholder={form.tags.length === 0 ? 'Select or type tags…' : ''}
+							InputProps={{
+								...params.InputProps,
+								endAdornment: (
+									<>
+										{isTagsLoading ? <CircularProgress size={16} /> : null}
+										{params.InputProps.endAdornment}
+									</>
+								),
+							}}
+						/>
 					)}
-				</Box>
-				{/* Hidden native file input — keeps the UI clean */}
-				<input
-					ref={posterInputRef}
-					type="file"
-					accept="image/*"
-					style={{ display: 'none' }}
-					onChange={(e) => {
-						const file = e.target.files?.[0] ?? null;
-						setPosterFile(file);
-						// Reset so the same file can be re-selected after clearing
-						e.target.value = '';
-					}}
 				/>
 				<Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-					Uploaded separately via multipart after the emission is saved.
+					Choose from existing tags or type a new one and press Enter.
 				</Typography>
+			</FormControl>
+
+			{/* ── Toggles ── */}
+			<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pt: 0.5 }}>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={form.is_pubic_content}
+							onChange={(e) => setField('is_pubic_content', e.target.checked)}
+							color="primary"
+						/>
+					}
+					label="Is Public Content"
+				/>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={form.is_published}
+							onChange={(e) => setField('is_published', e.target.checked)}
+							color="primary"
+						/>
+					}
+					label="Is Published"
+				/>
+			</Box>
+
+			{/* ── Created by (read-only) ── */}
+			<FormControl fullWidth>
+				<FormLabel>Created By</FormLabel>
+				<TextField
+					size="small"
+					value={`Account #${accountId}`}
+					disabled
+					helperText="Automatically set to your account"
+				/>
 			</FormControl>
 		</>
 	);
@@ -416,7 +543,7 @@ export default function AdminEmissionsView() {
 		</DialogContent>
 	);
 
-	// ─── Render ─────────────────────────────────────────────────────────────────
+	// ─── Render ───────────────────────────────────────────────────────────────
 
 	return (
 		<>
@@ -496,9 +623,7 @@ export default function AdminEmissionsView() {
 				{dialogContent}
 				<Divider />
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setAddOpen(false)} variant="outlined" disabled={isPending}>
-						Cancel
-					</Button>
+					<Button onClick={() => setAddOpen(false)} variant="outlined" disabled={isPending}>Cancel</Button>
 					<Button
 						onClick={handleAdd}
 						variant="contained"
@@ -524,9 +649,7 @@ export default function AdminEmissionsView() {
 				{dialogContent}
 				<Divider />
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isPending}>
-						Cancel
-					</Button>
+					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isPending}>Cancel</Button>
 					<Button
 						onClick={handleEdit}
 						variant="contained"
