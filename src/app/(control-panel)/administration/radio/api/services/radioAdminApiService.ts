@@ -89,7 +89,7 @@ export const radioAdminApi = {
 		// We call the radio backend's own language list as a fallback — adjust
 		// the path if your languages live elsewhere.
 		return radioApi
-			.get(`radio/language/list/${accountId(token)}/`, { headers: authHeaders(token) })
+			.get(`setting/language/list/${accountId(token)}/`, { headers: authHeaders(token) })
 			.json<RadioLanguageList>();
 	},
 
