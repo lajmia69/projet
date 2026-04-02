@@ -24,7 +24,6 @@ import {
 	usePublishEpisode,
 	useRadioAdminEmissions,
 	useRadioAdminSeasons,
-	useRadioAdminLanguages,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 import { Episode, CreateEpisodePayload } from '@/app/(control-panel)/administration/radio/api/types';
 
@@ -32,15 +31,23 @@ const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
 }));
 
+async function logHttpError(label: string, err: unknown) {
+	if (err && typeof err === 'object' && 'response' in err) {
+		const res = (err as { response: Response }).response;
+		try { console.error(`${label}:`, await res.clone().json()); }
+		catch { console.error(`${label}:`, await res.clone().text()); }
+	} else { console.error(label, err); }
+}
+
 type EpisodeForm = {
 	name: string;
+	slug: string;
 	description: string;
-	language_id: string;
 	emission_id: string;
 	season_id: string;
 };
 
-const empty: EpisodeForm = { name: '', description: '', language_id: '', emission_id: '', season_id: '' };
+const empty: EpisodeForm = { name: '', slug: '', description: '', emission_id: '', season_id: '' };
 
 export default function AdminEpisodesView() {
 	const { data: account } = useUser();
@@ -49,7 +56,6 @@ export default function AdminEpisodesView() {
 	const { data: episodesData, isLoading } = useRadioAdminEpisodes(token);
 	const { data: emissionsData } = useRadioAdminEmissions(token);
 	const { data: seasonsData } = useRadioAdminSeasons(token);
-	const { data: languagesData, isLoading: isLanguagesLoading, isError: isLanguagesError } = useRadioAdminLanguages(token);
 	const { mutate: create, isPending: isCreating } = useCreateEpisode(token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(token);
 	const { mutate: remove } = useDeleteEpisode(token);
@@ -62,14 +68,15 @@ export default function AdminEpisodesView() {
 	const [form, setForm] = useState<EpisodeForm>(empty);
 
 	const setField = (f: keyof EpisodeForm, v: string) => setForm((p) => ({ ...p, [f]: v }));
-	const canSubmit = !!form.name.trim() && !!form.language_id;
+	// emission_id is required because language is derived from the emission
+	const canSubmit = !!form.name.trim() && !!form.emission_id;
 
 	const openAdd = () => { setForm(empty); setAddOpen(true); };
 	const openEdit = (row: Episode) => {
 		setForm({
 			name: row.name,
+			slug: row.slug ?? '',
 			description: row.description ?? '',
-			language_id: String(row.language?.id ?? ''),
 			emission_id: String(row.emission?.id ?? ''),
 			season_id: String(row.season?.id ?? ''),
 		});
@@ -77,21 +84,27 @@ export default function AdminEpisodesView() {
 		setEditOpen(true);
 	};
 
-	const buildPayload = (): CreateEpisodePayload => ({
-		name: form.name.trim(),
-		description: form.description.trim() || undefined,
-		language_id: Number(form.language_id),
-		emission_id: form.emission_id ? Number(form.emission_id) : undefined,
-		season_id: form.season_id ? Number(form.season_id) : undefined,
-	});
+	const buildPayload = (): CreateEpisodePayload => {
+		const payload: CreateEpisodePayload = {
+			name: form.name.trim(),
+			slug: form.slug.trim() || undefined,
+			description: form.description.trim() || undefined,
+			emission_id: form.emission_id ? Number(form.emission_id) : undefined,
+			season_id: form.season_id ? Number(form.season_id) : undefined,
+			transcription: {},
+			tags: [],
+		};
+		console.log('Episode payload:', JSON.stringify(payload, null, 2));
+		return payload;
+	};
 
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
-		onError: (err) => console.error('Create episode failed:', err),
+		onError: (err) => logHttpError('Create episode failed', err),
 	});
 	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
 		onSuccess: () => setEditOpen(false),
-		onError: (err) => console.error('Update episode failed:', err),
+		onError: (err) => logHttpError('Update episode failed', err),
 	});
 
 	const columns = useMemo<MRT_ColumnDef<Episode>[]>(() => [
@@ -154,29 +167,23 @@ export default function AdminEpisodesView() {
 				<TextField size="small" value={form.name} onChange={(e) => setField('name', e.target.value)} />
 			</FormControl>
 			<FormControl fullWidth>
+				<FormLabel>Slug</FormLabel>
+				<TextField
+					size="small"
+					value={form.slug}
+					onChange={(e) => setField('slug', e.target.value)}
+					placeholder="auto-generated if left blank"
+				/>
+			</FormControl>
+			<FormControl fullWidth>
 				<FormLabel>Description</FormLabel>
 				<TextField size="small" multiline minRows={2} value={form.description} onChange={(e) => setField('description', e.target.value)} />
 			</FormControl>
-			<FormControl fullWidth>
-				<FormLabel required>Language</FormLabel>
-				{isLanguagesLoading ? (
-					<CircularProgress size={20} />
-				) : isLanguagesError ? (
-					<Typography color="error">Error loading languages</Typography>
-				) : !languagesData?.items?.length ? (
-					<Typography color="textSecondary">No languages available</Typography>
-				) : (
-					<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
-						<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-						{languagesData.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
-					</Select>
-				)}
-			</FormControl>
 			<div className="flex gap-3">
 				<FormControl fullWidth>
-					<FormLabel>Emission</FormLabel>
+					<FormLabel required>Emission</FormLabel>
 					<Select size="small" value={form.emission_id} onChange={(e) => setField('emission_id', e.target.value)} displayEmpty>
-						<MenuItem value=""><em>None</em></MenuItem>
+						<MenuItem value="" disabled><em>Select an emission…</em></MenuItem>
 						{emissionsData?.items.map((e) => <MenuItem key={e.id} value={String(e.id)}>{e.name}</MenuItem>)}
 					</Select>
 				</FormControl>

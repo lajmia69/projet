@@ -70,6 +70,7 @@ export type RadioTranscription = {
 };
 
 // ─── Emission Type ────────────────────────────────────────────────────────────
+// Backend: { name, description }
 
 export type EmissionType = {
 	id: number;
@@ -79,17 +80,20 @@ export type EmissionType = {
 
 export type EmissionTypeList = { items: EmissionType[]; count: number };
 
-export type CreateEmissionTypePayload = { name: string; description?: string };
+export type CreateEmissionTypePayload = {
+	name: string;
+	description?: string;
+};
 export type UpdateEmissionTypePayload = Partial<CreateEmissionTypePayload> & { id: number };
 
 // ─── Season ───────────────────────────────────────────────────────────────────
+// Backend: { name, slug, description, start_date, end_date }
 
 export type Season = {
 	id: number;
 	name: string;
 	slug?: string;
 	description: string;
-	number: number;
 	start_date?: string;
 	end_date?: string;
 };
@@ -98,14 +102,15 @@ export type SeasonList = { items: Season[]; count: number };
 
 export type CreateSeasonPayload = {
 	name: string;
+	slug?: string;
 	description?: string;
-	number?: number;
 	start_date?: string;
 	end_date?: string;
 };
 export type UpdateSeasonPayload = Partial<CreateSeasonPayload> & { id: number };
 
 // ─── Guest Type ───────────────────────────────────────────────────────────────
+// Backend: { name, description }
 
 export type GuestType = {
 	id: number;
@@ -115,28 +120,43 @@ export type GuestType = {
 
 export type GuestTypeList = { items: GuestType[]; count: number };
 
-export type CreateGuestTypePayload = { name: string; description?: string };
+export type CreateGuestTypePayload = {
+	name: string;
+	description?: string;
+};
 export type UpdateGuestTypePayload = Partial<CreateGuestTypePayload> & { id: number };
 
 // ─── Episode Guest ────────────────────────────────────────────────────────────
+// Backend create: { episode_id, guest_id, guest_type_id }
+// "guest" is a separate registry entity; EpisodeGuest is the junction record.
+
+export type Guest = {
+	id: number;
+	full_name: string;
+	biography?: string;
+};
+
+export type GuestList = { items: Guest[]; count: number };
 
 export type EpisodeGuest = {
 	id: number;
-	full_name: string;
-	biography: string;
+	episode: { id: number; name: string };
+	guest: Guest;
 	guest_type: GuestType;
 };
 
 export type EpisodeGuestList = { items: EpisodeGuest[]; count: number };
 
 export type CreateEpisodeGuestPayload = {
-	full_name: string;
-	biography?: string;
+	episode_id: number;
+	guest_id: number;
 	guest_type_id: number;
 };
 export type UpdateEpisodeGuestPayload = Partial<CreateEpisodeGuestPayload> & { id: number };
 
 // ─── Emission ─────────────────────────────────────────────────────────────────
+// Backend create: { name, slug, description, language_id, emission_type_id,
+//                   publishing_date, start_date, tags }
 
 export type Emission = {
 	id: number;
@@ -175,15 +195,15 @@ export type SearchEmissionsParams = {
 
 export type CreateEmissionPayload = {
 	name: string;
+	slug?: string;
 	description?: string;
 	language_id: number;
 	emission_type_id?: number;
-	season_id?: number;
-	transcription?: Record<string, unknown>;
-	tags?: string[];
 	publishing_date?: string;
+	start_date?: string;
+	tags?: string[];
+	transcription?: Record<string, unknown>;
 };
-
 export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & { id: number };
 
 // ─── Emission Emotion ─────────────────────────────────────────────────────────
@@ -201,6 +221,9 @@ export type EmissionEmotionList = { items: EmissionEmotion[]; count: number };
 export type SetEmissionEmotionPayload = { emission_id: number; emotion_type: string };
 
 // ─── Episode ──────────────────────────────────────────────────────────────────
+// Backend create: { tags, name, description, slug, transcription,
+//                   emission_id, season_id }
+// Note: no language_id — language is inherited from the emission.
 
 export type Episode = {
 	id: number;
@@ -240,16 +263,13 @@ export type SearchEpisodesParams = {
 
 export type CreateEpisodePayload = {
 	name: string;
+	slug?: string;
 	description?: string;
-	language_id: number;
 	emission_id?: number;
 	season_id?: number;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
-	publishing_date?: string;
-	online_date?: string;
 };
-
 export type UpdateEpisodePayload = Partial<CreateEpisodePayload> & { id: number };
 
 // ─── Episode Emotion ──────────────────────────────────────────────────────────
@@ -267,6 +287,7 @@ export type EpisodeEmotionList = { items: EpisodeEmotion[]; count: number };
 export type SetEpisodeEmotionPayload = { episode_id: number; emotion_type: string };
 
 // ─── Reportage Type ───────────────────────────────────────────────────────────
+// Backend: { name, description }
 
 export type ReportageType = {
 	id: number;
@@ -276,10 +297,16 @@ export type ReportageType = {
 
 export type ReportageTypeList = { items: ReportageType[]; count: number };
 
-export type CreateReportageTypePayload = { name: string; description?: string };
+export type CreateReportageTypePayload = {
+	name: string;
+	description?: string;
+};
 export type UpdateReportageTypePayload = Partial<CreateReportageTypePayload> & { id: number };
 
 // ─── Reportage ────────────────────────────────────────────────────────────────
+// Backend create: { tags, name, slug, description, transcription,
+//                   publishing_date, online_date, language_id,
+//                   reportage_type_id, episode_id }
 
 export type Reportage = {
 	id: number;
@@ -318,13 +345,12 @@ export type CreateReportagePayload = {
 	description?: string;
 	language_id: number;
 	reportage_type_id?: number;
-	episode_id?: number;          // ← required by backend (send 0 or omit when none)
+	episode_id?: number;
 	transcription?: Record<string, unknown>;
 	tags?: string[];
 	publishing_date?: string;
 	online_date?: string;
 };
-
 export type UpdateReportagePayload = Partial<CreateReportagePayload> & { id: number };
 
 // ─── Reportage Emotion ────────────────────────────────────────────────────────

@@ -38,14 +38,17 @@ const auth = (token: Token) => ({
 
 const id = (token: Token) => token.id;
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+// Wraps data in the { payload: ... } envelope the backend requires for all
+// POST / PUT / PATCH mutation bodies.
+const body = <T>(data: T, token: Token) => ({
+	json: { payload: data },
+	...auth(token),
+});
 
 function buildSearchParams(params: Record<string, string | number | undefined>): string {
 	const sp = new URLSearchParams();
 	for (const [key, value] of Object.entries(params)) {
-		if (value !== undefined && value !== '') {
-			sp.set(key, String(value));
-		}
+		if (value !== undefined && value !== '') sp.set(key, String(value));
 	}
 	return sp.toString();
 }
@@ -56,21 +59,12 @@ function buildSearchParams(params: Record<string, string | number | undefined>):
 
 export const radioAdminApi = {
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// LANGUAGES  (read-only reference, reuses setting endpoint)
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Languages ─────────────────────────────────────────────────────────────
 
 	getLanguages: (token: Token): Promise<RadioLanguageList> =>
 		api.get(`setting/language/list/${id(token)}/`, auth(token)).json(),
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// EMISSION TYPES
-	// GET    radio/emission/type/list/{id}/
-	// GET    radio/emission/type/detail/{id}/{typeId}/
-	// POST   radio/emission/type/create/{id}/
-	// PUT    radio/emission/type/update/{id}/
-	// DELETE radio/emission/type/delete/{id}/{typeId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Emission Types ────────────────────────────────────────────────────────
 
 	getEmissionTypes: (token: Token): Promise<EmissionTypeList> =>
 		api.get(`radio/emission/type/list/${id(token)}/`, auth(token)).json(),
@@ -79,23 +73,16 @@ export const radioAdminApi = {
 		api.get(`radio/emission/type/detail/${id(token)}/${typeId}/`, auth(token)).json(),
 
 	createEmissionType: (token: Token, data: CreateEmissionTypePayload): Promise<EmissionType> =>
-		api.post(`radio/emission/type/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/emission/type/create/${id(token)}/`, body(data, token)).json(),
 
 	updateEmissionType: (token: Token, data: UpdateEmissionTypePayload): Promise<EmissionType> =>
-		api.put(`radio/emission/type/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/emission/type/update/${id(token)}/`, body(data, token)).json(),
 
 	deleteEmissionType: async (token: Token, typeId: number): Promise<void> => {
 		await api.delete(`radio/emission/type/delete/${id(token)}/${typeId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// SEASONS
-	// GET    radio/season/list/{id}/
-	// GET    radio/season/detail/{id}/{seasonId}/
-	// POST   radio/season/create/{id}/
-	// PUT    radio/season/update/{id}/
-	// DELETE radio/season/delete/{id}/{seasonId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Seasons ───────────────────────────────────────────────────────────────
 
 	getSeasons: (token: Token): Promise<SeasonList> =>
 		api.get(`radio/season/list/${id(token)}/`, auth(token)).json(),
@@ -104,23 +91,16 @@ export const radioAdminApi = {
 		api.get(`radio/season/detail/${id(token)}/${seasonId}/`, auth(token)).json(),
 
 	createSeason: (token: Token, data: CreateSeasonPayload): Promise<Season> =>
-		api.post(`radio/season/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/season/create/${id(token)}/`, body(data, token)).json(),
 
 	updateSeason: (token: Token, data: UpdateSeasonPayload): Promise<Season> =>
-		api.put(`radio/season/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/season/update/${id(token)}/`, body(data, token)).json(),
 
 	deleteSeason: async (token: Token, seasonId: number): Promise<void> => {
 		await api.delete(`radio/season/delete/${id(token)}/${seasonId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// GUEST TYPES
-	// GET    radio/episode/guest/type/list/{id}/
-	// GET    radio/episode/guest/type/detail/{id}/{typeId}/
-	// POST   radio/episode/guest/type/create/{id}/
-	// PUT    radio/episode/guest/type/update/{id}/
-	// DELETE radio/episode/guest/type/delete/{id}/{typeId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Guest Types ───────────────────────────────────────────────────────────
 
 	getGuestTypes: (token: Token): Promise<GuestTypeList> =>
 		api.get(`radio/episode/guest/type/list/${id(token)}/`, auth(token)).json(),
@@ -129,23 +109,16 @@ export const radioAdminApi = {
 		api.get(`radio/episode/guest/type/detail/${id(token)}/${typeId}/`, auth(token)).json(),
 
 	createGuestType: (token: Token, data: CreateGuestTypePayload): Promise<GuestType> =>
-		api.post(`radio/episode/guest/type/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/episode/guest/type/create/${id(token)}/`, body(data, token)).json(),
 
 	updateGuestType: (token: Token, data: UpdateGuestTypePayload): Promise<GuestType> =>
-		api.put(`radio/episode/guest/type/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/episode/guest/type/update/${id(token)}/`, body(data, token)).json(),
 
 	deleteGuestType: async (token: Token, typeId: number): Promise<void> => {
 		await api.delete(`radio/episode/guest/type/delete/${id(token)}/${typeId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// EPISODE GUESTS
-	// GET    radio/episode/guest/list/{id}/
-	// GET    radio/episode/guest/detail/{id}/{guestId}/
-	// POST   radio/episode/guest/create/{id}/
-	// PUT    radio/episode/guest/update/{id}/
-	// DELETE radio/episode/guest/delete/{id}/{guestId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Episode Guests ────────────────────────────────────────────────────────
 
 	getEpisodeGuests: (token: Token): Promise<EpisodeGuestList> =>
 		api.get(`radio/episode/guest/list/${id(token)}/`, auth(token)).json(),
@@ -154,30 +127,16 @@ export const radioAdminApi = {
 		api.get(`radio/episode/guest/detail/${id(token)}/${guestId}/`, auth(token)).json(),
 
 	createEpisodeGuest: (token: Token, data: CreateEpisodeGuestPayload): Promise<EpisodeGuest> =>
-		api.post(`radio/episode/guest/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/episode/guest/create/${id(token)}/`, body(data, token)).json(),
 
 	updateEpisodeGuest: (token: Token, data: UpdateEpisodeGuestPayload): Promise<EpisodeGuest> =>
-		api.put(`radio/episode/guest/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/episode/guest/update/${id(token)}/`, body(data, token)).json(),
 
 	deleteEpisodeGuest: async (token: Token, guestId: number): Promise<void> => {
 		await api.delete(`radio/episode/guest/delete/${id(token)}/${guestId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// EMISSIONS
-	// GET    radio/emission/search/{id}/?limit&offset&language&emission_type&season
-	// GET    radio/emission/list/{id}/
-	// GET    radio/emission/detail/{id}/{emissionId}/
-	// POST   radio/emission/create/{id}/
-	// PUT    radio/emission/update/{id}/
-	// POST   radio/emission/update/poster/{id}/   (multipart)
-	// PATCH  radio/emission/validate/{id}/
-	// PATCH  radio/emission/public/{id}/
-	// PATCH  radio/emission/publish/{id}/
-	// PATCH  radio/emission/publish/release/{id}/
-	// PATCH  radio/emission/end/{id}/{emissionId}/
-	// DELETE radio/emission/delete/{id}/{emissionId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Emissions ─────────────────────────────────────────────────────────────
 
 	searchEmissions: (token: Token, params: SearchEmissionsParams = {}): Promise<EmissionList> =>
 		api.get(
@@ -192,25 +151,25 @@ export const radioAdminApi = {
 		api.get(`radio/emission/detail/${id(token)}/${emissionId}/`, auth(token)).json(),
 
 	createEmission: (token: Token, data: CreateEmissionPayload): Promise<Emission> =>
-		api.post(`radio/emission/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/emission/create/${id(token)}/`, body(data, token)).json(),
 
 	updateEmission: (token: Token, data: UpdateEmissionPayload): Promise<Emission> =>
-		api.put(`radio/emission/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/emission/update/${id(token)}/`, body(data, token)).json(),
 
 	updateEmissionPoster: (token: Token, formData: FormData): Promise<Emission> =>
 		api.post(`radio/emission/update/poster/${id(token)}/`, { body: formData, ...auth(token) }).json(),
 
 	validateEmission: (token: Token, emissionId: number): Promise<Emission> =>
-		api.patch(`radio/emission/validate/${id(token)}/`, { json: { id: emissionId }, ...auth(token) }).json(),
+		api.patch(`radio/emission/validate/${id(token)}/`, body({ id: emissionId }, token)).json(),
 
 	makePublicEmission: (token: Token, emissionId: number): Promise<Emission> =>
-		api.patch(`radio/emission/public/${id(token)}/`, { json: { id: emissionId }, ...auth(token) }).json(),
+		api.patch(`radio/emission/public/${id(token)}/`, body({ id: emissionId }, token)).json(),
 
 	publishEmission: (token: Token, emissionId: number): Promise<Emission> =>
-		api.patch(`radio/emission/publish/${id(token)}/`, { json: { id: emissionId }, ...auth(token) }).json(),
+		api.patch(`radio/emission/publish/${id(token)}/`, body({ id: emissionId }, token)).json(),
 
 	publishReleaseEmission: (token: Token, emissionId: number): Promise<Emission> =>
-		api.patch(`radio/emission/publish/release/${id(token)}/`, { json: { id: emissionId }, ...auth(token) }).json(),
+		api.patch(`radio/emission/publish/release/${id(token)}/`, body({ id: emissionId }, token)).json(),
 
 	endEmission: (token: Token, emissionId: number): Promise<Emission> =>
 		api.patch(`radio/emission/end/${id(token)}/${emissionId}/`, auth(token)).json(),
@@ -220,10 +179,6 @@ export const radioAdminApi = {
 	},
 
 	// ── Emission Emotions ─────────────────────────────────────────────────────
-	// GET   radio/emission/emotion/list/{id}/
-	// GET   radio/emission/emotion/detail/{id}/{emissionId}/
-	// POST  radio/emission/emotion/set/{id}/
-	// DELETE radio/emission/emotion/delete/{id}/{emissionId}/
 
 	getEmissionEmotions: (token: Token): Promise<EmissionEmotionList> =>
 		api.get(`radio/emission/emotion/list/${id(token)}/`, auth(token)).json(),
@@ -232,25 +187,13 @@ export const radioAdminApi = {
 		api.get(`radio/emission/emotion/detail/${id(token)}/${emissionId}/`, auth(token)).json(),
 
 	setEmissionEmotion: (token: Token, data: SetEmissionEmotionPayload): Promise<EmissionEmotion> =>
-		api.post(`radio/emission/emotion/set/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/emission/emotion/set/${id(token)}/`, body(data, token)).json(),
 
 	deleteEmissionEmotion: async (token: Token, emissionId: number): Promise<void> => {
 		await api.delete(`radio/emission/emotion/delete/${id(token)}/${emissionId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// EPISODES
-	// GET    radio/episode/search/{id}/?limit&offset&language&emission&season
-	// GET    radio/episode/list/{id}/
-	// GET    radio/episode/detail/{id}/{episodeId}/
-	// POST   radio/episode/create/{id}/
-	// PUT    radio/episode/update/{id}/
-	// PATCH  radio/episode/validate/{id}/
-	// PATCH  radio/episode/public/{id}/
-	// PATCH  radio/episode/publish/{id}/
-	// PATCH  radio/episode/publish/release/{id}/
-	// DELETE radio/episode/delete/{id}/{episodeId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Episodes ──────────────────────────────────────────────────────────────
 
 	searchEpisodes: (token: Token, params: SearchEpisodesParams = {}): Promise<EpisodeList> =>
 		api.get(
@@ -265,28 +208,29 @@ export const radioAdminApi = {
 		api.get(`radio/episode/detail/${id(token)}/${episodeId}/`, auth(token)).json(),
 
 	createEpisode: (token: Token, data: CreateEpisodePayload): Promise<Episode> =>
-		api.post(`radio/episode/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/episode/create/${id(token)}/`, body(data, token)).json(),
 
 	updateEpisode: (token: Token, data: UpdateEpisodePayload): Promise<Episode> =>
-		api.put(`radio/episode/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/episode/update/${id(token)}/`, body(data, token)).json(),
 
 	validateEpisode: (token: Token, episodeId: number): Promise<Episode> =>
-		api.patch(`radio/episode/validate/${id(token)}/`, { json: { id: episodeId }, ...auth(token) }).json(),
+		api.patch(`radio/episode/validate/${id(token)}/`, body({ id: episodeId }, token)).json(),
 
 	makePublicEpisode: (token: Token, episodeId: number): Promise<Episode> =>
-		api.patch(`radio/episode/public/${id(token)}/`, { json: { id: episodeId }, ...auth(token) }).json(),
+		api.patch(`radio/episode/public/${id(token)}/`, body({ id: episodeId }, token)).json(),
 
 	publishEpisode: (token: Token, episodeId: number): Promise<Episode> =>
-		api.patch(`radio/episode/publish/${id(token)}/`, { json: { id: episodeId }, ...auth(token) }).json(),
+		api.patch(`radio/episode/publish/${id(token)}/`, body({ id: episodeId }, token)).json(),
 
 	publishReleaseEpisode: (token: Token, episodeId: number): Promise<Episode> =>
-		api.patch(`radio/episode/publish/release/${id(token)}/`, { json: { id: episodeId }, ...auth(token) }).json(),
+		api.patch(`radio/episode/publish/release/${id(token)}/`, body({ id: episodeId }, token)).json(),
 
 	deleteEpisode: async (token: Token, episodeId: number): Promise<void> => {
 		await api.delete(`radio/episode/delete/${id(token)}/${episodeId}/`, auth(token));
 	},
 
 	// ── Episode Emotions ──────────────────────────────────────────────────────
+
 	getEpisodeEmotions: (token: Token): Promise<EpisodeEmotionList> =>
 		api.get(`radio/episode/emotion/list/${id(token)}/`, auth(token)).json(),
 
@@ -294,20 +238,13 @@ export const radioAdminApi = {
 		api.get(`radio/episode/emotion/detail/${id(token)}/${episodeId}/`, auth(token)).json(),
 
 	setEpisodeEmotion: (token: Token, data: SetEpisodeEmotionPayload): Promise<EpisodeEmotion> =>
-		api.post(`radio/episode/emotion/set/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/episode/emotion/set/${id(token)}/`, body(data, token)).json(),
 
 	deleteEpisodeEmotion: async (token: Token, episodeId: number): Promise<void> => {
 		await api.delete(`radio/episode/emotion/delete/${id(token)}/${episodeId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// REPORTAGE TYPES
-	// GET    radio/reportage/type/list/{id}/
-	// GET    radio/reportage/type/detail/{id}/{typeId}/
-	// POST   radio/reportage/type/create/{id}/
-	// PUT    radio/reportage/type/update/{id}/
-	// DELETE radio/reportage/type/delete/{id}/{typeId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Reportage Types ───────────────────────────────────────────────────────
 
 	getReportageTypes: (token: Token): Promise<ReportageTypeList> =>
 		api.get(`radio/reportage/type/list/${id(token)}/`, auth(token)).json(),
@@ -316,28 +253,16 @@ export const radioAdminApi = {
 		api.get(`radio/reportage/type/detail/${id(token)}/${typeId}/`, auth(token)).json(),
 
 	createReportageType: (token: Token, data: CreateReportageTypePayload): Promise<ReportageType> =>
-		api.post(`radio/reportage/type/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/reportage/type/create/${id(token)}/`, body(data, token)).json(),
 
 	updateReportageType: (token: Token, data: UpdateReportageTypePayload): Promise<ReportageType> =>
-		api.put(`radio/reportage/type/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/reportage/type/update/${id(token)}/`, body(data, token)).json(),
 
 	deleteReportageType: async (token: Token, typeId: number): Promise<void> => {
 		await api.delete(`radio/reportage/type/delete/${id(token)}/${typeId}/`, auth(token));
 	},
 
-	// ──────────────────────────────────────────────────────────────────────────
-	// REPORTAGES
-	// GET    radio/reportage/search/{id}/?limit&offset&language&reportage_type
-	// GET    radio/reportage/list/{id}/
-	// GET    radio/reportage/detail/{id}/{reportageId}/
-	// POST   radio/reportage/create/{id}/
-	// PUT    radio/reportage/update/{id}/
-	// PATCH  radio/reportage/validate/{id}/
-	// PATCH  radio/reportage/public/{id}/
-	// PATCH  radio/reportage/publish/{id}/
-	// PATCH  radio/reportage/publish/release/{id}/
-	// DELETE radio/reportage/delete/{id}/{reportageId}/
-	// ──────────────────────────────────────────────────────────────────────────
+	// ── Reportages ────────────────────────────────────────────────────────────
 
 	searchReportages: (token: Token, params: SearchReportagesParams = {}): Promise<ReportageList> =>
 		api.get(
@@ -352,28 +277,29 @@ export const radioAdminApi = {
 		api.get(`radio/reportage/detail/${id(token)}/${reportageId}/`, auth(token)).json(),
 
 	createReportage: (token: Token, data: CreateReportagePayload): Promise<Reportage> =>
-		api.post(`radio/reportage/create/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/reportage/create/${id(token)}/`, body(data, token)).json(),
 
 	updateReportage: (token: Token, data: UpdateReportagePayload): Promise<Reportage> =>
-		api.put(`radio/reportage/update/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.put(`radio/reportage/update/${id(token)}/`, body(data, token)).json(),
 
 	validateReportage: (token: Token, reportageId: number): Promise<Reportage> =>
-		api.patch(`radio/reportage/validate/${id(token)}/`, { json: { id: reportageId }, ...auth(token) }).json(),
+		api.patch(`radio/reportage/validate/${id(token)}/`, body({ id: reportageId }, token)).json(),
 
 	makePublicReportage: (token: Token, reportageId: number): Promise<Reportage> =>
-		api.patch(`radio/reportage/public/${id(token)}/`, { json: { id: reportageId }, ...auth(token) }).json(),
+		api.patch(`radio/reportage/public/${id(token)}/`, body({ id: reportageId }, token)).json(),
 
 	publishReportage: (token: Token, reportageId: number): Promise<Reportage> =>
-		api.patch(`radio/reportage/publish/${id(token)}/`, { json: { id: reportageId }, ...auth(token) }).json(),
+		api.patch(`radio/reportage/publish/${id(token)}/`, body({ id: reportageId }, token)).json(),
 
 	publishReleaseReportage: (token: Token, reportageId: number): Promise<Reportage> =>
-		api.patch(`radio/reportage/publish/release/${id(token)}/`, { json: { id: reportageId }, ...auth(token) }).json(),
+		api.patch(`radio/reportage/publish/release/${id(token)}/`, body({ id: reportageId }, token)).json(),
 
 	deleteReportage: async (token: Token, reportageId: number): Promise<void> => {
 		await api.delete(`radio/reportage/delete/${id(token)}/${reportageId}/`, auth(token));
 	},
 
 	// ── Reportage Emotions ────────────────────────────────────────────────────
+
 	getReportageEmotions: (token: Token): Promise<ReportageEmotionList> =>
 		api.get(`radio/reportage/emotion/list/${id(token)}/`, auth(token)).json(),
 
@@ -381,7 +307,7 @@ export const radioAdminApi = {
 		api.get(`radio/reportage/emotion/detail/${id(token)}/${reportageId}/`, auth(token)).json(),
 
 	setReportageEmotion: (token: Token, data: SetReportageEmotionPayload): Promise<ReportageEmotion> =>
-		api.post(`radio/reportage/emotion/set/${id(token)}/`, { json: data, ...auth(token) }).json(),
+		api.post(`radio/reportage/emotion/set/${id(token)}/`, body(data, token)).json(),
 
 	deleteReportageEmotion: async (token: Token, reportageId: number): Promise<void> => {
 		await api.delete(`radio/reportage/emotion/delete/${id(token)}/${reportageId}/`, auth(token));

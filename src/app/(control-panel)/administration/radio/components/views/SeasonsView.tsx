@@ -15,19 +15,24 @@ import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type SeasonForm = {
 	name: string;
+	slug: string;
 	description: string;
-	number: string;
 	start_date: string;
 	end_date: string;
 };
 
 const empty: SeasonForm = {
 	name: '',
+	slug: '',
 	description: '',
-	number: '',
 	start_date: '',
 	end_date: '',
 };
+
+function toDateOnly(v: string | undefined) {
+	if (!v) return '';
+	return v.split('T')[0] ?? '';
+}
 
 export default function SeasonsView() {
 	const { data: account } = useUser();
@@ -50,10 +55,10 @@ export default function SeasonsView() {
 	const openEdit = (row: Season) => {
 		setForm({
 			name: row.name,
+			slug: row.slug ?? '',
 			description: row.description ?? '',
-			number: String(row.number ?? ''),
-			start_date: row.start_date ?? '',
-			end_date: row.end_date ?? '',
+			start_date: toDateOnly(row.start_date),
+			end_date: toDateOnly(row.end_date),
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
@@ -61,8 +66,8 @@ export default function SeasonsView() {
 
 	const buildPayload = () => ({
 		name: form.name.trim(),
-		description: form.description.trim(),
-		number: form.number ? Number(form.number) : undefined,
+		slug: form.slug.trim() || undefined,
+		description: form.description.trim() || undefined,
 		start_date: form.start_date || undefined,
 		end_date: form.end_date || undefined,
 	});
@@ -78,19 +83,11 @@ export default function SeasonsView() {
 
 	const columns = useMemo<MRT_ColumnDef<Season>[]>(() => [
 		{ accessorKey: 'id', header: 'ID', size: 70 },
-		{ accessorKey: 'number', header: 'No.', size: 80 },
 		{ accessorKey: 'name', header: 'Name' },
+		{ accessorKey: 'slug', header: 'Slug' },
 		{ accessorKey: 'description', header: 'Description' },
-		{
-			id: 'start_date',
-			header: 'Start Date',
-			accessorFn: (row) => row.start_date ?? '',
-		},
-		{
-			id: 'end_date',
-			header: 'End Date',
-			accessorFn: (row) => row.end_date ?? '',
-		},
+		{ id: 'start_date', header: 'Start Date', accessorFn: (row) => row.start_date ?? '' },
+		{ id: 'end_date', header: 'End Date', accessorFn: (row) => row.end_date ?? '' },
 	], []);
 
 	const formContent = (
@@ -100,12 +97,12 @@ export default function SeasonsView() {
 				<TextField size="small" value={form.name} onChange={(e) => setField('name', e.target.value)} />
 			</FormControl>
 			<FormControl fullWidth>
-				<FormLabel>Season Number</FormLabel>
+				<FormLabel>Slug</FormLabel>
 				<TextField
 					size="small"
-					type="number"
-					value={form.number}
-					onChange={(e) => setField('number', e.target.value)}
+					value={form.slug}
+					onChange={(e) => setField('slug', e.target.value)}
+					placeholder="auto-generated if left blank"
 				/>
 			</FormControl>
 			<FormControl fullWidth>
@@ -127,7 +124,6 @@ export default function SeasonsView() {
 						value={form.start_date}
 						onChange={(e) => setField('start_date', e.target.value)}
 						InputLabelProps={{ shrink: true }}
-						inputProps={{ placeholder: 'yyyy-mm-dd' }}
 					/>
 				</FormControl>
 				<FormControl fullWidth>
@@ -138,7 +134,6 @@ export default function SeasonsView() {
 						value={form.end_date}
 						onChange={(e) => setField('end_date', e.target.value)}
 						InputLabelProps={{ shrink: true }}
-						inputProps={{ placeholder: 'yyyy-mm-dd' }}
 					/>
 				</FormControl>
 			</div>
@@ -156,24 +151,10 @@ export default function SeasonsView() {
 			onDelete={(id) => remove(id)}
 			formDialog={
 				<>
-					<SimpleFormDialog
-						open={addOpen}
-						onClose={() => setAddOpen(false)}
-						title="Add Season"
-						isPending={isCreating}
-						canSubmit={!!form.name.trim()}
-						onSubmit={handleAdd}
-					>
+					<SimpleFormDialog open={addOpen} onClose={() => setAddOpen(false)} title="Add Season" isPending={isCreating} canSubmit={!!form.name.trim()} onSubmit={handleAdd}>
 						{formContent}
 					</SimpleFormDialog>
-					<SimpleFormDialog
-						open={editOpen}
-						onClose={() => setEditOpen(false)}
-						title="Edit Season"
-						isPending={isUpdating}
-						canSubmit={!!form.name.trim()}
-						onSubmit={handleEdit}
-					>
+					<SimpleFormDialog open={editOpen} onClose={() => setEditOpen(false)} title="Edit Season" isPending={isUpdating} canSubmit={!!form.name.trim()} onSubmit={handleEdit}>
 						{formContent}
 					</SimpleFormDialog>
 				</>
