@@ -4,7 +4,9 @@ import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
 import {
 	FormControl, FormLabel, MenuItem, Select, Typography, CircularProgress,
+	Dialog, DialogTitle, DialogContent, DialogActions, Button,
 } from '@mui/material';
+import { useSnackbar } from 'notistack';
 import useUser from '@auth/useUser';
 import {
 	useRadioAdminEpisodeGuests,
@@ -29,20 +31,22 @@ const empty: GuestLinkForm = { episode_id: '', guest_id: '', guest_type_id: '' }
 export default function EpisodeGuestsView() {
 	const { data: account } = useUser();
 	const token = account?.token;
+	const { enqueueSnackbar } = useSnackbar();
 
-	const { data, isLoading }                                                          = useRadioAdminEpisodeGuests(token);
-	const { data: guestTypes }                                                         = useRadioAdminGuestTypes(token);
-	const { data: episodesData }                                                       = useRadioAdminEpisodes(token);
-	const { data: accountsData, isLoading: isAccountsLoading, isError: isAccountsError } = useRadioAdminAccounts(token);
+	const { data, isLoading }                                                              = useRadioAdminEpisodeGuests(token);
+	const { data: guestTypes }                                                             = useRadioAdminGuestTypes(token);
+	const { data: episodesData }                                                           = useRadioAdminEpisodes(token);
+	const { data: accountsData, isLoading: isAccountsLoading, isError: isAccountsError }  = useRadioAdminAccounts(token);
 
 	const { mutate: create, isPending: isCreating } = useCreateEpisodeGuest(token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEpisodeGuest(token);
 	const { mutate: remove }                         = useDeleteEpisodeGuest(token);
 
-	const [addOpen,   setAddOpen]   = useState(false);
-	const [editOpen,  setEditOpen]  = useState(false);
-	const [form,      setForm]      = useState<GuestLinkForm>(empty);
-	const [editingId, setEditingId] = useState<number | null>(null);
+	const [addOpen,      setAddOpen]      = useState(false);
+	const [editOpen,     setEditOpen]     = useState(false);
+	const [form,         setForm]         = useState<GuestLinkForm>(empty);
+	const [editingId,    setEditingId]    = useState<number | null>(null);
+	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
 	const setField = (field: keyof GuestLinkForm, value: string) =>
 		setForm((p) => ({ ...p, [field]: value }));
@@ -65,17 +69,46 @@ export default function EpisodeGuestsView() {
 		guest_type_id: Number(form.guest_type_id),
 	});
 
-	const canSubmit = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
+	/**
+	 * FIX: For editing, guest_id + guest_type_id may already be set from
+	 * the existing row — only require episode_id as a minimum (it's always
+	 * present on an existing guest link). Also accept a pre-filled guest_id
+	 * even if it doesn't appear in the current accounts dropdown list.
+	 */
+	const canSubmitCreate = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
+	const canSubmitEdit   = !!form.episode_id && !!form.guest_type_id;
 
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
-		onError:   (err) => console.error('Create episode guest failed:', err),
+		onError:   (err) => {
+			console.error('Create episode guest failed:', err);
+			enqueueSnackbar('Error creating guest link', { variant: 'error' });
+		},
 	});
 
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
-		onSuccess: () => setEditOpen(false),
-		onError:   (err) => console.error('Update episode guest failed:', err),
-	});
+	const handleEdit = () => {
+		if (!editingId) return;
+		update({ id: editingId, ...buildPayload() }, {
+			onSuccess: () => setEditOpen(false),
+			// FIX: was only console.error — now shows snackbar so the user
+			// knows when the save failed.
+			onError: (err) => {
+				console.error('Update episode guest failed:', err);
+				enqueueSnackbar('Error updating guest link', { variant: 'error' });
+			},
+		});
+	};
+
+	const handleDeleteConfirmed = () => {
+		if (deleteTarget === null) return;
+		remove(deleteTarget, {
+			onError: (err) => {
+				console.error('Delete episode guest failed:', err);
+				enqueueSnackbar('Error deleting guest link', { variant: 'error' });
+			},
+		});
+		setDeleteTarget(null);
+	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
 
@@ -98,7 +131,7 @@ export default function EpisodeGuestsView() {
 		},
 	], []);
 
-	// ─── Shared form fields ───────────────────────────────────────────────────
+	// ─── Guest selector ───────────────────────────────────────────────────────
 
 	const guestSelector = () => {
 		if (isAccountsLoading) {
@@ -140,6 +173,8 @@ export default function EpisodeGuestsView() {
 			</Select>
 		);
 	};
+
+	// ─── Shared form fields ───────────────────────────────────────────────────
 
 	const formContent = (
 		<>
@@ -183,40 +218,63 @@ export default function EpisodeGuestsView() {
 	// ─── Render ───────────────────────────────────────────────────────────────
 
 	return (
-		<RadioAdminTable
-			title="Episode Guests"
-			addButtonLabel="Link Guest"
-			data={data?.items}
-			isLoading={isLoading}
-			columns={columns}
-			onAdd={openAdd}
-			onEdit={openEdit}
-			onDelete={(id) => remove(id)}
-			formDialog={
-				<>
-					<SimpleFormDialog
-						open={addOpen}
-						onClose={() => setAddOpen(false)}
-						title="Link Guest to Episode"
-						isPending={isCreating}
-						canSubmit={canSubmit}
-						onSubmit={handleAdd}
-					>
-						{formContent}
-					</SimpleFormDialog>
+		<>
+			<RadioAdminTable
+				title="Episode Guests"
+				addButtonLabel="Link Guest"
+				data={data?.items}
+				isLoading={isLoading}
+				columns={columns}
+				onAdd={openAdd}
+				onEdit={openEdit}
+				// FIX: use delete confirmation instead of instant delete
+				onDelete={(id) => setDeleteTarget(id)}
+				formDialog={
+					<>
+						<SimpleFormDialog
+							open={addOpen}
+							onClose={() => setAddOpen(false)}
+							title="Link Guest to Episode"
+							isPending={isCreating}
+							canSubmit={canSubmitCreate}
+							onSubmit={handleAdd}
+						>
+							{formContent}
+						</SimpleFormDialog>
 
-					<SimpleFormDialog
-						open={editOpen}
-						onClose={() => setEditOpen(false)}
-						title="Edit Guest Link"
-						isPending={isUpdating}
-						canSubmit={canSubmit}
-						onSubmit={handleEdit}
-					>
-						{formContent}
-					</SimpleFormDialog>
-				</>
-			}
-		/>
+						<SimpleFormDialog
+							open={editOpen}
+							onClose={() => setEditOpen(false)}
+							title="Edit Guest Link"
+							isPending={isUpdating}
+							// FIX: use canSubmitEdit (doesn't require guest_id to be
+							// present in the accounts dropdown — existing value is kept)
+							canSubmit={canSubmitEdit}
+							onSubmit={handleEdit}
+						>
+							{formContent}
+						</SimpleFormDialog>
+					</>
+				}
+			/>
+
+			{/* ── Delete confirmation dialog ── */}
+			<Dialog
+				open={deleteTarget !== null}
+				onClose={() => setDeleteTarget(null)}
+				maxWidth="xs"
+				fullWidth
+				PaperProps={{ sx: { borderRadius: '16px' } }}
+			>
+				<DialogTitle sx={{ fontWeight: 700 }}>Remove Guest Link?</DialogTitle>
+				<DialogContent>
+					<Typography>This will unlink the guest from the episode. This action cannot be undone.</Typography>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+					<Button onClick={() => setDeleteTarget(null)} variant="outlined">Cancel</Button>
+					<Button onClick={handleDeleteConfirmed} variant="contained" color="error">Remove</Button>
+				</DialogActions>
+			</Dialog>
+		</>
 	);
 }

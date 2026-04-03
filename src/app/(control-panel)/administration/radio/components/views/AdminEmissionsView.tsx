@@ -32,7 +32,7 @@ import {
 	radioAdminKeys,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 import { radioAdminApi } from '@/app/(control-panel)/administration/radio/api/services/radioAdminApiService';
-import { Emission, CreateEmissionPayload, RadioTag } from '@/app/(control-panel)/administration/radio/api/types';
+import { Emission, CreateEmissionPayload, UpdateEmissionPayload, RadioTag } from '@/app/(control-panel)/administration/radio/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -114,16 +114,23 @@ export default function AdminEmissionsView() {
 	const [posterFile, setPosterFile] = useState<File | null>(null);
 	const [isCreating, setIsCreating] = useState(false);
 
+	// ── Delete confirmation ───────────────────────────────────────────────────
+	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
 	const posterInputRef = useRef<HTMLInputElement>(null);
 
 	const setField = <K extends keyof EmissionForm>(f: K, v: EmissionForm[K]) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
 	/**
-	 * Required fields per OpenAPI CreateEmissionSchema.
-	 * PATCH-only fields (publishing_date, is_published, etc.) are excluded.
+	 * FIX: Separate canSubmit for create vs edit.
+	 *
+	 * CREATE — all fields are genuinely required by the backend schema.
+	 * EDIT   — only name + language are the minimum; all other fields
+	 *           are optional on update, so don't block the Save button when
+	 *           they happen to be empty on an existing record.
 	 */
-	const canSubmit =
+	const canSubmitCreate =
 		!!form.name.trim()               &&
 		!!form.slug.trim()               &&
 		!!form.description.trim()        &&
@@ -131,6 +138,11 @@ export default function AdminEmissionsView() {
 		!!form.start_date                &&
 		!!form.language_id               &&
 		!!form.emission_type_id          &&
+		!!accountId;
+
+	const canSubmitEdit =
+		!!form.name.trim() &&
+		!!form.language_id &&
 		!!accountId;
 
 	const isPending = isCreating || isUpdating;
@@ -160,13 +172,9 @@ export default function AdminEmissionsView() {
 	};
 
 	/**
-	 * Builds the JSON payload for the `payload` field in the multipart request.
-	 *
-	 * Includes only what CreateEmissionSchema requires at creation time.
-	 * Fields like publishing_date, is_published, is_pubic_content must be set
-	 * later via the dedicated /publish/, /public/, /validate/ PATCH endpoints.
+	 * CREATE payload — all required fields for the backend CreateEmissionSchema.
 	 */
-	const buildPayload = (): CreateEmissionPayload => ({
+	const buildCreatePayload = (): CreateEmissionPayload => ({
 		name:               form.name.trim(),
 		slug:               form.slug.trim(),
 		description:        form.description.trim(),
@@ -181,15 +189,42 @@ export default function AdminEmissionsView() {
 	});
 
 	/**
-	 * Create — calls the service directly so the poster file travels in the
-	 * same multipart/form-data request (no second round-trip).
-	 * Cache is invalidated manually via queryClient.
+	 * FIX: UPDATE payload only sends what was actually filled in.
+	 * - Does NOT send created_by_id (it's a create-only field).
+	 * - Does NOT send transcription: {} (would overwrite existing transcription).
+	 * - Optional fields are omitted when empty rather than sent as ''.
+	 */
+	const buildUpdatePayload = (): Omit<UpdateEmissionPayload, 'id'> => {
+		const payload: Omit<UpdateEmissionPayload, 'id'> = {
+			name:        form.name.trim(),
+			language_id: Number(form.language_id),
+		};
+
+		if (form.slug.trim())               payload.slug               = form.slug.trim();
+		if (form.description.trim())        payload.description        = form.description.trim();
+		if (form.poster_description.trim()) payload.poster_description = form.poster_description.trim();
+		if (form.start_date)                payload.start_date         = form.start_date;
+		if (form.end_date)                  payload.end_date           = form.end_date;
+		else                                payload.end_date           = null; // allow clearing end_date
+		if (form.emission_type_id)          payload.emission_type_id   = Number(form.emission_type_id);
+
+		// Tags: use add_tags/remove_tags rather than overwriting the whole array
+		if (form.tags.length > 0) {
+			payload.add_tags = form.tags.map(tagLabel);
+		}
+
+		return payload;
+	};
+
+	/**
+	 * Create — calls the service directly so the poster travels in the
+	 * same multipart/form-data request.
 	 */
 	const handleAddEmission = async () => {
-		if (!token || !canSubmit) return;
+		if (!token || !canSubmitCreate) return;
 		setIsCreating(true);
 		try {
-			await radioAdminApi.createEmission(token, buildPayload(), posterFile ?? undefined);
+			await radioAdminApi.createEmission(token, buildCreatePayload(), posterFile ?? undefined);
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
 			enqueueSnackbar('Emission created', { variant: 'success' });
 			setPosterFile(null);
@@ -203,12 +238,12 @@ export default function AdminEmissionsView() {
 	};
 
 	/**
-	 * Edit — uses the mutation hook for cache housekeeping. Poster is updated
-	 * via the dedicated endpoint if the user changed it.
+	 * Edit — uses the mutation hook. Poster updated via dedicated endpoint
+	 * if the user changed it.
 	 */
 	const handleEditEmission = () => {
-		if (!editingId) return;
-		update({ id: editingId, ...buildPayload() }, {
+		if (!editingId || !canSubmitEdit) return;
+		update({ id: editingId, ...buildUpdatePayload() }, {
 			onSuccess: async (updated) => {
 				if (posterFile && token) {
 					try {
@@ -223,8 +258,19 @@ export default function AdminEmissionsView() {
 				setPosterFile(null);
 				setEditOpen(false);
 			},
-			onError: (err) => logHttpError('Update emission failed', err),
+			onError: (err) => {
+				logHttpError('Update emission failed', err);
+				enqueueSnackbar('Error updating emission', { variant: 'error' });
+			},
 		});
+	};
+
+	const handleDeleteConfirmed = () => {
+		if (deleteTarget === null) return;
+		remove(deleteTarget, {
+			onError: (err) => logHttpError('Delete emission failed', err),
+		});
+		setDeleteTarget(null);
 	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
@@ -308,18 +354,18 @@ export default function AdminEmissionsView() {
 			</FormControl>
 
 			<FormControl fullWidth>
-				<FormLabel required>Slug</FormLabel>
+				<FormLabel>Slug</FormLabel>
 				<TextField
 					size="small"
 					value={form.slug}
 					onChange={(e) => setField('slug', e.target.value)}
 					placeholder="my-emission-slug"
-					helperText="Required. Lowercase letters, numbers and hyphens."
+					helperText="Lowercase letters, numbers and hyphens."
 				/>
 			</FormControl>
 
 			<FormControl fullWidth>
-				<FormLabel required>Description</FormLabel>
+				<FormLabel>Description</FormLabel>
 				<TextField size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} />
 			</FormControl>
 
@@ -356,7 +402,7 @@ export default function AdminEmissionsView() {
 			</FormControl>
 
 			<FormControl fullWidth>
-				<FormLabel required>Poster Description</FormLabel>
+				<FormLabel>Poster Description</FormLabel>
 				<TextField
 					size="small"
 					multiline
@@ -384,16 +430,16 @@ export default function AdminEmissionsView() {
 			</FormControl>
 
 			<FormControl fullWidth>
-				<FormLabel required>Emission Type</FormLabel>
+				<FormLabel>Emission Type</FormLabel>
 				<Select size="small" value={form.emission_type_id} onChange={(e) => setField('emission_type_id', e.target.value)} displayEmpty>
-					<MenuItem value="" disabled><em>Select a type…</em></MenuItem>
+					<MenuItem value=""><em>None</em></MenuItem>
 					{emissionTypesData?.items.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
 				</Select>
 			</FormControl>
 
 			<Box sx={{ display: 'flex', gap: 2 }}>
 				<FormControl fullWidth>
-					<FormLabel required>Start Date</FormLabel>
+					<FormLabel>Start Date</FormLabel>
 					<TextField size="small" type="date" value={form.start_date} onChange={(e) => setField('start_date', e.target.value)} InputLabelProps={{ shrink: true }} />
 				</FormControl>
 				<FormControl fullWidth>
@@ -499,7 +545,7 @@ export default function AdminEmissionsView() {
 									<MenuItem key="publish" onClick={() => { publish(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish
 									</MenuItem>,
-									<MenuItem key="del" onClick={() => { remove(row.original.id); closeMenu(); }}>
+									<MenuItem key="del" onClick={() => { setDeleteTarget(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>Delete
 									</MenuItem>,
 								]}
@@ -521,7 +567,7 @@ export default function AdminEmissionsView() {
 						onClick={handleAddEmission}
 						variant="contained"
 						color="secondary"
-						disabled={!canSubmit || isPending}
+						disabled={!canSubmitCreate || isPending}
 						startIcon={isPending ? <CircularProgress size={14} /> : undefined}
 					>
 						{isCreating ? 'Creating…' : 'Create'}
@@ -541,11 +587,23 @@ export default function AdminEmissionsView() {
 						onClick={handleEditEmission}
 						variant="contained"
 						color="secondary"
-						disabled={!canSubmit || isPending}
+						disabled={!canSubmitEdit || isPending}
 						startIcon={isPending ? <CircularProgress size={14} /> : undefined}
 					>
 						{isUpdating ? 'Saving…' : 'Save'}
 					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* ── Delete confirmation dialog ── */}
+			<Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
+				<DialogTitle sx={{ fontWeight: 700 }}>Delete Emission?</DialogTitle>
+				<DialogContent>
+					<Typography>This action cannot be undone. Approved or published emissions may be rejected by the server.</Typography>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+					<Button onClick={() => setDeleteTarget(null)} variant="outlined">Cancel</Button>
+					<Button onClick={handleDeleteConfirmed} variant="contained" color="error">Delete</Button>
 				</DialogActions>
 			</Dialog>
 		</>

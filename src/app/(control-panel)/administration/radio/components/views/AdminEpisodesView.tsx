@@ -5,7 +5,7 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
 	DialogActions, Button, Typography, FormControl, FormLabel,
-	TextField, Select, Chip, CircularProgress, Divider
+	TextField, Select, Chip, CircularProgress, Divider,
 } from '@mui/material';
 import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
@@ -14,6 +14,7 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
+import { useSnackbar } from 'notistack';
 import DataTable from 'src/components/data-table/DataTable';
 import {
 	useRadioAdminEpisodes,
@@ -25,7 +26,7 @@ import {
 	useRadioAdminEmissions,
 	useRadioAdminSeasons,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
-import { Episode, CreateEpisodePayload } from '@/app/(control-panel)/administration/radio/api/types';
+import { Episode, CreateEpisodePayload, UpdateEpisodePayload } from '@/app/(control-panel)/administration/radio/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -45,15 +46,11 @@ async function logHttpError(label: string, err: unknown) {
 	}
 }
 
-// ID fields are strings only inside form state so MUI Select works correctly.
-// buildPayload converts them to numbers before sending.
 type EpisodeForm = {
 	name:        string;
 	slug:        string;
 	description: string;
-	/** String in form state; converted to number (or omitted) in buildPayload. */
 	emission_id: string;
-	/** String in form state; converted to number (or omitted) in buildPayload. */
 	season_id:   string;
 };
 
@@ -64,26 +61,37 @@ const empty: EpisodeForm = {
 export default function AdminEpisodesView() {
 	const { data: account } = useUser();
 	const token = account?.token;
+	const { enqueueSnackbar } = useSnackbar();
 
-	const { data: episodesData,  isLoading }   = useRadioAdminEpisodes(token);
-	const { data: emissionsData }               = useRadioAdminEmissions(token);
-	const { data: seasonsData }                 = useRadioAdminSeasons(token);
-	const { mutate: create, isPending: isCreating } = useCreateEpisode(token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(token);
-	const { mutate: remove }                    = useDeleteEpisode(token);
-	const { mutate: validate }                  = useValidateEpisode(token);
-	const { mutate: publish }                   = usePublishEpisode(token);
+	const { data: episodesData,  isLoading }                   = useRadioAdminEpisodes(token);
+	const { data: emissionsData }                               = useRadioAdminEmissions(token);
+	const { data: seasonsData }                                 = useRadioAdminSeasons(token);
+	const { mutate: create, isPending: isCreating }             = useCreateEpisode(token);
+	const { mutate: update, isPending: isUpdating }             = useUpdateEpisode(token);
+	const { mutate: remove }                                    = useDeleteEpisode(token);
+	const { mutate: validate }                                  = useValidateEpisode(token);
+	const { mutate: publish }                                   = usePublishEpisode(token);
 
-	const [addOpen,   setAddOpen]   = useState(false);
-	const [editOpen,  setEditOpen]  = useState(false);
-	const [editingId, setEditingId] = useState<number | null>(null);
-	const [form,      setForm]      = useState<EpisodeForm>(empty);
+	const [addOpen,       setAddOpen]       = useState(false);
+	const [editOpen,      setEditOpen]      = useState(false);
+	const [editingId,     setEditingId]     = useState<number | null>(null);
+	const [form,          setForm]          = useState<EpisodeForm>(empty);
+	const [deleteTarget,  setDeleteTarget]  = useState<number | null>(null);
 
 	const setField = (f: keyof EpisodeForm, v: string) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
-	// emission_id is the only required field the backend enforces at creation.
-	const canSubmit = !!form.name.trim() && !!form.emission_id;
+	/**
+	 * FIX: Separate canSubmit for create vs edit.
+	 *
+	 * CREATE — emission_id is required by the backend schema.
+	 * EDIT   — emission_id is optional on update; existing episodes
+	 *           already have an emission stored server-side, so we
+	 *           must not block Save just because it's absent from the
+	 *           list-response payload.
+	 */
+	const canSubmitCreate = !!form.name.trim() && !!form.emission_id;
+	const canSubmitEdit   = !!form.name.trim();
 
 	const openAdd = () => { setForm(empty); setAddOpen(true); };
 
@@ -100,14 +108,10 @@ export default function AdminEpisodesView() {
 	};
 
 	/**
-	 * Builds a payload that matches the backend CreateEpisodeSchema exactly:
-	 *   { tags, name, description, slug, transcription, emission_id, season_id }
-	 *
-	 * - String IDs are converted to numbers (or omitted when empty).
-	 * - scheduling fields (publishing_date, online_date) are NOT sent at
-	 *   creation time — they belong to the PATCH endpoints only.
+	 * CREATE payload — matches backend CreateEpisodeSchema exactly.
+	 * Includes tags:[] and transcription:{} which are required at creation.
 	 */
-	const buildPayload = (): CreateEpisodePayload => ({
+	const buildCreatePayload = (): CreateEpisodePayload => ({
 		name:          form.name.trim(),
 		slug:          form.slug.trim()        || undefined,
 		description:   form.description.trim() || undefined,
@@ -118,23 +122,46 @@ export default function AdminEpisodesView() {
 	});
 
 	/**
-	 * Guards both handlers against a missing token (can happen when the
-	 * component first mounts before auth resolves and the user acts quickly).
+	 * FIX: UPDATE payload — does NOT send tags:[] (would wipe all existing
+	 * tags) and does NOT send transcription:{} (would overwrite transcription).
+	 * Only sends fields the user actually filled in.
 	 */
+	const buildUpdatePayload = (): Omit<UpdateEpisodePayload, 'id'> => {
+		const payload: Omit<UpdateEpisodePayload, 'id'> = {
+			name: form.name.trim(),
+		};
+		if (form.slug.trim())        payload.slug        = form.slug.trim();
+		if (form.description.trim()) payload.description = form.description.trim();
+		if (form.emission_id)        payload.emission_id = Number(form.emission_id);
+		if (form.season_id)          payload.season_id   = Number(form.season_id);
+		return payload;
+	};
+
 	const handleAdd = () => {
-		if (!token || !canSubmit) return;
-		create(buildPayload(), {
+		if (!token || !canSubmitCreate) return;
+		create(buildCreatePayload(), {
 			onSuccess: () => setAddOpen(false),
 			onError:   (err) => logHttpError('Create episode failed', err),
 		});
 	};
 
 	const handleEdit = () => {
-		if (!token || !editingId) return;
-		update({ id: editingId, ...buildPayload() }, {
+		if (!token || !editingId || !canSubmitEdit) return;
+		update({ id: editingId, ...buildUpdatePayload() }, {
 			onSuccess: () => setEditOpen(false),
-			onError:   (err) => logHttpError('Update episode failed', err),
+			onError:   (err) => {
+				logHttpError('Update episode failed', err);
+				enqueueSnackbar('Error updating episode', { variant: 'error' });
+			},
 		});
+	};
+
+	const handleDeleteConfirmed = () => {
+		if (deleteTarget === null) return;
+		remove(deleteTarget, {
+			onError: (err) => logHttpError('Delete episode failed', err),
+		});
+		setDeleteTarget(null);
 	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
@@ -245,14 +272,14 @@ export default function AdminEpisodesView() {
 
 			<div className="flex gap-3">
 				<FormControl fullWidth>
-					<FormLabel required>Emission</FormLabel>
+					<FormLabel>Emission</FormLabel>
 					<Select
 						size="small"
 						value={form.emission_id}
 						onChange={(e) => setField('emission_id', e.target.value)}
 						displayEmpty
 					>
-						<MenuItem value="" disabled><em>Select an emission…</em></MenuItem>
+						<MenuItem value=""><em>None / keep existing</em></MenuItem>
 						{emissionsData?.items.map((e) => (
 							<MenuItem key={e.id} value={String(e.id)}>{e.name}</MenuItem>
 						))}
@@ -337,7 +364,7 @@ export default function AdminEpisodesView() {
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>
 										Publish
 									</MenuItem>,
-									<MenuItem key="del" onClick={() => { remove(row.original.id); closeMenu(); }}>
+									<MenuItem key="del" onClick={() => { setDeleteTarget(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>
 										Delete
 									</MenuItem>,
@@ -370,7 +397,7 @@ export default function AdminEpisodesView() {
 						onClick={handleAdd}
 						variant="contained"
 						color="secondary"
-						disabled={!canSubmit || isCreating}
+						disabled={!canSubmitCreate || isCreating}
 						startIcon={isCreating ? <CircularProgress size={14} /> : undefined}
 					>
 						{isCreating ? 'Creating…' : 'Create'}
@@ -400,11 +427,29 @@ export default function AdminEpisodesView() {
 						onClick={handleEdit}
 						variant="contained"
 						color="secondary"
-						disabled={!canSubmit || isUpdating}
+						disabled={!canSubmitEdit || isUpdating}
 						startIcon={isUpdating ? <CircularProgress size={14} /> : undefined}
 					>
 						{isUpdating ? 'Saving…' : 'Save'}
 					</Button>
+				</DialogActions>
+			</Dialog>
+
+			{/* ── Delete confirmation dialog ── */}
+			<Dialog
+				open={deleteTarget !== null}
+				onClose={() => setDeleteTarget(null)}
+				maxWidth="xs"
+				fullWidth
+				PaperProps={{ sx: { borderRadius: '16px' } }}
+			>
+				<DialogTitle sx={{ fontWeight: 700 }}>Delete Episode?</DialogTitle>
+				<DialogContent>
+					<Typography>This action cannot be undone. Approved or published episodes may be rejected by the server.</Typography>
+				</DialogContent>
+				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+					<Button onClick={() => setDeleteTarget(null)} variant="outlined">Cancel</Button>
+					<Button onClick={handleDeleteConfirmed} variant="contained" color="error">Delete</Button>
 				</DialogActions>
 			</Dialog>
 		</>
