@@ -20,6 +20,7 @@ import {
 // =============================================================================
 
 export const radioAdminKeys = {
+	accounts:         (token: Token | undefined) => ['radio-admin', 'accounts',         token?.id] as const,
 	languages:        (token: Token | undefined) => ['radio-admin', 'languages',        token?.id] as const,
 	tags:             (token: Token | undefined) => ['radio-admin', 'tags',             token?.id] as const,
 
@@ -61,6 +62,17 @@ export const radioAdminKeys = {
 } as const;
 
 const enabled = (token: Token | undefined) => !!token?.access;
+
+// =============================================================================
+// ACCOUNTS
+// =============================================================================
+
+export const useRadioAdminAccounts = (token: Token | undefined) =>
+	useQuery({
+		queryKey: radioAdminKeys.accounts(token),
+		queryFn:  () => radioAdminApi.getAccounts(token),
+		enabled:  enabled(token),
+	});
 
 // =============================================================================
 // LANGUAGES

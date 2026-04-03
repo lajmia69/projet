@@ -35,6 +35,8 @@ import {
 	RadioLanguage, RadioLanguageList,
 	// Tag
 	RadioTagList,
+	// Account
+	RadioAccount, RadioAccountList,
 } from '../types';
 
 // ─── Dedicated radio ky instance ──────────────────────────────────────────────
@@ -69,6 +71,13 @@ function buildSearchParams(params: Record<string, string | number | undefined>):
 // =============================================================================
 
 export const radioAdminApi = {
+
+	// ── Accounts ──────────────────────────────────────────────────────────────
+
+	getAccounts: (token: Token | undefined): Promise<RadioAccountList> =>
+		radioApi
+			.get(`account/list/${accountId(token)}/`, { headers: authHeaders(token) })
+			.json<RadioAccountList>(),
 
 	// ── Languages ─────────────────────────────────────────────────────────────
 
@@ -205,24 +214,6 @@ export const radioAdminApi = {
 			.get(`radio/emission/detail/${accountId(token)}/${emissionId}/`, { headers: authHeaders(token) })
 			.json(),
 
-	/**
-	 * Create emission — multipart/form-data.
-	 *
-	 * The backend (CreateEmissionSchema) expects:
-	 *   • `payload`  — CreateEmissionSchema serialized as a JSON string
-	 *   • `poster`   — (optional) binary image file
-	 *
-	 * Do NOT set Content-Type manually; ky/fetch sets it automatically with the
-	 * correct multipart boundary when `body` is a FormData instance.
-	 *
-	 * Fields handled here at creation time (per OpenAPI spec):
-	 *   name, slug, description, poster_description, start_date,
-	 *   language_id, emission_type_id, tags
-	 *
-	 * Fields NOT sent at creation (use the dedicated PATCH endpoints instead):
-	 *   publishing_date, end_date, is_published, is_pubic_content,
-	 *   is_approved_content
-	 */
 	createEmission: (
 		token: Token | undefined,
 		data: CreateEmissionPayload,

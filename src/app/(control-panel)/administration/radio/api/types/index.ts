@@ -62,6 +62,8 @@ export type RadioAccount = {
 	level?: { id?: number; name: string } | null;
 };
 
+export type RadioAccountList = { items: RadioAccount[]; count: number };
+
 export type RadioTranscriptionContent = {
 	index: number;
 	type: string;
