@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth';
+// import { User } from '@auth/user';
 import { createStorage } from 'unstorage';
 import memoryDriver from 'unstorage/drivers/memory';
 import vercelKVDriver from 'unstorage/drivers/vercel-kv';
@@ -6,6 +7,8 @@ import { UnstorageAdapter } from '@auth/unstorage-adapter';
 import type { NextAuthConfig } from 'next-auth';
 import type { Provider } from 'next-auth/providers';
 import Credentials from 'next-auth/providers/credentials';
+// import Facebook from 'next-auth/providers/facebook';
+// import Google from 'next-auth/providers/google';
 import { authLoginUser, authGetUserAccount } from './authApi';
 
 const storage = createStorage({
@@ -21,47 +24,48 @@ const storage = createStorage({
 export const providers: Provider[] = [
 	Credentials({
 		async authorize(formInput) {
+			/**
+			 * !! This is just for demonstration purposes
+			 * You can create your own validation logic here
+			 * !! Do not use this in production
+			 */
+
+			/**
+			 * Sign in
+			 */
 			if (formInput.formType === 'signin') {
 				if (formInput.password && formInput.email) {
-					const response = await authLoginUser(
-						formInput.email.toString(),
-						formInput.password.toString()
-					);
+					const response = await authLoginUser(formInput.email.toString(), formInput.password.toString());
 
 					const token = await response.json();
 
 					if (!token) {
+						// No user found, so this is their first attempt to login
+						// Optionally, this is also the place you could do a user registration
 						throw new Error('Invalid credentials.');
 					}
 
-					// Fetch account once here, at login time
-					let account = null;
-					try {
-						const accountResponse = await authGetUserAccount({
-							id: token.id,
-							access: token.access,
-							refresh: token.refresh
-						});
-						account = await accountResponse.json();
-					} catch (e) {
-						console.error('Failed to fetch account during login:', e);
-					}
-
+					// console.log(token);
 					return {
 						id: token.id,
-						name: token.access,    // access token
-						email: token.refresh,  // refresh token
-						account                // store account data here
+						name: token.access,
+						email: token.refresh
 					};
 				}
 			}
 
+			/**
+			 * Sign up
+			 */
 			if (formInput.formType === 'signup') {
 				if (formInput.password === '' || formInput.email === '') {
 					return null;
 				}
 			}
 
+			/**
+			 * Response Success with email
+			 */
 			return {
 				email: formInput?.email as string
 			};
@@ -80,20 +84,18 @@ const config = {
 	trustHost: true,
 	callbacks: {
 		authorized() {
+			/** Checkout information to how to use middleware for authorization
+			 * https://next-auth.js.org/configuration/nextjs#middleware
+			 */
 			return true;
 		},
-		jwt({ token, trigger, user, account: oauthAccount }) {
+		jwt({ token, trigger, account, user }) {
 			if (trigger === 'update') {
-				token.name = user?.name;
+				token.name = user.name;
 			}
 
-			if (oauthAccount?.provider === 'keycloak') {
-				return { ...token, accessToken: oauthAccount.access_token };
-			}
-
-			// On first sign-in, user object is available — store account in token
-			if (user) {
-				token.accountData = (user as any).account ?? null;
+			if (account?.provider === 'keycloak') {
+				return { ...token, accessToken: account.access_token };
 			}
 
 			return token;
@@ -104,10 +106,26 @@ const config = {
 			}
 
 			if (session) {
-				// Use account data already stored in token — no backend call needed
-				const account = token.accountData as any;
+				try {
+					/**
+					 * Get the session user from database
+					 */
+					// const response = await authGetDbUserByEmail(session.user.email);
 
-				if (account) {
+					// const userDbData = (await response.json()) as User;
+
+					const accountResponse = await authGetUserAccount({
+						id: token.sub,
+						access: token.name,
+						refresh: token.email
+					});
+
+					const account = await accountResponse.json();
+
+					// const response = await authGetDbUserByEmail(session.user.email);
+
+					// const userDbData = (await response.json()) as User;
+					// console.log(account);
 					session.db = {
 						id: account.id,
 						email: account.user.email,
@@ -121,37 +139,31 @@ const config = {
 							refresh: token.email
 						}
 					};
-				} else {
-					// Fallback: try fetching once if somehow missing
-					try {
-						const accountResponse = await authGetUserAccount({
-							id: token.sub,
-							access: token.name,
-							refresh: token.email
-						});
-						const fetchedAccount = await accountResponse.json();
-						token.accountData = fetchedAccount;
 
-						session.db = {
-							id: fetchedAccount.id,
-							email: fetchedAccount.user.email,
-							role: fetchedAccount.role,
-							displayName: fetchedAccount.full_name,
-							photoURL: fetchedAccount.avatar_url,
-							account: fetchedAccount,
-							token: {
-								id: token.sub,
-								access: token.name,
-								refresh: token.email
-							}
-						};
-					} catch (error) {
-						console.error('Failed to fetch account in session callback:', error);
+					return session;
+				} catch (error) {
+					const errorStatus = error?.status;
+
+					/** If user not found, create a new user */
+					if (errorStatus === 404) {
+						// const newUserResponse = await authCreateDbUser({
+						// 	email: session.user.email,
+						// 	role: ['admin'],
+						// 	displayName: session.user.name,
+						// 	photoURL: session.user.image
+						// });
+
+						// const newUser = (await newUserResponse.json()) as User;
+
+						// console.error('Error fetching user data:', error);
+
+						// session.db = newUser;
+
 						return session;
 					}
-				}
 
-				return session;
+					throw error;
+				}
 			}
 
 			return null;
@@ -179,6 +191,7 @@ export type AuthJsProvider = {
 export const authJsProviderMap: AuthJsProvider[] = providers
 	.map((provider) => {
 		const providerData = typeof provider === 'function' ? provider() : provider;
+
 		return {
 			id: providerData.id,
 			name: providerData.name,

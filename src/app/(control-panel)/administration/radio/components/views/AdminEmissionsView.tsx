@@ -6,7 +6,7 @@ import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
 	DialogActions, Button, Typography, FormControl, FormLabel,
 	TextField, Select, Chip, CircularProgress, Divider, Box,
-	IconButton, Tooltip, Switch, FormControlLabel,
+	IconButton, Tooltip,
 } from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';
 import { motion } from 'motion/react';
@@ -17,10 +17,11 @@ import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
 import useUser from '@auth/useUser';
+import { useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
 import DataTable from 'src/components/data-table/DataTable';
 import {
 	useRadioAdminEmissions,
-	useCreateEmission,
 	useUpdateEmission,
 	useDeleteEmission,
 	useValidateEmission,
@@ -28,6 +29,7 @@ import {
 	useRadioAdminEmissionTypes,
 	useRadioAdminLanguages,
 	useRadioAdminTags,
+	radioAdminKeys,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 import { radioAdminApi } from '@/app/(control-panel)/administration/radio/api/services/radioAdminApiService';
 import { Emission, CreateEmissionPayload, RadioTag } from '@/app/(control-panel)/administration/radio/api/types';
@@ -53,11 +55,9 @@ async function logHttpError(label: string, err: unknown) {
 	if (err && typeof err === 'object' && 'response' in err) {
 		const res = (err as { response: Response }).response;
 		try {
-			const body = await res.clone().json();
-			console.error(`${label} [${res.status}]:`, JSON.stringify(body, null, 2));
+			console.error(`${label} [${res.status}]:`, JSON.stringify(await res.clone().json(), null, 2));
 		} catch {
-			const text = await res.clone().text();
-			console.error(`${label} [${res.status}]:`, text);
+			console.error(`${label} [${res.status}]:`, await res.clone().text());
 		}
 	} else {
 		console.error(label, err);
@@ -67,37 +67,22 @@ async function logHttpError(label: string, err: unknown) {
 // ─── Form state ───────────────────────────────────────────────────────────────
 
 type EmissionForm = {
-	name: string;
-	slug: string;
-	description: string;
+	name:               string;
+	slug:               string;
+	description:        string;
 	poster_description: string;
-	language_id: string;
-	emission_type_id: string;
-	publishing_date: string;
-	start_date: string;
-	end_date: string;
-	/** Selected tags — can be existing RadioTag objects or plain strings for new ones */
-	tags: (RadioTag | string)[];
-	is_pubic_content: boolean;
-	is_published: boolean;
+	start_date:         string;
+	end_date:           string;
+	language_id:        string;
+	emission_type_id:   string;
+	tags:               (RadioTag | string)[];
 };
 
 const empty: EmissionForm = {
-	name: '',
-	slug: '',
-	description: '',
-	poster_description: '',
-	language_id: '',
-	emission_type_id: '',
-	publishing_date: '',
-	start_date: '',
-	end_date: '',
-	tags: [],
-	is_pubic_content: false,
-	is_published: false,
+	name: '', slug: '', description: '', poster_description: '',
+	start_date: '', end_date: '', language_id: '', emission_type_id: '', tags: [],
 };
 
-/** Extract the display name from a tag option (object or string) */
 function tagLabel(tag: RadioTag | string): string {
 	return typeof tag === 'string' ? tag : tag.name;
 }
@@ -106,132 +91,141 @@ function tagLabel(tag: RadioTag | string): string {
 
 export default function AdminEmissionsView() {
 	const { data: account } = useUser();
-	const token = account?.token;
+	const token     = account?.token;
 	const accountId = token?.id ? Number(token.id) : undefined;
 
-	const { data: emissionsData, isLoading } = useRadioAdminEmissions(token);
-	const { data: emissionTypesData } = useRadioAdminEmissionTypes(token);
+	const qc                  = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+
+	const { data: emissionsData, isLoading }                                                = useRadioAdminEmissions(token);
+	const { data: emissionTypesData }                                                        = useRadioAdminEmissionTypes(token);
 	const { data: languagesData, isLoading: isLanguagesLoading, isError: isLanguagesError } = useRadioAdminLanguages(token);
-	const { data: tagsData, isLoading: isTagsLoading } = useRadioAdminTags(token);
+	const { data: tagsData, isLoading: isTagsLoading }                                      = useRadioAdminTags(token);
 
-	const { mutate: create, isPending: isCreating } = useCreateEmission(token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEmission(token);
-	const { mutate: remove } = useDeleteEmission(token);
-	const { mutate: validate } = useValidateEmission(token);
-	const { mutate: publish } = usePublishEmission(token);
+	const { mutate: remove }                         = useDeleteEmission(token);
+	const { mutate: validate }                       = useValidateEmission(token);
+	const { mutate: publish }                        = usePublishEmission(token);
 
-	const [addOpen, setAddOpen] = useState(false);
-	const [editOpen, setEditOpen] = useState(false);
-	const [editingId, setEditingId] = useState<number | null>(null);
-	const [form, setForm] = useState<EmissionForm>(empty);
-
+	const [addOpen,    setAddOpen]    = useState(false);
+	const [editOpen,   setEditOpen]   = useState(false);
+	const [editingId,  setEditingId]  = useState<number | null>(null);
+	const [form,       setForm]       = useState<EmissionForm>(empty);
 	const [posterFile, setPosterFile] = useState<File | null>(null);
-	const [isPosterUploading, setIsPosterUploading] = useState(false);
+	const [isCreating, setIsCreating] = useState(false);
+
 	const posterInputRef = useRef<HTMLInputElement>(null);
 
 	const setField = <K extends keyof EmissionForm>(f: K, v: EmissionForm[K]) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
+	/**
+	 * Required fields per OpenAPI CreateEmissionSchema.
+	 * PATCH-only fields (publishing_date, is_published, etc.) are excluded.
+	 */
 	const canSubmit =
-		!!form.name.trim() &&
-		!!form.language_id &&
-		!!form.emission_type_id &&
-		!!form.publishing_date &&
-		!!form.start_date &&
+		!!form.name.trim()               &&
+		!!form.slug.trim()               &&
+		!!form.description.trim()        &&
+		!!form.poster_description.trim() &&
+		!!form.start_date                &&
+		!!form.language_id               &&
+		!!form.emission_type_id          &&
 		!!accountId;
 
-	const isPending = isCreating || isUpdating || isPosterUploading;
+	const isPending = isCreating || isUpdating;
 
-	/** All tags from the backend — used as Autocomplete options */
-	const tagOptions: RadioTag[] = useMemo(
-		() => tagsData?.items ?? [],
-		[tagsData]
-	);
+	const tagOptions: RadioTag[] = useMemo(() => tagsData?.items ?? [], [tagsData]);
 
 	const openAdd = () => { setForm(empty); setPosterFile(null); setAddOpen(true); };
 
 	const openEdit = (row: Emission) => {
 		setForm({
-			name: row.name,
-			slug: row.slug ?? '',
-			description: row.description ?? '',
+			name:               row.name,
+			slug:               row.slug               ?? '',
+			description:        row.description        ?? '',
 			poster_description: row.poster_description ?? '',
-			language_id: String(row.language?.id ?? ''),
-			emission_type_id: String(row.emission_type?.id ?? ''),
-			publishing_date: toDateOnly(row.publishing_date) ?? '',
-			start_date: toDateOnly(row.start_date) ?? '',
-			end_date: toDateOnly(row.end_date) ?? '',
-			// Rehydrate tags: match by name against fetched tag objects so the
-			// Autocomplete can display them as chips properly.
+			start_date:         toDateOnly(row.start_date) ?? '',
+			end_date:           toDateOnly(row.end_date)   ?? '',
+			language_id:        String(row.language?.id      ?? ''),
+			emission_type_id:   String(row.emission_type?.id ?? ''),
 			tags: (row.tags ?? []).map((rt) => {
 				const found = tagOptions.find((t) => t.name === rt.name || t.id === rt.id);
 				return found ?? rt.name;
 			}),
-			is_pubic_content: row.is_pubic_content ?? false,
-			is_published: row.is_published ?? false,
 		});
 		setPosterFile(null);
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
-	/** Convert the mixed tags array (RadioTag | string) to an array of name strings for the payload */
-	const resolveTagNames = (): string[] => form.tags.map(tagLabel);
+	/**
+	 * Builds the JSON payload for the `payload` field in the multipart request.
+	 *
+	 * Includes only what CreateEmissionSchema requires at creation time.
+	 * Fields like publishing_date, is_published, is_pubic_content must be set
+	 * later via the dedicated /publish/, /public/, /validate/ PATCH endpoints.
+	 */
+	const buildPayload = (): CreateEmissionPayload => ({
+		name:               form.name.trim(),
+		slug:               form.slug.trim(),
+		description:        form.description.trim(),
+		poster_description: form.poster_description.trim(),
+		start_date:         form.start_date,
+		end_date:           form.end_date || undefined,
+		language_id:        Number(form.language_id),
+		emission_type_id:   Number(form.emission_type_id),
+		tags:               form.tags.map(tagLabel),
+		created_by_id:      accountId!,
+		transcription:      {},
+	});
 
-	const buildPayload = (): CreateEmissionPayload => {
-		const payload: CreateEmissionPayload = {
-			name: form.name.trim(),
-			created_by_id: accountId!,
-			language_id: Number(form.language_id),
-			tags: resolveTagNames(),
-			transcription: {},
-		};
-
-		if (form.slug.trim())               payload.slug               = form.slug.trim();
-		if (form.description.trim())        payload.description        = form.description.trim();
-		if (form.poster_description.trim()) payload.poster_description = form.poster_description.trim();
-		if (form.emission_type_id)          payload.emission_type_id   = Number(form.emission_type_id);
-		if (form.publishing_date)           payload.publishing_date    = form.publishing_date;
-		if (form.start_date)                payload.start_date         = form.start_date;
-		if (form.end_date)                  payload.end_date           = form.end_date;
-		payload.is_pubic_content = form.is_pubic_content;
-		payload.is_published     = form.is_published;
-
-		return payload;
-	};
-
-	const uploadPosterIfNeeded = async (emissionId: number) => {
-		if (!posterFile || !token) return;
-		setIsPosterUploading(true);
+	/**
+	 * Create — calls the service directly so the poster file travels in the
+	 * same multipart/form-data request (no second round-trip).
+	 * Cache is invalidated manually via queryClient.
+	 */
+	const handleAddEmission = async () => {
+		if (!token || !canSubmit) return;
+		setIsCreating(true);
 		try {
-			const fd = new FormData();
-			fd.append('id', String(emissionId));
-			fd.append('poster', posterFile);
-			await radioAdminApi.updateEmissionPoster(token, fd);
+			await radioAdminApi.createEmission(token, buildPayload(), posterFile ?? undefined);
+			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
+			enqueueSnackbar('Emission created', { variant: 'success' });
+			setPosterFile(null);
+			setAddOpen(false);
 		} catch (err) {
-			logHttpError('Poster upload failed', err);
+			logHttpError('Create emission failed', err);
+			enqueueSnackbar('Error creating emission', { variant: 'error' });
 		} finally {
-			setIsPosterUploading(false);
+			setIsCreating(false);
 		}
 	};
 
-	const handleAdd = () =>
-		create(buildPayload(), {
-			onSuccess: async (created) => {
-				await uploadPosterIfNeeded(created.id);
-				setAddOpen(false);
-			},
-			onError: (err) => logHttpError('Create emission failed', err),
-		});
-
-	const handleEdit = () =>
-		update({ id: editingId!, ...buildPayload() }, {
+	/**
+	 * Edit — uses the mutation hook for cache housekeeping. Poster is updated
+	 * via the dedicated endpoint if the user changed it.
+	 */
+	const handleEditEmission = () => {
+		if (!editingId) return;
+		update({ id: editingId, ...buildPayload() }, {
 			onSuccess: async (updated) => {
-				await uploadPosterIfNeeded(updated.id);
+				if (posterFile && token) {
+					try {
+						const fd = new FormData();
+						fd.append('id', String(updated.id));
+						fd.append('poster', posterFile);
+						await radioAdminApi.updateEmissionPoster(token, fd);
+					} catch (err) {
+						logHttpError('Poster upload failed', err);
+					}
+				}
+				setPosterFile(null);
 				setEditOpen(false);
 			},
 			onError: (err) => logHttpError('Update emission failed', err),
 		});
+	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
 
@@ -308,42 +302,28 @@ export default function AdminEmissionsView() {
 
 	const formContent = (
 		<>
-			{/* ── Name ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Name</FormLabel>
-				<TextField
-					size="small"
-					value={form.name}
-					onChange={(e) => setField('name', e.target.value)}
-					placeholder="Emission name"
-				/>
+				<TextField size="small" value={form.name} onChange={(e) => setField('name', e.target.value)} placeholder="Emission name" />
 			</FormControl>
 
-			{/* ── Slug ── */}
 			<FormControl fullWidth>
-				<FormLabel>Slug</FormLabel>
+				<FormLabel required>Slug</FormLabel>
 				<TextField
 					size="small"
 					value={form.slug}
 					onChange={(e) => setField('slug', e.target.value)}
-					placeholder="auto-generated if left blank"
+					placeholder="my-emission-slug"
+					helperText="Required. Lowercase letters, numbers and hyphens."
 				/>
 			</FormControl>
 
-			{/* ── Description ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Description</FormLabel>
-				<TextField
-					size="small"
-					multiline
-					minRows={3}
-					value={form.description}
-					onChange={(e) => setField('description', e.target.value)}
-					placeholder="Emission description"
-				/>
+				<TextField size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} />
 			</FormControl>
 
-			{/* ── Poster image ── */}
+			{/* Poster — sent atomically in the same multipart request */}
 			<FormControl fullWidth>
 				<FormLabel>Poster Image</FormLabel>
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -357,9 +337,7 @@ export default function AdminEmissionsView() {
 					</Button>
 					{posterFile && (
 						<>
-							<Typography variant="caption" noWrap sx={{ maxWidth: 180 }}>
-								{posterFile.name}
-							</Typography>
+							<Typography variant="caption" noWrap sx={{ maxWidth: 180 }}>{posterFile.name}</Typography>
 							<Tooltip title="Remove">
 								<IconButton size="small" onClick={() => setPosterFile(null)}>
 									<FuseSvgIcon size={14}>lucide:x</FuseSvgIcon>
@@ -375,12 +353,8 @@ export default function AdminEmissionsView() {
 					style={{ display: 'none' }}
 					onChange={(e) => { setPosterFile(e.target.files?.[0] ?? null); e.target.value = ''; }}
 				/>
-				<Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-					Uploaded via multipart after saving.
-				</Typography>
 			</FormControl>
 
-			{/* ── Poster description ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Poster Description</FormLabel>
 				<TextField
@@ -393,99 +367,52 @@ export default function AdminEmissionsView() {
 				/>
 			</FormControl>
 
-			{/* ── Language ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Language</FormLabel>
-				{isLanguagesLoading ? (
-					<CircularProgress size={20} />
-				) : isLanguagesError ? (
-					<Typography color="error">Error loading languages</Typography>
-				) : !languagesData?.items?.length ? (
-					<Typography color="textSecondary">No languages available</Typography>
-				) : (
-					<Select
-						size="small"
-						value={form.language_id}
-						onChange={(e) => setField('language_id', e.target.value)}
-						displayEmpty
-					>
-						<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
-						{languagesData.items.map((l) => (
-							<MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>
-						))}
-					</Select>
-				)}
+				{isLanguagesLoading
+					? <CircularProgress size={20} />
+					: isLanguagesError
+						? <Typography color="error">Error loading languages</Typography>
+						: !languagesData?.items?.length
+							? <Typography color="textSecondary">No languages available</Typography>
+							: (
+								<Select size="small" value={form.language_id} onChange={(e) => setField('language_id', e.target.value)} displayEmpty>
+									<MenuItem value="" disabled><em>Select a language…</em></MenuItem>
+									{languagesData.items.map((l) => <MenuItem key={l.id} value={String(l.id)}>{l.name}</MenuItem>)}
+								</Select>
+							)}
 			</FormControl>
 
-			{/* ── Emission Type ── */}
 			<FormControl fullWidth>
 				<FormLabel required>Emission Type</FormLabel>
-				<Select
-					size="small"
-					value={form.emission_type_id}
-					onChange={(e) => setField('emission_type_id', e.target.value)}
-					displayEmpty
-				>
+				<Select size="small" value={form.emission_type_id} onChange={(e) => setField('emission_type_id', e.target.value)} displayEmpty>
 					<MenuItem value="" disabled><em>Select a type…</em></MenuItem>
-					{emissionTypesData?.items.map((t) => (
-						<MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>
-					))}
+					{emissionTypesData?.items.map((t) => <MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>)}
 				</Select>
 			</FormControl>
 
-			{/* ── Dates row ── */}
 			<Box sx={{ display: 'flex', gap: 2 }}>
 				<FormControl fullWidth>
 					<FormLabel required>Start Date</FormLabel>
-					<TextField
-						size="small"
-						type="date"
-						value={form.start_date}
-						onChange={(e) => setField('start_date', e.target.value)}
-						InputLabelProps={{ shrink: true }}
-					/>
+					<TextField size="small" type="date" value={form.start_date} onChange={(e) => setField('start_date', e.target.value)} InputLabelProps={{ shrink: true }} />
 				</FormControl>
 				<FormControl fullWidth>
 					<FormLabel>End Date</FormLabel>
-					<TextField
-						size="small"
-						type="date"
-						value={form.end_date}
-						onChange={(e) => setField('end_date', e.target.value)}
-						InputLabelProps={{ shrink: true }}
-					/>
+					<TextField size="small" type="date" value={form.end_date} onChange={(e) => setField('end_date', e.target.value)} InputLabelProps={{ shrink: true }} />
 				</FormControl>
 			</Box>
 
-			{/* ── Publishing date ── */}
 			<FormControl fullWidth>
-				<FormLabel required>Publishing Date</FormLabel>
-				<TextField
-					size="small"
-					type="date"
-					value={form.publishing_date}
-					onChange={(e) => setField('publishing_date', e.target.value)}
-					InputLabelProps={{ shrink: true }}
-				/>
-			</FormControl>
-
-			{/* ── Tags ── */}
-			<FormControl fullWidth>
-				<FormLabel required>Tags</FormLabel>
+				<FormLabel>Tags</FormLabel>
 				<Autocomplete
 					multiple
 					freeSolo
 					options={tagOptions}
-					// Use the RadioTag object (or string) for value tracking
 					value={form.tags}
-					onChange={(_, newValue) => setField('tags', newValue as (RadioTag | string)[])}
+					onChange={(_, v) => setField('tags', v as (RadioTag | string)[])}
 					loading={isTagsLoading}
-					// How to display each option in the dropdown list
-					getOptionLabel={(option) => tagLabel(option as RadioTag | string)}
-					// Deduplicate: treat two options as equal if same name
-					isOptionEqualToValue={(option, value) =>
-						tagLabel(option as RadioTag | string) === tagLabel(value as RadioTag | string)
-					}
+					getOptionLabel={(o) => tagLabel(o as RadioTag | string)}
+					isOptionEqualToValue={(o, v) => tagLabel(o as RadioTag | string) === tagLabel(v as RadioTag | string)}
 					renderOption={(props, option) => (
 						<li {...props} key={typeof option === 'string' ? option : option.id}>
 							{tagLabel(option as RadioTag | string)}
@@ -509,54 +436,19 @@ export default function AdminEmissionsView() {
 							placeholder={form.tags.length === 0 ? 'Pick existing tags or type a new one…' : ''}
 							InputProps={{
 								...params.InputProps,
-								endAdornment: (
-									<>
-										{isTagsLoading ? <CircularProgress size={16} /> : null}
-										{params.InputProps.endAdornment}
-									</>
-								),
+								endAdornment: <>{isTagsLoading ? <CircularProgress size={16} /> : null}{params.InputProps.endAdornment}</>,
 							}}
 						/>
 					)}
 				/>
 				<Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-					Select from existing tags or type a new name and press Enter to add it.
+					Select from existing tags or type a new name and press Enter.
 				</Typography>
 			</FormControl>
 
-			{/* ── Toggles ── */}
-			<Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, pt: 0.5 }}>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={form.is_pubic_content}
-							onChange={(e) => setField('is_pubic_content', e.target.checked)}
-							color="primary"
-						/>
-					}
-					label="Is Public Content"
-				/>
-				<FormControlLabel
-					control={
-						<Switch
-							checked={form.is_published}
-							onChange={(e) => setField('is_published', e.target.checked)}
-							color="primary"
-						/>
-					}
-					label="Is Published"
-				/>
-			</Box>
-
-			{/* ── Created by (read-only) ── */}
 			<FormControl fullWidth>
 				<FormLabel>Created By</FormLabel>
-				<TextField
-					size="small"
-					value={`Account #${accountId}`}
-					disabled
-					helperText="Automatically set to your account"
-				/>
+				<TextField size="small" value={`Account #${accountId}`} disabled helperText="Automatically set to your account" />
 			</FormControl>
 		</>
 	);
@@ -567,8 +459,6 @@ export default function AdminEmissionsView() {
 		</DialogContent>
 	);
 
-	// ─── Render ───────────────────────────────────────────────────────────────
-
 	return (
 		<>
 			<Root
@@ -577,17 +467,10 @@ export default function AdminEmissionsView() {
 						<PageBreadcrumb className="mb-2" />
 						<div className="flex items-center gap-2">
 							<motion.span initial={{ x: -20 }} animate={{ x: 0, transition: { delay: 0.2 } }}>
-								<Typography className="text-4xl leading-none font-extrabold tracking-tight">
-									Emissions
-								</Typography>
+								<Typography className="text-4xl leading-none font-extrabold tracking-tight">Emissions</Typography>
 							</motion.span>
 							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button
-									variant="contained"
-									color="secondary"
-									onClick={openAdd}
-									startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}
-								>
+								<Button variant="contained" color="secondary" onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
 									Add Emission
 								</Button>
 							</div>
@@ -604,16 +487,8 @@ export default function AdminEmissionsView() {
 								enableRowActions
 								enablePagination
 								paginationDisplayMode="pages"
-								initialState={{
-									pagination: { pageSize: 15, pageIndex: 0 },
-									sorting: [{ id: 'id', desc: true }],
-								}}
-								muiPaginationProps={{
-									color: 'secondary',
-									rowsPerPageOptions: [10, 15, 25],
-									shape: 'rounded',
-									variant: 'outlined',
-								}}
+								initialState={{ pagination: { pageSize: 15, pageIndex: 0 }, sorting: [{ id: 'id', desc: true }] }}
+								muiPaginationProps={{ color: 'secondary', rowsPerPageOptions: [10, 15, 25], shape: 'rounded', variant: 'outlined' }}
 								renderRowActionMenuItems={({ row, closeMenu }) => [
 									<MenuItem key="edit" onClick={() => { openEdit(row.original); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>Edit
@@ -635,13 +510,7 @@ export default function AdminEmissionsView() {
 			/>
 
 			{/* ── Add dialog ── */}
-			<Dialog
-				open={addOpen}
-				onClose={() => setAddOpen(false)}
-				fullWidth
-				maxWidth="sm"
-				PaperProps={{ sx: { borderRadius: '16px' } }}
-			>
+			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Emission</DialogTitle>
 				<Divider />
 				{dialogContent}
@@ -649,25 +518,19 @@ export default function AdminEmissionsView() {
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
 					<Button onClick={() => setAddOpen(false)} variant="outlined" disabled={isPending}>Cancel</Button>
 					<Button
-						onClick={handleAdd}
+						onClick={handleAddEmission}
 						variant="contained"
 						color="secondary"
 						disabled={!canSubmit || isPending}
 						startIcon={isPending ? <CircularProgress size={14} /> : undefined}
 					>
-						{isCreating ? 'Creating…' : isPosterUploading ? 'Uploading poster…' : 'Create'}
+						{isCreating ? 'Creating…' : 'Create'}
 					</Button>
 				</DialogActions>
 			</Dialog>
 
 			{/* ── Edit dialog ── */}
-			<Dialog
-				open={editOpen}
-				onClose={() => setEditOpen(false)}
-				fullWidth
-				maxWidth="sm"
-				PaperProps={{ sx: { borderRadius: '16px' } }}
-			>
+			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Emission</DialogTitle>
 				<Divider />
 				{dialogContent}
@@ -675,13 +538,13 @@ export default function AdminEmissionsView() {
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
 					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isPending}>Cancel</Button>
 					<Button
-						onClick={handleEdit}
+						onClick={handleEditEmission}
 						variant="contained"
 						color="secondary"
 						disabled={!canSubmit || isPending}
 						startIcon={isPending ? <CircularProgress size={14} /> : undefined}
 					>
-						{isUpdating ? 'Saving…' : isPosterUploading ? 'Uploading poster…' : 'Save'}
+						{isUpdating ? 'Saving…' : 'Save'}
 					</Button>
 				</DialogActions>
 			</Dialog>

@@ -205,11 +205,36 @@ export const radioAdminApi = {
 			.get(`radio/emission/detail/${accountId(token)}/${emissionId}/`, { headers: authHeaders(token) })
 			.json(),
 
-	// ── FIX: wrap data in { payload } to match backend schema ─────────────────
-	createEmission: (token: Token | undefined, data: CreateEmissionPayload): Promise<Emission> =>
-		radioApi
-			.post(`radio/emission/create/${accountId(token)}/`, { json: { payload: data }, headers: authHeaders(token) })
-			.json(),
+	/**
+	 * Create emission — multipart/form-data.
+	 *
+	 * The backend (CreateEmissionSchema) expects:
+	 *   • `payload`  — CreateEmissionSchema serialized as a JSON string
+	 *   • `poster`   — (optional) binary image file
+	 *
+	 * Do NOT set Content-Type manually; ky/fetch sets it automatically with the
+	 * correct multipart boundary when `body` is a FormData instance.
+	 *
+	 * Fields handled here at creation time (per OpenAPI spec):
+	 *   name, slug, description, poster_description, start_date,
+	 *   language_id, emission_type_id, tags
+	 *
+	 * Fields NOT sent at creation (use the dedicated PATCH endpoints instead):
+	 *   publishing_date, end_date, is_published, is_pubic_content,
+	 *   is_approved_content
+	 */
+	createEmission: (
+		token: Token | undefined,
+		data: CreateEmissionPayload,
+		poster?: File,
+	): Promise<Emission> => {
+		const fd = new FormData();
+		fd.append('payload', JSON.stringify(data));
+		if (poster) fd.append('poster', poster);
+		return radioApi
+			.post(`radio/emission/create/${accountId(token)}/`, { body: fd, headers: authHeaders(token) })
+			.json();
+	},
 
 	updateEmission: (token: Token | undefined, data: UpdateEmissionPayload): Promise<Emission> =>
 		radioApi
