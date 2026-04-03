@@ -320,21 +320,33 @@ export type SearchEpisodesParams = {
 	offset?: number;
 };
 
+/**
+ * Matches the backend CreateEpisodeSchema exactly:
+ *   { tags, name, description, slug, transcription, emission_id, season_id }
+ *
+ * Scheduling fields (publishing_date, online_date) are NOT accepted at creation
+ * time — use UpdateEpisodePayload / dedicated PATCH endpoints instead.
+ */
 export type CreateEpisodePayload = {
-	name: string;
-	slug?: string;
-	description?: string;
-	emission_id?: number;
-	season_id?: number;
+	name:           string;
+	slug?:          string;
+	description?:   string;
+	emission_id?:   number;
+	season_id?:     number;
 	transcription?: Record<string, unknown>;
-	tags?: string[];
-	publishing_date?: string;
-	online_date?: string;
+	tags?:          string[];
 };
+
+/**
+ * All create fields become optional on update, plus scheduling fields that
+ * the backend only accepts via PUT/PATCH.
+ */
 export type UpdateEpisodePayload = Partial<CreateEpisodePayload> & {
-	id: number;
-	remove_tags?: string[] | null;
-	add_tags?: string[] | null;
+	id:              number;
+	remove_tags?:    string[] | null;
+	add_tags?:       string[] | null;
+	publishing_date?: string;
+	online_date?:    string;
 };
 
 // ─── Episode Emotion ──────────────────────────────────────────────────────────

@@ -34,83 +34,110 @@ const Root = styled(FusePageCarded)(() => ({
 async function logHttpError(label: string, err: unknown) {
 	if (err && typeof err === 'object' && 'response' in err) {
 		const res = (err as { response: Response }).response;
-		try { console.error(`${label}:`, await res.clone().json()); }
-		catch { console.error(`${label}:`, await res.clone().text()); }
-	} else { console.error(label, err); }
+		try {
+			const body = await res.clone().json();
+			console.error(`${label} [${res.status}]:`, JSON.stringify(body, null, 2));
+		} catch {
+			console.error(`${label} [${res.status}]:`, await res.clone().text());
+		}
+	} else {
+		console.error(label, err);
+	}
 }
 
-// FIX #4: form fields that map to numeric IDs stay as strings inside the form
-// state so MUI Select works correctly; buildPayload converts them before sending.
+// ID fields are strings only inside form state so MUI Select works correctly.
+// buildPayload converts them to numbers before sending.
 type EpisodeForm = {
-	name: string;
-	slug: string;
+	name:        string;
+	slug:        string;
 	description: string;
-	/** String in form state; converted to number in buildPayload. */
+	/** String in form state; converted to number (or omitted) in buildPayload. */
 	emission_id: string;
-	/** String in form state; converted to number in buildPayload. */
-	season_id: string;
+	/** String in form state; converted to number (or omitted) in buildPayload. */
+	season_id:   string;
 };
 
-const empty: EpisodeForm = { name: '', slug: '', description: '', emission_id: '', season_id: '' };
+const empty: EpisodeForm = {
+	name: '', slug: '', description: '', emission_id: '', season_id: '',
+};
 
 export default function AdminEpisodesView() {
 	const { data: account } = useUser();
 	const token = account?.token;
 
-	const { data: episodesData, isLoading } = useRadioAdminEpisodes(token);
-	const { data: emissionsData } = useRadioAdminEmissions(token);
-	const { data: seasonsData } = useRadioAdminSeasons(token);
+	const { data: episodesData,  isLoading }   = useRadioAdminEpisodes(token);
+	const { data: emissionsData }               = useRadioAdminEmissions(token);
+	const { data: seasonsData }                 = useRadioAdminSeasons(token);
 	const { mutate: create, isPending: isCreating } = useCreateEpisode(token);
 	const { mutate: update, isPending: isUpdating } = useUpdateEpisode(token);
-	const { mutate: remove } = useDeleteEpisode(token);
-	const { mutate: validate } = useValidateEpisode(token);
-	const { mutate: publish } = usePublishEpisode(token);
+	const { mutate: remove }                    = useDeleteEpisode(token);
+	const { mutate: validate }                  = useValidateEpisode(token);
+	const { mutate: publish }                   = usePublishEpisode(token);
 
-	const [addOpen, setAddOpen] = useState(false);
-	const [editOpen, setEditOpen] = useState(false);
+	const [addOpen,   setAddOpen]   = useState(false);
+	const [editOpen,  setEditOpen]  = useState(false);
 	const [editingId, setEditingId] = useState<number | null>(null);
-	const [form, setForm] = useState<EpisodeForm>(empty);
+	const [form,      setForm]      = useState<EpisodeForm>(empty);
 
-	const setField = (f: keyof EpisodeForm, v: string) => setForm((p) => ({ ...p, [f]: v }));
-	// emission_id is required — language is derived from the parent emission
+	const setField = (f: keyof EpisodeForm, v: string) =>
+		setForm((p) => ({ ...p, [f]: v }));
+
+	// emission_id is the only required field the backend enforces at creation.
 	const canSubmit = !!form.name.trim() && !!form.emission_id;
 
 	const openAdd = () => { setForm(empty); setAddOpen(true); };
+
 	const openEdit = (row: Episode) => {
 		setForm({
-			name: row.name,
-			slug: row.slug ?? '',
+			name:        row.name,
+			slug:        row.slug        ?? '',
 			description: row.description ?? '',
 			emission_id: String(row.emission?.id ?? ''),
-			season_id: String(row.season?.id ?? ''),
+			season_id:   String(row.season?.id   ?? ''),
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
 	/**
-	 * FIX #2: include `transcription` and `tags` in the payload.
-	 * FIX #4: convert string IDs to numbers before sending.
+	 * Builds a payload that matches the backend CreateEpisodeSchema exactly:
+	 *   { tags, name, description, slug, transcription, emission_id, season_id }
+	 *
+	 * - String IDs are converted to numbers (or omitted when empty).
+	 * - scheduling fields (publishing_date, online_date) are NOT sent at
+	 *   creation time — they belong to the PATCH endpoints only.
 	 */
 	const buildPayload = (): CreateEpisodePayload => ({
-		name: form.name.trim(),
-		slug: form.slug.trim() || undefined,
-		description: form.description.trim() || undefined,
-		emission_id: form.emission_id ? Number(form.emission_id) : undefined,
-		season_id: form.season_id ? Number(form.season_id) : undefined,
-		// FIX #2: always send these so the backend doesn't reject partial payloads
+		name:          form.name.trim(),
+		slug:          form.slug.trim()        || undefined,
+		description:   form.description.trim() || undefined,
+		emission_id:   form.emission_id ? Number(form.emission_id) : undefined,
+		season_id:     form.season_id   ? Number(form.season_id)   : undefined,
 		transcription: {},
-		tags: [],
+		tags:          [],
 	});
 
-	const handleAdd = () => create(buildPayload(), {
-		onSuccess: () => setAddOpen(false),
-		onError: (err) => logHttpError('Create episode failed', err),
-	});
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
-		onSuccess: () => setEditOpen(false),
-		onError: (err) => logHttpError('Update episode failed', err),
-	});
+	/**
+	 * Guards both handlers against a missing token (can happen when the
+	 * component first mounts before auth resolves and the user acts quickly).
+	 */
+	const handleAdd = () => {
+		if (!token || !canSubmit) return;
+		create(buildPayload(), {
+			onSuccess: () => setAddOpen(false),
+			onError:   (err) => logHttpError('Create episode failed', err),
+		});
+	};
+
+	const handleEdit = () => {
+		if (!token || !editingId) return;
+		update({ id: editingId, ...buildPayload() }, {
+			onSuccess: () => setEditOpen(false),
+			onError:   (err) => logHttpError('Update episode failed', err),
+		});
+	};
+
+	// ─── Table columns ────────────────────────────────────────────────────────
 
 	const columns = useMemo<MRT_ColumnDef<Episode>[]>(() => [
 		{
@@ -123,13 +150,19 @@ export default function AdminEpisodesView() {
 				</Typography>
 			),
 		},
-		{ accessorKey: 'name', header: 'Name', Cell: ({ cell }) => <span className="font-medium">{cell.getValue<string>()}</span> },
+		{
+			accessorKey: 'name',
+			header: 'Name',
+			Cell: ({ cell }) => <span className="font-medium">{cell.getValue<string>()}</span>,
+		},
 		{
 			id: 'emission',
 			header: 'Emission',
 			accessorFn: (row) => row.emission?.name ?? '',
 			Cell: ({ row }) => (
-				<span className="text-sm truncate max-w-[160px] block">{row.original.emission?.name ?? '—'}</span>
+				<span className="text-sm truncate max-w-[160px] block">
+					{row.original.emission?.name ?? '—'}
+				</span>
 			),
 		},
 		{
@@ -147,13 +180,25 @@ export default function AdminEpisodesView() {
 			header: 'Status',
 			accessorFn: (row) => row.is_published,
 			Cell: ({ row }) => {
-				// FIX #1: use `is_pubic_content` to match the backend JSON key
 				const { is_published, is_approved_content, is_pubic_content } = row.original;
-				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_pubic_content ? 'Public' : 'Draft';
-				const bg    = is_published ? '#dcfce7' : is_approved_content ? '#dbeafe' : is_pubic_content ? '#fef9c3' : '#f1f5f9';
-				const color = is_published ? '#15803d' : is_approved_content ? '#1d4ed8' : is_pubic_content ? '#854d0e' : '#475569';
+				const label = is_published       ? 'Published'
+					: is_approved_content         ? 'Approved'
+					: is_pubic_content            ? 'Public'
+					:                               'Draft';
+				const bg    = is_published       ? '#dcfce7'
+					: is_approved_content         ? '#dbeafe'
+					: is_pubic_content            ? '#fef9c3'
+					:                               '#f1f5f9';
+				const color = is_published       ? '#15803d'
+					: is_approved_content         ? '#1d4ed8'
+					: is_pubic_content            ? '#854d0e'
+					:                               '#475569';
 				return (
-					<Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />
+					<Chip
+						label={label}
+						size="small"
+						sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }}
+					/>
 				);
 			},
 		},
@@ -164,12 +209,19 @@ export default function AdminEpisodesView() {
 		},
 	], []);
 
+	// ─── Shared form fields ───────────────────────────────────────────────────
+
 	const formContent = (
 		<>
 			<FormControl fullWidth>
 				<FormLabel required>Episode Name</FormLabel>
-				<TextField size="small" value={form.name} onChange={(e) => setField('name', e.target.value)} />
+				<TextField
+					size="small"
+					value={form.name}
+					onChange={(e) => setField('name', e.target.value)}
+				/>
 			</FormControl>
+
 			<FormControl fullWidth>
 				<FormLabel>Slug</FormLabel>
 				<TextField
@@ -179,28 +231,53 @@ export default function AdminEpisodesView() {
 					placeholder="auto-generated if left blank"
 				/>
 			</FormControl>
+
 			<FormControl fullWidth>
 				<FormLabel>Description</FormLabel>
-				<TextField size="small" multiline minRows={2} value={form.description} onChange={(e) => setField('description', e.target.value)} />
+				<TextField
+					size="small"
+					multiline
+					minRows={2}
+					value={form.description}
+					onChange={(e) => setField('description', e.target.value)}
+				/>
 			</FormControl>
+
 			<div className="flex gap-3">
 				<FormControl fullWidth>
 					<FormLabel required>Emission</FormLabel>
-					<Select size="small" value={form.emission_id} onChange={(e) => setField('emission_id', e.target.value)} displayEmpty>
+					<Select
+						size="small"
+						value={form.emission_id}
+						onChange={(e) => setField('emission_id', e.target.value)}
+						displayEmpty
+					>
 						<MenuItem value="" disabled><em>Select an emission…</em></MenuItem>
-						{emissionsData?.items.map((e) => <MenuItem key={e.id} value={String(e.id)}>{e.name}</MenuItem>)}
+						{emissionsData?.items.map((e) => (
+							<MenuItem key={e.id} value={String(e.id)}>{e.name}</MenuItem>
+						))}
 					</Select>
 				</FormControl>
+
 				<FormControl fullWidth>
 					<FormLabel>Season</FormLabel>
-					<Select size="small" value={form.season_id} onChange={(e) => setField('season_id', e.target.value)} displayEmpty>
+					<Select
+						size="small"
+						value={form.season_id}
+						onChange={(e) => setField('season_id', e.target.value)}
+						displayEmpty
+					>
 						<MenuItem value=""><em>None</em></MenuItem>
-						{seasonsData?.items.map((s) => <MenuItem key={s.id} value={String(s.id)}>{s.name}</MenuItem>)}
+						{seasonsData?.items.map((s) => (
+							<MenuItem key={s.id} value={String(s.id)}>{s.name}</MenuItem>
+						))}
 					</Select>
 				</FormControl>
 			</div>
 		</>
 	);
+
+	// ─── Render ───────────────────────────────────────────────────────────────
 
 	return (
 		<>
@@ -210,10 +287,17 @@ export default function AdminEpisodesView() {
 						<PageBreadcrumb className="mb-2" />
 						<div className="flex items-center gap-2">
 							<motion.span initial={{ x: -20 }} animate={{ x: 0, transition: { delay: 0.2 } }}>
-								<Typography className="text-4xl leading-none font-extrabold tracking-tight">Episodes</Typography>
+								<Typography className="text-4xl leading-none font-extrabold tracking-tight">
+									Episodes
+								</Typography>
 							</motion.span>
 							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button variant="contained" color="secondary" onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
+								<Button
+									variant="contained"
+									color="secondary"
+									onClick={openAdd}
+									startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}
+								>
 									Add Episode
 								</Button>
 							</div>
@@ -230,20 +314,32 @@ export default function AdminEpisodesView() {
 								enableRowActions
 								enablePagination
 								paginationDisplayMode="pages"
-								initialState={{ pagination: { pageSize: 15, pageIndex: 0 }, sorting: [{ id: 'id', desc: true }] }}
-								muiPaginationProps={{ color: 'secondary', rowsPerPageOptions: [10, 15, 25], shape: 'rounded', variant: 'outlined' }}
+								initialState={{
+									pagination: { pageSize: 15, pageIndex: 0 },
+									sorting:    [{ id: 'id', desc: true }],
+								}}
+								muiPaginationProps={{
+									color: 'secondary',
+									rowsPerPageOptions: [10, 15, 25],
+									shape: 'rounded',
+									variant: 'outlined',
+								}}
 								renderRowActionMenuItems={({ row, closeMenu }) => [
 									<MenuItem key="edit" onClick={() => { openEdit(row.original); closeMenu(); }}>
-										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>Edit
+										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>
+										Edit
 									</MenuItem>,
 									<MenuItem key="validate" onClick={() => { validate(row.original.id); closeMenu(); }}>
-										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Validate
+										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>
+										Validate
 									</MenuItem>,
 									<MenuItem key="publish" onClick={() => { publish(row.original.id); closeMenu(); }}>
-										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish
+										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>
+										Publish
 									</MenuItem>,
 									<MenuItem key="del" onClick={() => { remove(row.original.id); closeMenu(); }}>
-										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>Delete
+										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>
+										Delete
 									</MenuItem>,
 								]}
 							/>
@@ -252,29 +348,61 @@ export default function AdminEpisodesView() {
 				}
 			/>
 
-			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
+			{/* ── Add dialog ── */}
+			<Dialog
+				open={addOpen}
+				onClose={() => setAddOpen(false)}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{ sx: { borderRadius: '16px' } }}
+			>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Episode</DialogTitle>
 				<Divider />
-				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>{formContent}</DialogContent>
+				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+					{formContent}
+				</DialogContent>
 				<Divider />
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setAddOpen(false)} variant="outlined" disabled={isCreating}>Cancel</Button>
-					<Button onClick={handleAdd} variant="contained" color="secondary" disabled={!canSubmit || isCreating}
-						startIcon={isCreating ? <CircularProgress size={14} /> : undefined}>
+					<Button onClick={() => setAddOpen(false)} variant="outlined" disabled={isCreating}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleAdd}
+						variant="contained"
+						color="secondary"
+						disabled={!canSubmit || isCreating}
+						startIcon={isCreating ? <CircularProgress size={14} /> : undefined}
+					>
 						{isCreating ? 'Creating…' : 'Create'}
 					</Button>
 				</DialogActions>
 			</Dialog>
 
-			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
+			{/* ── Edit dialog ── */}
+			<Dialog
+				open={editOpen}
+				onClose={() => setEditOpen(false)}
+				fullWidth
+				maxWidth="sm"
+				PaperProps={{ sx: { borderRadius: '16px' } }}
+			>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Episode</DialogTitle>
 				<Divider />
-				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>{formContent}</DialogContent>
+				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+					{formContent}
+				</DialogContent>
 				<Divider />
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isUpdating}>Cancel</Button>
-					<Button onClick={handleEdit} variant="contained" color="secondary" disabled={!canSubmit || isUpdating}
-						startIcon={isUpdating ? <CircularProgress size={14} /> : undefined}>
+					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isUpdating}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleEdit}
+						variant="contained"
+						color="secondary"
+						disabled={!canSubmit || isUpdating}
+						startIcon={isUpdating ? <CircularProgress size={14} /> : undefined}
+					>
 						{isUpdating ? 'Saving…' : 'Save'}
 					</Button>
 				</DialogActions>
