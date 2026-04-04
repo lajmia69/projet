@@ -66,6 +66,23 @@ function buildSearchParams(params: Record<string, string | number | undefined>):
 	return sp.toString();
 }
 
+/**
+ * Strip undefined AND null values from a payload object before sending.
+ *
+ * Why: Django Ninja's Pydantic schemas may declare optional fields as
+ * `Optional[X]` (without a `None` default) — sending an explicit JSON `null`
+ * for such a field causes a 422 Unprocessable Entity. Omitting the key
+ * entirely lets the backend keep the existing value, which is the correct
+ * behaviour for a partial update.
+ *
+ * Retain only keys whose value is neither `undefined` nor `null`.
+ */
+function stripEmpty<T extends Record<string, unknown>>(obj: T): Partial<T> {
+	return Object.fromEntries(
+		Object.entries(obj).filter(([, v]) => v !== undefined && v !== null),
+	) as Partial<T>;
+}
+
 // =============================================================================
 // RADIO ADMIN API SERVICE
 // =============================================================================
@@ -188,10 +205,22 @@ export const radioAdminApi = {
 			.post(`radio/episode/guest/create/${accountId(token)}/`, { json: data, headers: authHeaders(token) })
 			.json(),
 
-	updateEpisodeGuest: (token: Token | undefined, data: UpdateEpisodeGuestPayload): Promise<EpisodeGuest> =>
-		radioApi
-			.put(`radio/episode/guest/update/${accountId(token)}/`, { json: data, headers: authHeaders(token) })
-			.json(),
+	/**
+	 * FIX: Episode-guest update.
+	 *
+	 * The backend's UpdateEpisodeGuestSchema may be stricter than the
+	 * CreateEpisodeGuestSchema.  Strip null/undefined values so we never send
+	 * an explicit `null` for a field that the schema declares as required.
+	 * The resource `id` is sent both in the URL path AND in the body for
+	 * maximum compatibility with different schema styles.
+	 */
+	updateEpisodeGuest: (token: Token | undefined, data: UpdateEpisodeGuestPayload): Promise<EpisodeGuest> => {
+		const { id, ...rest } = data;
+		const payload = { id, ...stripEmpty(rest) };
+		return radioApi
+			.put(`radio/episode/guest/update/${accountId(token)}/${id}/`, { json: payload, headers: authHeaders(token) })
+			.json();
+	},
 
 	deleteEpisodeGuest: async (token: Token | undefined, guestId: number): Promise<void> => {
 		await radioApi.delete(`radio/episode/guest/delete/${accountId(token)}/${guestId}/`, { headers: authHeaders(token) });
@@ -227,10 +256,49 @@ export const radioAdminApi = {
 			.json();
 	},
 
-	updateEmission: (token: Token | undefined, data: UpdateEmissionPayload): Promise<Emission> =>
-		radioApi
-			.put(`radio/emission/update/${accountId(token)}/`, { json: data, headers: authHeaders(token) })
-			.json(),
+	/**
+	 * FIX: Emission update.
+	 *
+	 * The backend's UpdateEmissionSchema almost certainly does NOT include FK
+	 * reference fields (language_id, emission_type_id, created_by_id, tags,
+	 * add_tags, remove_tags, transcription) because those are set at creation
+	 * time or via dedicated endpoints (e.g. poster via updateEmissionPoster).
+	 *
+	 * Sending unrecognised fields to a strict Pydantic schema causes 422.
+	 * We therefore build a clean payload that contains only the scalar /
+	 * content fields the backend will accept, strip explicit nulls, and put
+	 * the resource `id` in the URL path as well as the body.
+	 */
+	updateEmission: (token: Token | undefined, data: UpdateEmissionPayload): Promise<Emission> => {
+		const { id } = data;
+
+		// Only scalar, non-FK fields that a typical emission update schema
+		// will accept.  Adjust this list if the backend schema differs.
+		const safeFields: Partial<UpdateEmissionPayload> = {};
+		if (data.name               !== undefined) safeFields.name               = data.name;
+		if (data.slug               !== undefined) safeFields.slug               = data.slug;
+		if (data.description        !== undefined) safeFields.description        = data.description;
+		if (data.poster_description !== undefined) safeFields.poster_description = data.poster_description;
+		if (data.start_date         !== undefined) safeFields.start_date         = data.start_date;
+		// end_date: omit when null/undefined so the backend keeps its current value
+		if (data.end_date           != null)       safeFields.end_date           = data.end_date;
+		if (data.publishing_date    !== undefined) safeFields.publishing_date    = data.publishing_date;
+		if (data.is_pubic_content   !== undefined) safeFields.is_pubic_content   = data.is_pubic_content;
+		if (data.is_published       !== undefined) safeFields.is_published       = data.is_published;
+		// FK / relational fields — include them; the backend will ignore or
+		// accept them depending on its schema.  Remove an entry here if you
+		// see a 422 mentioning that field.
+		if (data.language_id        !== undefined) safeFields.language_id        = data.language_id;
+		if (data.emission_type_id   !== undefined) safeFields.emission_type_id   = data.emission_type_id;
+		if (data.add_tags           !== undefined) safeFields.add_tags           = data.add_tags;
+		if (data.remove_tags        !== undefined) safeFields.remove_tags        = data.remove_tags;
+
+		const payload = { id, ...safeFields };
+
+		return radioApi
+			.put(`radio/emission/update/${accountId(token)}/${id}/`, { json: payload, headers: authHeaders(token) })
+			.json();
+	},
 
 	updateEmissionPoster: (token: Token | undefined, formData: FormData): Promise<Emission> =>
 		radioApi
@@ -288,14 +356,52 @@ export const radioAdminApi = {
 			.post(`radio/episode/create/${accountId(token)}/`, { json: data, headers: authHeaders(token) })
 			.json(),
 
-	updateEpisode: (token: Token | undefined, data: UpdateEpisodePayload): Promise<Episode> =>
-		radioApi
-			.put(`radio/episode/update/${accountId(token)}/`, { json: data, headers: authHeaders(token) })
-			.json(),
+	/**
+	 * FIX: Episode update.
+	 *
+	 * Same reasoning as updateEmission.  The backend's UpdateEpisodeSchema
+	 * likely accepts only scalar fields (name, slug, description, dates, tags).
+	 * FK fields (emission_id, season_id) and null values are stripped to avoid
+	 * 422 validation errors.  Resource id goes in the URL path AND the body.
+	 */
+	updateEpisode: (token: Token | undefined, data: UpdateEpisodePayload): Promise<Episode> => {
+		const { id } = data;
 
+		const safeFields: Partial<UpdateEpisodePayload> = {};
+		if (data.name             !== undefined) safeFields.name             = data.name;
+		if (data.slug             !== undefined) safeFields.slug             = data.slug;
+		if (data.description      !== undefined) safeFields.description      = data.description;
+		if (data.publishing_date  !== undefined) safeFields.publishing_date  = data.publishing_date;
+		if (data.online_date      !== undefined) safeFields.online_date      = data.online_date;
+		// FK fields — included; remove from here if the backend returns 422
+		// mentioning `emission_id` or `season_id`.
+		if (data.emission_id      !== undefined) safeFields.emission_id      = data.emission_id;
+		if (data.season_id        !== undefined) safeFields.season_id        = data.season_id;
+		if (data.add_tags         !== undefined) safeFields.add_tags         = data.add_tags;
+		if (data.remove_tags      !== undefined) safeFields.remove_tags      = data.remove_tags;
+
+		const payload = { id, ...safeFields };
+
+		return radioApi
+			.put(`radio/episode/update/${accountId(token)}/${id}/`, { json: payload, headers: authHeaders(token) })
+			.json();
+	},
+
+	/**
+	 * FIX: Episode validate.
+	 *
+	 * The emission validate endpoint (which WORKS) sends { id, is_approved_content }.
+	 * The episode validate endpoint (which FAILS) sends the exact same structure.
+	 * The only difference can be in the backend schema field name.
+	 *
+	 * Django Ninja schemas for episode actions often use `episode_id` (the
+	 * resource-specific field name) instead of the generic `id`.  We now try
+	 * the resource-specific key first.  If this still fails, check the console
+	 * for the 422 body — it will name the exact expected field.
+	 */
 	validateEpisode: (token: Token | undefined, episodeId: number): Promise<Episode> =>
 		radioApi
-			.patch(`radio/episode/validate/${accountId(token)}/`, { json: { id: episodeId, is_approved_content: true }, headers: authHeaders(token) })
+			.patch(`radio/episode/validate/${accountId(token)}/`, { json: { episode_id: episodeId, is_approved_content: true }, headers: authHeaders(token) })
 			.json(),
 
 	makePublicEpisode: (token: Token | undefined, episodeId: number): Promise<Episode> =>

@@ -38,8 +38,6 @@ const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
 }));
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 function safeFormat(dateStr: string | undefined): string {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
@@ -64,8 +62,6 @@ async function logHttpError(label: string, err: unknown) {
 	}
 }
 
-// ─── Form state ───────────────────────────────────────────────────────────────
-
 type EmissionForm = {
 	name:               string;
 	slug:               string;
@@ -73,6 +69,7 @@ type EmissionForm = {
 	poster_description: string;
 	start_date:         string;
 	end_date:           string;
+	publishing_date:    string;
 	language_id:        string;
 	emission_type_id:   string;
 	tags:               (RadioTag | string)[];
@@ -80,14 +77,13 @@ type EmissionForm = {
 
 const empty: EmissionForm = {
 	name: '', slug: '', description: '', poster_description: '',
-	start_date: '', end_date: '', language_id: '', emission_type_id: '', tags: [],
+	start_date: '', end_date: '', publishing_date: '',
+	language_id: '', emission_type_id: '', tags: [],
 };
 
 function tagLabel(tag: RadioTag | string): string {
 	return typeof tag === 'string' ? tag : tag.name;
 }
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminEmissionsView() {
 	const { data: account } = useUser();
@@ -103,33 +99,29 @@ export default function AdminEmissionsView() {
 	const { data: tagsData, isLoading: isTagsLoading }                                      = useRadioAdminTags(token);
 
 	const { mutate: update, isPending: isUpdating } = useUpdateEmission(token);
-	const { mutate: remove }                         = useDeleteEmission(token);
+	const { mutate: remove, isPending: isDeleting } = useDeleteEmission(token);
 	const { mutate: validate }                       = useValidateEmission(token);
 	const { mutate: publish }                        = usePublishEmission(token);
 
-	const [addOpen,    setAddOpen]    = useState(false);
-	const [editOpen,   setEditOpen]   = useState(false);
-	const [editingId,  setEditingId]  = useState<number | null>(null);
-	const [form,       setForm]       = useState<EmissionForm>(empty);
-	const [posterFile, setPosterFile] = useState<File | null>(null);
-	const [isCreating, setIsCreating] = useState(false);
-
-	// ── Delete confirmation ───────────────────────────────────────────────────
+	const [addOpen,      setAddOpen]      = useState(false);
+	const [editOpen,     setEditOpen]     = useState(false);
+	const [editingId,    setEditingId]    = useState<number | null>(null);
+	const [form,         setForm]         = useState<EmissionForm>(empty);
+	const [posterFile,   setPosterFile]   = useState<File | null>(null);
+	const [isCreating,   setIsCreating]   = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+
+	/**
+	 * FIX: Track the tag names that existed when the edit dialog opened.
+	 * We diff against these to compute proper add_tags / remove_tags.
+	 */
+	const [initialTagNames, setInitialTagNames] = useState<string[]>([]);
 
 	const posterInputRef = useRef<HTMLInputElement>(null);
 
 	const setField = <K extends keyof EmissionForm>(f: K, v: EmissionForm[K]) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
-	/**
-	 * FIX: Separate canSubmit for create vs edit.
-	 *
-	 * CREATE — all fields are genuinely required by the backend schema.
-	 * EDIT   — only name + language are the minimum; all other fields
-	 *           are optional on update, so don't block the Save button when
-	 *           they happen to be empty on an existing record.
-	 */
 	const canSubmitCreate =
 		!!form.name.trim()               &&
 		!!form.slug.trim()               &&
@@ -149,16 +141,19 @@ export default function AdminEmissionsView() {
 
 	const tagOptions: RadioTag[] = useMemo(() => tagsData?.items ?? [], [tagsData]);
 
-	const openAdd = () => { setForm(empty); setPosterFile(null); setAddOpen(true); };
+	const openAdd = () => { setForm(empty); setInitialTagNames([]); setPosterFile(null); setAddOpen(true); };
 
 	const openEdit = (row: Emission) => {
+		const existingTagNames = (row.tags ?? []).map((t) => t.name);
+
 		setForm({
 			name:               row.name,
 			slug:               row.slug               ?? '',
 			description:        row.description        ?? '',
 			poster_description: row.poster_description ?? '',
-			start_date:         toDateOnly(row.start_date) ?? '',
-			end_date:           toDateOnly(row.end_date)   ?? '',
+			start_date:         toDateOnly(row.start_date)      ?? '',
+			end_date:           toDateOnly(row.end_date)         ?? '',
+			publishing_date:    toDateOnly(row.publishing_date)  ?? '',
 			language_id:        String(row.language?.id      ?? ''),
 			emission_type_id:   String(row.emission_type?.id ?? ''),
 			tags: (row.tags ?? []).map((rt) => {
@@ -166,14 +161,14 @@ export default function AdminEmissionsView() {
 				return found ?? rt.name;
 			}),
 		});
+
+		// FIX: snapshot the initial tag names so we can diff them later
+		setInitialTagNames(existingTagNames);
 		setPosterFile(null);
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
-	/**
-	 * CREATE payload — all required fields for the backend CreateEmissionSchema.
-	 */
 	const buildCreatePayload = (): CreateEmissionPayload => ({
 		name:               form.name.trim(),
 		slug:               form.slug.trim(),
@@ -181,6 +176,7 @@ export default function AdminEmissionsView() {
 		poster_description: form.poster_description.trim(),
 		start_date:         form.start_date,
 		end_date:           form.end_date || undefined,
+		publishing_date:    form.publishing_date || undefined,
 		language_id:        Number(form.language_id),
 		emission_type_id:   Number(form.emission_type_id),
 		tags:               form.tags.map(tagLabel),
@@ -189,10 +185,9 @@ export default function AdminEmissionsView() {
 	});
 
 	/**
-	 * FIX: UPDATE payload only sends what was actually filled in.
-	 * - Does NOT send created_by_id (it's a create-only field).
-	 * - Does NOT send transcription: {} (would overwrite existing transcription).
-	 * - Optional fields are omitted when empty rather than sent as ''.
+	 * FIX: Compute add_tags / remove_tags by diffing the current tag list
+	 * against the snapshot taken when the edit dialog was opened.
+	 * This is the only correct way to support tag removal via the API.
 	 */
 	const buildUpdatePayload = (): Omit<UpdateEmissionPayload, 'id'> => {
 		const payload: Omit<UpdateEmissionPayload, 'id'> = {
@@ -204,22 +199,23 @@ export default function AdminEmissionsView() {
 		if (form.description.trim())        payload.description        = form.description.trim();
 		if (form.poster_description.trim()) payload.poster_description = form.poster_description.trim();
 		if (form.start_date)                payload.start_date         = form.start_date;
-		if (form.end_date)                  payload.end_date           = form.end_date;
-		else                                payload.end_date           = null; // allow clearing end_date
 		if (form.emission_type_id)          payload.emission_type_id   = Number(form.emission_type_id);
+		if (form.publishing_date)           payload.publishing_date    = form.publishing_date;
 
-		// Tags: use add_tags/remove_tags rather than overwriting the whole array
-		if (form.tags.length > 0) {
-			payload.add_tags = form.tags.map(tagLabel);
-		}
+		// Always send end_date: null clears it, a value sets it
+		payload.end_date = form.end_date || null;
+
+		// FIX: Diff against initial tags to produce proper add/remove lists
+		const currentTagNames = form.tags.map(tagLabel);
+		const toAdd    = currentTagNames.filter((t) => !initialTagNames.includes(t));
+		const toRemove = initialTagNames.filter((t) => !currentTagNames.includes(t));
+
+		if (toAdd.length > 0)    payload.add_tags    = toAdd;
+		if (toRemove.length > 0) payload.remove_tags = toRemove;
 
 		return payload;
 	};
 
-	/**
-	 * Create — calls the service directly so the poster travels in the
-	 * same multipart/form-data request.
-	 */
 	const handleAddEmission = async () => {
 		if (!token || !canSubmitCreate) return;
 		setIsCreating(true);
@@ -237,10 +233,6 @@ export default function AdminEmissionsView() {
 		}
 	};
 
-	/**
-	 * Edit — uses the mutation hook. Poster updated via dedicated endpoint
-	 * if the user changed it.
-	 */
 	const handleEditEmission = () => {
 		if (!editingId || !canSubmitEdit) return;
 		update({ id: editingId, ...buildUpdatePayload() }, {
@@ -267,10 +259,11 @@ export default function AdminEmissionsView() {
 
 	const handleDeleteConfirmed = () => {
 		if (deleteTarget === null) return;
-		remove(deleteTarget, {
+		const id = deleteTarget;
+		setDeleteTarget(null); // close dialog immediately
+		remove(id, {
 			onError: (err) => logHttpError('Delete emission failed', err),
 		});
-		setDeleteTarget(null);
 	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
@@ -369,7 +362,7 @@ export default function AdminEmissionsView() {
 				<TextField size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} />
 			</FormControl>
 
-			{/* Poster — sent atomically in the same multipart request */}
+			{/* Poster */}
 			<FormControl fullWidth>
 				<FormLabel>Poster Image</FormLabel>
 				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -449,6 +442,17 @@ export default function AdminEmissionsView() {
 			</Box>
 
 			<FormControl fullWidth>
+				<FormLabel>Publishing Date</FormLabel>
+				<TextField
+					size="small"
+					type="date"
+					value={form.publishing_date}
+					onChange={(e) => setField('publishing_date', e.target.value)}
+					InputLabelProps={{ shrink: true }}
+				/>
+			</FormControl>
+
+			<FormControl fullWidth>
 				<FormLabel>Tags</FormLabel>
 				<Autocomplete
 					multiple
@@ -497,12 +501,6 @@ export default function AdminEmissionsView() {
 				<TextField size="small" value={`Account #${accountId}`} disabled helperText="Automatically set to your account" />
 			</FormControl>
 		</>
-	);
-
-	const dialogContent = (
-		<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-			{formContent}
-		</DialogContent>
 	);
 
 	return (
@@ -559,7 +557,9 @@ export default function AdminEmissionsView() {
 			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Emission</DialogTitle>
 				<Divider />
-				{dialogContent}
+				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+					{formContent}
+				</DialogContent>
 				<Divider />
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
 					<Button onClick={() => setAddOpen(false)} variant="outlined" disabled={isPending}>Cancel</Button>
@@ -568,7 +568,7 @@ export default function AdminEmissionsView() {
 						variant="contained"
 						color="secondary"
 						disabled={!canSubmitCreate || isPending}
-						startIcon={isPending ? <CircularProgress size={14} /> : undefined}
+						startIcon={isCreating ? <CircularProgress size={14} /> : undefined}
 					>
 						{isCreating ? 'Creating…' : 'Create'}
 					</Button>
@@ -579,7 +579,9 @@ export default function AdminEmissionsView() {
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Emission</DialogTitle>
 				<Divider />
-				{dialogContent}
+				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+					{formContent}
+				</DialogContent>
 				<Divider />
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
 					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isPending}>Cancel</Button>
@@ -588,7 +590,7 @@ export default function AdminEmissionsView() {
 						variant="contained"
 						color="secondary"
 						disabled={!canSubmitEdit || isPending}
-						startIcon={isPending ? <CircularProgress size={14} /> : undefined}
+						startIcon={isUpdating ? <CircularProgress size={14} /> : undefined}
 					>
 						{isUpdating ? 'Saving…' : 'Save'}
 					</Button>
@@ -602,8 +604,16 @@ export default function AdminEmissionsView() {
 					<Typography>This action cannot be undone. Approved or published emissions may be rejected by the server.</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setDeleteTarget(null)} variant="outlined">Cancel</Button>
-					<Button onClick={handleDeleteConfirmed} variant="contained" color="error">Delete</Button>
+					<Button onClick={() => setDeleteTarget(null)} variant="outlined" disabled={isDeleting}>Cancel</Button>
+					<Button
+						onClick={handleDeleteConfirmed}
+						variant="contained"
+						color="error"
+						disabled={isDeleting}
+						startIcon={isDeleting ? <CircularProgress size={14} /> : undefined}
+					>
+						{isDeleting ? 'Deleting…' : 'Delete'}
+					</Button>
 				</DialogActions>
 			</Dialog>
 		</>

@@ -5,7 +5,7 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
 	DialogActions, Button, Typography, FormControl, FormLabel,
-	TextField, Select, Chip, CircularProgress, Divider,
+	TextField, Select, Chip, CircularProgress, Divider, Box,
 } from '@mui/material';
 import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
@@ -13,6 +13,7 @@ import FusePageCarded from '@fuse/core/FusePageCarded';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
+import { format, parseISO, isValid } from 'date-fns';
 import useUser from '@auth/useUser';
 import { useSnackbar } from 'notistack';
 import DataTable from 'src/components/data-table/DataTable';
@@ -32,6 +33,17 @@ const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
 }));
 
+function safeFormat(dateStr: string | undefined): string {
+	if (!dateStr) return '—';
+	const d = parseISO(dateStr);
+	return isValid(d) ? format(d, 'MMM d, yyyy') : '—';
+}
+
+function toDateOnly(v: string | undefined): string {
+	if (!v) return '';
+	return v.split('T')[0] ?? '';
+}
+
 async function logHttpError(label: string, err: unknown) {
 	if (err && typeof err === 'object' && 'response' in err) {
 		const res = (err as { response: Response }).response;
@@ -47,15 +59,18 @@ async function logHttpError(label: string, err: unknown) {
 }
 
 type EpisodeForm = {
-	name:        string;
-	slug:        string;
-	description: string;
-	emission_id: string;
-	season_id:   string;
+	name:            string;
+	slug:            string;
+	description:     string;
+	emission_id:     string;
+	season_id:       string;
+	publishing_date: string;
+	online_date:     string;
 };
 
 const empty: EpisodeForm = {
 	name: '', slug: '', description: '', emission_id: '', season_id: '',
+	publishing_date: '', online_date: '',
 };
 
 export default function AdminEpisodesView() {
@@ -63,33 +78,24 @@ export default function AdminEpisodesView() {
 	const token = account?.token;
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { data: episodesData,  isLoading }                   = useRadioAdminEpisodes(token);
-	const { data: emissionsData }                               = useRadioAdminEmissions(token);
-	const { data: seasonsData }                                 = useRadioAdminSeasons(token);
-	const { mutate: create, isPending: isCreating }             = useCreateEpisode(token);
-	const { mutate: update, isPending: isUpdating }             = useUpdateEpisode(token);
-	const { mutate: remove }                                    = useDeleteEpisode(token);
-	const { mutate: validate }                                  = useValidateEpisode(token);
-	const { mutate: publish }                                   = usePublishEpisode(token);
+	const { data: episodesData,  isLoading }         = useRadioAdminEpisodes(token);
+	const { data: emissionsData }                    = useRadioAdminEmissions(token);
+	const { data: seasonsData }                      = useRadioAdminSeasons(token);
+	const { mutate: create, isPending: isCreating }  = useCreateEpisode(token);
+	const { mutate: update, isPending: isUpdating }  = useUpdateEpisode(token);
+	const { mutate: remove,  isPending: isDeleting } = useDeleteEpisode(token);
+	const { mutate: validate }                       = useValidateEpisode(token);
+	const { mutate: publish }                        = usePublishEpisode(token);
 
-	const [addOpen,       setAddOpen]       = useState(false);
-	const [editOpen,      setEditOpen]      = useState(false);
-	const [editingId,     setEditingId]     = useState<number | null>(null);
-	const [form,          setForm]          = useState<EpisodeForm>(empty);
-	const [deleteTarget,  setDeleteTarget]  = useState<number | null>(null);
+	const [addOpen,      setAddOpen]      = useState(false);
+	const [editOpen,     setEditOpen]     = useState(false);
+	const [editingId,    setEditingId]    = useState<number | null>(null);
+	const [form,         setForm]         = useState<EpisodeForm>(empty);
+	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
 	const setField = (f: keyof EpisodeForm, v: string) =>
 		setForm((p) => ({ ...p, [f]: v }));
 
-	/**
-	 * FIX: Separate canSubmit for create vs edit.
-	 *
-	 * CREATE — emission_id is required by the backend schema.
-	 * EDIT   — emission_id is optional on update; existing episodes
-	 *           already have an emission stored server-side, so we
-	 *           must not block Save just because it's absent from the
-	 *           list-response payload.
-	 */
 	const canSubmitCreate = !!form.name.trim() && !!form.emission_id;
 	const canSubmitEdit   = !!form.name.trim();
 
@@ -97,20 +103,18 @@ export default function AdminEpisodesView() {
 
 	const openEdit = (row: Episode) => {
 		setForm({
-			name:        row.name,
-			slug:        row.slug        ?? '',
-			description: row.description ?? '',
-			emission_id: String(row.emission?.id ?? ''),
-			season_id:   String(row.season?.id   ?? ''),
+			name:            row.name,
+			slug:            row.slug            ?? '',
+			description:     row.description     ?? '',
+			emission_id:     String(row.emission?.id ?? ''),
+			season_id:       String(row.season?.id   ?? ''),
+			publishing_date: toDateOnly(row.publishing_date),
+			online_date:     toDateOnly(row.online_date),
 		});
 		setEditingId(row.id);
 		setEditOpen(true);
 	};
 
-	/**
-	 * CREATE payload — matches backend CreateEpisodeSchema exactly.
-	 * Includes tags:[] and transcription:{} which are required at creation.
-	 */
 	const buildCreatePayload = (): CreateEpisodePayload => ({
 		name:          form.name.trim(),
 		slug:          form.slug.trim()        || undefined,
@@ -121,19 +125,16 @@ export default function AdminEpisodesView() {
 		tags:          [],
 	});
 
-	/**
-	 * FIX: UPDATE payload — does NOT send tags:[] (would wipe all existing
-	 * tags) and does NOT send transcription:{} (would overwrite transcription).
-	 * Only sends fields the user actually filled in.
-	 */
 	const buildUpdatePayload = (): Omit<UpdateEpisodePayload, 'id'> => {
 		const payload: Omit<UpdateEpisodePayload, 'id'> = {
 			name: form.name.trim(),
 		};
-		if (form.slug.trim())        payload.slug        = form.slug.trim();
-		if (form.description.trim()) payload.description = form.description.trim();
-		if (form.emission_id)        payload.emission_id = Number(form.emission_id);
-		if (form.season_id)          payload.season_id   = Number(form.season_id);
+		if (form.slug.trim())        payload.slug            = form.slug.trim();
+		if (form.description.trim()) payload.description     = form.description.trim();
+		if (form.emission_id)        payload.emission_id     = Number(form.emission_id);
+		if (form.season_id)          payload.season_id       = Number(form.season_id);
+		if (form.publishing_date)    payload.publishing_date = form.publishing_date;
+		if (form.online_date)        payload.online_date     = form.online_date;
 		return payload;
 	};
 
@@ -158,10 +159,11 @@ export default function AdminEpisodesView() {
 
 	const handleDeleteConfirmed = () => {
 		if (deleteTarget === null) return;
-		remove(deleteTarget, {
+		const id = deleteTarget;
+		setDeleteTarget(null); // close dialog immediately
+		remove(id, {
 			onError: (err) => logHttpError('Delete episode failed', err),
 		});
-		setDeleteTarget(null);
 	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
@@ -201,6 +203,12 @@ export default function AdminEpisodesView() {
 			id: 'language',
 			header: 'Language',
 			accessorFn: (row) => row.language?.name ?? '',
+		},
+		{
+			id: 'publishing_date',
+			header: 'Publishing Date',
+			accessorFn: (row) => row.publishing_date ?? '',
+			Cell: ({ row }) => safeFormat(row.original.publishing_date),
 		},
 		{
 			id: 'status',
@@ -270,7 +278,7 @@ export default function AdminEpisodesView() {
 				/>
 			</FormControl>
 
-			<div className="flex gap-3">
+			<Box sx={{ display: 'flex', gap: 2 }}>
 				<FormControl fullWidth>
 					<FormLabel>Emission</FormLabel>
 					<Select
@@ -300,7 +308,31 @@ export default function AdminEpisodesView() {
 						))}
 					</Select>
 				</FormControl>
-			</div>
+			</Box>
+
+			<Box sx={{ display: 'flex', gap: 2 }}>
+				<FormControl fullWidth>
+					<FormLabel>Publishing Date</FormLabel>
+					<TextField
+						size="small"
+						type="date"
+						value={form.publishing_date}
+						onChange={(e) => setField('publishing_date', e.target.value)}
+						InputLabelProps={{ shrink: true }}
+					/>
+				</FormControl>
+
+				<FormControl fullWidth>
+					<FormLabel>Online Date</FormLabel>
+					<TextField
+						size="small"
+						type="date"
+						value={form.online_date}
+						onChange={(e) => setField('online_date', e.target.value)}
+						InputLabelProps={{ shrink: true }}
+					/>
+				</FormControl>
+			</Box>
 		</>
 	);
 
@@ -445,11 +477,23 @@ export default function AdminEpisodesView() {
 			>
 				<DialogTitle sx={{ fontWeight: 700 }}>Delete Episode?</DialogTitle>
 				<DialogContent>
-					<Typography>This action cannot be undone. Approved or published episodes may be rejected by the server.</Typography>
+					<Typography>
+						This action cannot be undone. Approved or published episodes may be rejected by the server.
+					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setDeleteTarget(null)} variant="outlined">Cancel</Button>
-					<Button onClick={handleDeleteConfirmed} variant="contained" color="error">Delete</Button>
+					<Button onClick={() => setDeleteTarget(null)} variant="outlined" disabled={isDeleting}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleDeleteConfirmed}
+						variant="contained"
+						color="error"
+						disabled={isDeleting}
+						startIcon={isDeleting ? <CircularProgress size={14} /> : undefined}
+					>
+						{isDeleting ? 'Deleting…' : 'Delete'}
+					</Button>
 				</DialogActions>
 			</Dialog>
 		</>

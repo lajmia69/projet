@@ -17,7 +17,7 @@ import {
 	useRadioAdminEpisodes,
 	useRadioAdminAccounts,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
-import { EpisodeGuest } from '@/app/(control-panel)/administration/radio/api/types';
+import { EpisodeGuest, CreateEpisodeGuestPayload, UpdateEpisodeGuestPayload } from '@/app/(control-panel)/administration/radio/api/types';
 import { RadioAdminTable, SimpleFormDialog } from '../ui/RadioAdminTable';
 
 type GuestLinkForm = {
@@ -33,14 +33,14 @@ export default function EpisodeGuestsView() {
 	const token = account?.token;
 	const { enqueueSnackbar } = useSnackbar();
 
-	const { data, isLoading }                                                              = useRadioAdminEpisodeGuests(token);
-	const { data: guestTypes }                                                             = useRadioAdminGuestTypes(token);
-	const { data: episodesData }                                                           = useRadioAdminEpisodes(token);
-	const { data: accountsData, isLoading: isAccountsLoading, isError: isAccountsError }  = useRadioAdminAccounts(token);
+	const { data, isLoading }                                                             = useRadioAdminEpisodeGuests(token);
+	const { data: guestTypes }                                                            = useRadioAdminGuestTypes(token);
+	const { data: episodesData }                                                          = useRadioAdminEpisodes(token);
+	const { data: accountsData, isLoading: isAccountsLoading, isError: isAccountsError } = useRadioAdminAccounts(token);
 
-	const { mutate: create, isPending: isCreating } = useCreateEpisodeGuest(token);
-	const { mutate: update, isPending: isUpdating } = useUpdateEpisodeGuest(token);
-	const { mutate: remove }                         = useDeleteEpisodeGuest(token);
+	const { mutate: create, isPending: isCreating }  = useCreateEpisodeGuest(token);
+	const { mutate: update, isPending: isUpdating }  = useUpdateEpisodeGuest(token);
+	const { mutate: remove, isPending: isDeleting }  = useDeleteEpisodeGuest(token);
 
 	const [addOpen,      setAddOpen]      = useState(false);
 	const [editOpen,     setEditOpen]     = useState(false);
@@ -63,36 +63,46 @@ export default function EpisodeGuestsView() {
 		setEditOpen(true);
 	};
 
-	const buildPayload = () => ({
+	// All three IDs are required for create
+	const canSubmitCreate = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
+
+	// All three IDs are required for edit too — guest_id is pre-populated from the row
+	const canSubmitEdit = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
+
+	const buildCreatePayload = (): CreateEpisodeGuestPayload => ({
 		episode_id:    Number(form.episode_id),
 		guest_id:      Number(form.guest_id),
 		guest_type_id: Number(form.guest_type_id),
 	});
 
 	/**
-	 * FIX: For editing, guest_id + guest_type_id may already be set from
-	 * the existing row — only require episode_id as a minimum (it's always
-	 * present on an existing guest link). Also accept a pre-filled guest_id
-	 * even if it doesn't appear in the current accounts dropdown list.
+	 * FIX: Only include IDs that are actually set (non-empty). Sending guest_id:0
+	 * or episode_id:0 causes the backend to reject the request.
 	 */
-	const canSubmitCreate = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
-	const canSubmitEdit   = !!form.episode_id && !!form.guest_type_id;
+	const buildUpdatePayload = (): Omit<UpdateEpisodeGuestPayload, 'id'> => {
+		const payload: Omit<UpdateEpisodeGuestPayload, 'id'> = {};
+		if (form.episode_id)    payload.episode_id    = Number(form.episode_id);
+		if (form.guest_id)      payload.guest_id      = Number(form.guest_id);
+		if (form.guest_type_id) payload.guest_type_id = Number(form.guest_type_id);
+		return payload;
+	};
 
-	const handleAdd = () => create(buildPayload(), {
-		onSuccess: () => setAddOpen(false),
-		onError:   (err) => {
-			console.error('Create episode guest failed:', err);
-			enqueueSnackbar('Error creating guest link', { variant: 'error' });
-		},
-	});
+	const handleAdd = () => {
+		if (!canSubmitCreate) return;
+		create(buildCreatePayload(), {
+			onSuccess: () => setAddOpen(false),
+			onError:   (err) => {
+				console.error('Create episode guest failed:', err);
+				enqueueSnackbar('Error creating guest link', { variant: 'error' });
+			},
+		});
+	};
 
 	const handleEdit = () => {
-		if (!editingId) return;
-		update({ id: editingId, ...buildPayload() }, {
+		if (!editingId || !canSubmitEdit) return;
+		update({ id: editingId, ...buildUpdatePayload() }, {
 			onSuccess: () => setEditOpen(false),
-			// FIX: was only console.error — now shows snackbar so the user
-			// knows when the save failed.
-			onError: (err) => {
+			onError:   (err) => {
 				console.error('Update episode guest failed:', err);
 				enqueueSnackbar('Error updating guest link', { variant: 'error' });
 			},
@@ -101,13 +111,14 @@ export default function EpisodeGuestsView() {
 
 	const handleDeleteConfirmed = () => {
 		if (deleteTarget === null) return;
-		remove(deleteTarget, {
+		const id = deleteTarget;
+		setDeleteTarget(null); // close dialog first
+		remove(id, {
 			onError: (err) => {
 				console.error('Delete episode guest failed:', err);
 				enqueueSnackbar('Error deleting guest link', { variant: 'error' });
 			},
 		});
-		setDeleteTarget(null);
 	};
 
 	// ─── Table columns ────────────────────────────────────────────────────────
@@ -141,11 +152,7 @@ export default function EpisodeGuestsView() {
 			return <Typography color="error" variant="caption">Error loading accounts.</Typography>;
 		}
 		if (!accountsData?.items?.length) {
-			return (
-				<Typography variant="caption" color="textSecondary">
-					No accounts found.
-				</Typography>
-			);
+			return <Typography variant="caption" color="textSecondary">No accounts found.</Typography>;
 		}
 		return (
 			<Select
@@ -159,12 +166,7 @@ export default function EpisodeGuestsView() {
 					<MenuItem key={acc.id} value={String(acc.id)}>
 						{acc.full_name}
 						{acc.user?.username ? (
-							<Typography
-								component="span"
-								variant="caption"
-								color="textSecondary"
-								sx={{ ml: 1 }}
-							>
+							<Typography component="span" variant="caption" color="textSecondary" sx={{ ml: 1 }}>
 								@{acc.user.username}
 							</Typography>
 						) : null}
@@ -227,7 +229,6 @@ export default function EpisodeGuestsView() {
 				columns={columns}
 				onAdd={openAdd}
 				onEdit={openEdit}
-				// FIX: use delete confirmation instead of instant delete
 				onDelete={(id) => setDeleteTarget(id)}
 				formDialog={
 					<>
@@ -247,8 +248,6 @@ export default function EpisodeGuestsView() {
 							onClose={() => setEditOpen(false)}
 							title="Edit Guest Link"
 							isPending={isUpdating}
-							// FIX: use canSubmitEdit (doesn't require guest_id to be
-							// present in the accounts dropdown — existing value is kept)
 							canSubmit={canSubmitEdit}
 							onSubmit={handleEdit}
 						>
@@ -271,8 +270,18 @@ export default function EpisodeGuestsView() {
 					<Typography>This will unlink the guest from the episode. This action cannot be undone.</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setDeleteTarget(null)} variant="outlined">Cancel</Button>
-					<Button onClick={handleDeleteConfirmed} variant="contained" color="error">Remove</Button>
+					<Button onClick={() => setDeleteTarget(null)} variant="outlined" disabled={isDeleting}>
+						Cancel
+					</Button>
+					<Button
+						onClick={handleDeleteConfirmed}
+						variant="contained"
+						color="error"
+						disabled={isDeleting}
+						startIcon={isDeleting ? <CircularProgress size={14} /> : undefined}
+					>
+						{isDeleting ? 'Removing…' : 'Remove'}
+					</Button>
 				</DialogActions>
 			</Dialog>
 		</>
