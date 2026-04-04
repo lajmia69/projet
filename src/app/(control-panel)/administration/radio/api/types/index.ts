@@ -164,7 +164,30 @@ export type CreateEpisodeGuestPayload = {
 	guest_id: number;
 	guest_type_id: number;
 };
-export type UpdateEpisodeGuestPayload = Partial<CreateEpisodeGuestPayload> & { id: number };
+
+/**
+ * The backend's update endpoint for episode guests uses EpisodeGuestSchema
+ * as the request body, which requires full nested objects (not IDs).
+ * See: PUT /radio/episode/guest/update/{current_account_id}/
+ */
+export type UpdateEpisodeGuestPayload = {
+	id?: number | null;
+	guest: {
+		id?: number | null;
+		full_name: string;
+		biography?: string | null;
+		avatar?: string;
+	};
+	guest_type: {
+		id?: number | null;
+		name: string;
+		description: string;
+	};
+	// Full episode object as returned by the episode list API.
+	// We use a loose type here because the nested structure is very deep.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	episode: Record<string, any>;
+};
 
 // ─── Emission ─────────────────────────────────────────────────────────────────
 
@@ -222,23 +245,21 @@ export type SearchEmissionsParams = {
 };
 
 export type CreateEmissionPayload = {
-	// ── Required ──────────────────────────────────────────────────────────────
+	// ── Required by backend CreateEmissionSchema ───────────────────────────────
 	name: string;
-	/** Account PK of the creator — required by backend ("Created by *"). */
-	created_by_id: number;
+	slug: string;
+	description: string;
+	poster_description: string;
+	start_date: string;
 	language_id: number;
+	emission_type_id: number;
 	/** Tag names — required; send at least an empty array. */
 	tags: string[];
 
-	// ── Shown as required (*) in Django admin ─────────────────────────────────
-	emission_type_id?: number;
-	publishing_date?: string;   // YYYY-MM-DD
-	start_date?: string;        // YYYY-MM-DD
-
 	// ── Optional ──────────────────────────────────────────────────────────────
-	slug?: string;
-	description?: string;
-	poster_description?: string;
+	/** Account PK of the creator — not in backend schema but kept for compatibility */
+	created_by_id?: number;
+	publishing_date?: string;   // YYYY-MM-DD
 	end_date?: string;
 	/** Backend field is spelled `is_pubic_content` (typo in the API). */
 	is_pubic_content?: boolean;
@@ -246,11 +267,28 @@ export type CreateEmissionPayload = {
 	transcription?: Record<string, unknown>;
 };
 
-export type UpdateEmissionPayload = Partial<CreateEmissionPayload> & {
+/**
+ * UpdateEmissionSchema (from OpenAPI) requires ALL of:
+ * remove_tags, add_tags, name, slug, description, poster_description,
+ * start_date, publishing_date, language_id, emission_type_id
+ */
+export type UpdateEmissionPayload = {
 	id: number;
-	remove_tags?: string[] | null;
-	add_tags?: string[] | null;
+	// Required fields
+	name: string;
+	slug: string;
+	description: string;
+	poster_description: string;
+	start_date: string;
+	publishing_date: string;
+	language_id: number;
+	emission_type_id: number;
+	remove_tags: string[] | null;
+	add_tags: string[] | null;
+	// Optional
 	end_date?: string | null;
+	is_pubic_content?: boolean;
+	is_published?: boolean;
 };
 
 // ─── Episode ──────────────────────────────────────────────────────────────────
@@ -323,32 +361,37 @@ export type SearchEpisodesParams = {
 };
 
 /**
- * Matches the backend CreateEpisodeSchema exactly:
- *   { tags, name, description, slug, transcription, emission_id, season_id }
- *
- * Scheduling fields (publishing_date, online_date) are NOT accepted at creation
- * time — use UpdateEpisodePayload / dedicated PATCH endpoints instead.
+ * CreateEpisodeSchema (from OpenAPI) requires ALL of:
+ * tags, name, description, slug, transcription, emission_id, season_id
  */
 export type CreateEpisodePayload = {
-	name:           string;
-	slug?:          string;
-	description?:   string;
-	emission_id?:   number;
-	season_id?:     number;
-	transcription?: Record<string, unknown>;
-	tags?:          string[];
+	name: string;
+	description: string;
+	slug: string;
+	transcription: Record<string, unknown>;
+	emission_id: number;
+	season_id: number;
+	tags: string[];
 };
 
 /**
- * All create fields become optional on update, plus scheduling fields that
- * the backend only accepts via PUT/PATCH.
+ * UpdateEpisodeSchema (from OpenAPI) requires ALL of:
+ * remove_tags, add_tags, name, description, slug, transcription,
+ * publishing_date, online_date, emission_id, season_id
  */
-export type UpdateEpisodePayload = Partial<CreateEpisodePayload> & {
-	id:              number;
-	remove_tags?:    string[] | null;
-	add_tags?:       string[] | null;
-	publishing_date?: string;
-	online_date?:    string;
+export type UpdateEpisodePayload = {
+	id: number;
+	// Required fields
+	name: string;
+	description: string;
+	slug: string;
+	transcription: Record<string, unknown>;
+	publishing_date: string;
+	online_date: string;
+	emission_id: number;
+	season_id: number;
+	remove_tags: string[] | null;
+	add_tags: string[] | null;
 };
 
 // ─── Episode Emotion ──────────────────────────────────────────────────────────
@@ -420,22 +463,44 @@ export type SearchReportagesParams = {
 	offset?: number;
 };
 
+/**
+ * CreateReportageSchema (from OpenAPI) requires ALL of:
+ * tags, name, slug, description, transcription, publishing_date,
+ * online_date, language_id, reportage_type_id
+ */
 export type CreateReportagePayload = {
 	name: string;
-	slug?: string;
-	description?: string;
+	slug: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	publishing_date: string;
+	online_date: string;
 	language_id: number;
-	reportage_type_id?: number;
+	reportage_type_id: number;
+	tags: string[];
 	episode_id?: number | null;
-	transcription?: Record<string, unknown>;
-	tags?: string[];
-	publishing_date?: string;
-	online_date?: string;
 };
-export type UpdateReportagePayload = Partial<CreateReportagePayload> & {
+
+/**
+ * UpdateReportageSchema (from OpenAPI) requires ALL of:
+ * remove_tags, add_tags, name, slug, description, transcription,
+ * publishing_date, online_date, language_id, reportage_type_id
+ */
+export type UpdateReportagePayload = {
 	id: number;
-	remove_tags?: string[] | null;
-	add_tags?: string[] | null;
+	// Required fields
+	name: string;
+	slug: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	publishing_date: string;
+	online_date: string;
+	language_id: number;
+	reportage_type_id: number;
+	remove_tags: string[] | null;
+	add_tags: string[] | null;
+	// Optional
+	episode_id?: number | null;
 };
 
 // ─── Reportage Emotion ────────────────────────────────────────────────────────

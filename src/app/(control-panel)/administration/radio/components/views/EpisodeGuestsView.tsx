@@ -28,6 +28,16 @@ type GuestLinkForm = {
 
 const empty: GuestLinkForm = { episode_id: '', guest_id: '', guest_type_id: '' };
 
+async function logHttpError(label: string, err: unknown) {
+	if (err && typeof err === 'object' && 'response' in err) {
+		const res = (err as { response: Response }).response;
+		try { console.error(`${label} [${res.status}]:`, JSON.stringify(await res.clone().json(), null, 2)); }
+		catch { console.error(`${label} [${res.status}]:`, await res.clone().text()); }
+	} else {
+		console.error(label, err);
+	}
+}
+
 export default function EpisodeGuestsView() {
 	const { data: account } = useUser();
 	const token = account?.token;
@@ -46,6 +56,12 @@ export default function EpisodeGuestsView() {
 	const [editOpen,     setEditOpen]     = useState(false);
 	const [form,         setForm]         = useState<GuestLinkForm>(empty);
 	const [editingId,    setEditingId]    = useState<number | null>(null);
+	/**
+	 * Store the original full row so we can use its nested objects as
+	 * fallbacks when constructing the update payload (the backend requires
+	 * full nested objects, not just IDs).
+	 */
+	const [editingRow,   setEditingRow]   = useState<EpisodeGuest | null>(null);
 	const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
 	const setField = (field: keyof GuestLinkForm, value: string) =>
@@ -54,6 +70,7 @@ export default function EpisodeGuestsView() {
 	const openAdd = () => { setForm(empty); setAddOpen(true); };
 
 	const openEdit = (row: EpisodeGuest) => {
+		setEditingRow(row);
 		setForm({
 			episode_id:    String(row.episode?.id    ?? ''),
 			guest_id:      String(row.guest?.id      ?? ''),
@@ -63,11 +80,8 @@ export default function EpisodeGuestsView() {
 		setEditOpen(true);
 	};
 
-	// All three IDs are required for create
 	const canSubmitCreate = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
-
-	// All three IDs are required for edit too — guest_id is pre-populated from the row
-	const canSubmitEdit = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
+	const canSubmitEdit   = !!form.episode_id && !!form.guest_id && !!form.guest_type_id;
 
 	const buildCreatePayload = (): CreateEpisodeGuestPayload => ({
 		episode_id:    Number(form.episode_id),
@@ -76,15 +90,53 @@ export default function EpisodeGuestsView() {
 	});
 
 	/**
-	 * FIX: Only include IDs that are actually set (non-empty). Sending guest_id:0
-	 * or episode_id:0 causes the backend to reject the request.
+	 * The backend's update endpoint (EpisodeGuestSchema) requires full nested
+	 * objects for guest, guest_type, and episode — not just IDs.
+	 *
+	 * We look up the full objects from our already-loaded data:
+	 *  - episode  → from episodesData.items (full Episode from API)
+	 *  - account  → from accountsData.items (RadioAccount from API)
+	 *  - guestType → from guestTypes.items
+	 *
+	 * If a selection wasn't changed we fall back to the original row's values.
 	 */
-	const buildUpdatePayload = (): Omit<UpdateEpisodeGuestPayload, 'id'> => {
-		const payload: Omit<UpdateEpisodeGuestPayload, 'id'> = {};
-		if (form.episode_id)    payload.episode_id    = Number(form.episode_id);
-		if (form.guest_id)      payload.guest_id      = Number(form.guest_id);
-		if (form.guest_type_id) payload.guest_type_id = Number(form.guest_type_id);
-		return payload;
+	const buildUpdatePayload = (): UpdateEpisodeGuestPayload => {
+		const selectedEpisode  = episodesData?.items.find((e) => e.id === Number(form.episode_id));
+		const selectedAccount  = accountsData?.items.find((a) => a.id === Number(form.guest_id));
+		const selectedGuestType = guestTypes?.items.find((t) => t.id === Number(form.guest_type_id));
+
+		const guest = selectedAccount
+			? {
+				id:        selectedAccount.id ?? null,
+				full_name: selectedAccount.full_name,
+				biography: selectedAccount.biography ?? null,
+				avatar:    selectedAccount.avatar,
+			}
+			: {
+				id:        editingRow?.guest?.id ?? null,
+				full_name: editingRow?.guest?.full_name ?? '',
+				biography: editingRow?.guest?.biography ?? null,
+				avatar:    editingRow?.guest?.avatar,
+			};
+
+		const guest_type = selectedGuestType
+			? {
+				id:          selectedGuestType.id,
+				name:        selectedGuestType.name,
+				description: selectedGuestType.description,
+			}
+			: {
+				id:          editingRow?.guest_type?.id ?? null,
+				name:        editingRow?.guest_type?.name ?? '',
+				description: editingRow?.guest_type?.description ?? '',
+			};
+
+		// The episode field must be the full Episode object as the API returns it.
+		// We use the object from the episodes list (which contains all required fields).
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const episode: Record<string, any> = selectedEpisode ?? (editingRow?.episode as any) ?? {};
+
+		return { id: editingId ?? undefined, guest, guest_type, episode };
 	};
 
 	const handleAdd = () => {
@@ -92,7 +144,7 @@ export default function EpisodeGuestsView() {
 		create(buildCreatePayload(), {
 			onSuccess: () => setAddOpen(false),
 			onError:   (err) => {
-				console.error('Create episode guest failed:', err);
+				logHttpError('Create episode guest failed', err);
 				enqueueSnackbar('Error creating guest link', { variant: 'error' });
 			},
 		});
@@ -100,10 +152,10 @@ export default function EpisodeGuestsView() {
 
 	const handleEdit = () => {
 		if (!editingId || !canSubmitEdit) return;
-		update({ id: editingId, ...buildUpdatePayload() }, {
+		update(buildUpdatePayload(), {
 			onSuccess: () => setEditOpen(false),
 			onError:   (err) => {
-				console.error('Update episode guest failed:', err);
+				logHttpError('Update episode guest failed', err);
 				enqueueSnackbar('Error updating guest link', { variant: 'error' });
 			},
 		});
@@ -112,10 +164,10 @@ export default function EpisodeGuestsView() {
 	const handleDeleteConfirmed = () => {
 		if (deleteTarget === null) return;
 		const id = deleteTarget;
-		setDeleteTarget(null); // close dialog first
+		setDeleteTarget(null);
 		remove(id, {
 			onError: (err) => {
-				console.error('Delete episode guest failed:', err);
+				logHttpError('Delete episode guest failed', err);
 				enqueueSnackbar('Error deleting guest link', { variant: 'error' });
 			},
 		});
@@ -125,51 +177,28 @@ export default function EpisodeGuestsView() {
 
 	const columns = useMemo<MRT_ColumnDef<EpisodeGuest>[]>(() => [
 		{ accessorKey: 'id', header: 'ID', size: 70 },
-		{
-			id: 'episode',
-			header: 'Episode',
-			accessorFn: (row) => row.episode?.name ?? '',
-		},
-		{
-			id: 'guest',
-			header: 'Guest',
-			accessorFn: (row) => row.guest?.full_name ?? '',
-		},
-		{
-			id: 'guest_type',
-			header: 'Role / Type',
-			accessorFn: (row) => row.guest_type?.name ?? '',
-		},
+		{ id: 'episode',    header: 'Episode',      accessorFn: (row) => row.episode?.name    ?? '' },
+		{ id: 'guest',      header: 'Guest',        accessorFn: (row) => row.guest?.full_name ?? '' },
+		{ id: 'guest_type', header: 'Role / Type',  accessorFn: (row) => row.guest_type?.name ?? '' },
 	], []);
 
 	// ─── Guest selector ───────────────────────────────────────────────────────
 
 	const guestSelector = () => {
-		if (isAccountsLoading) {
-			return <CircularProgress size={20} sx={{ mt: 0.5 }} />;
-		}
-		if (isAccountsError) {
-			return <Typography color="error" variant="caption">Error loading accounts.</Typography>;
-		}
-		if (!accountsData?.items?.length) {
-			return <Typography variant="caption" color="textSecondary">No accounts found.</Typography>;
-		}
+		if (isAccountsLoading) return <CircularProgress size={20} sx={{ mt: 0.5 }} />;
+		if (isAccountsError)   return <Typography color="error" variant="caption">Error loading accounts.</Typography>;
+		if (!accountsData?.items?.length) return <Typography variant="caption" color="textSecondary">No accounts found.</Typography>;
 		return (
-			<Select
-				size="small"
-				value={form.guest_id}
-				onChange={(e) => setField('guest_id', e.target.value)}
-				displayEmpty
-			>
+			<Select size="small" value={form.guest_id} onChange={(e) => setField('guest_id', e.target.value)} displayEmpty>
 				<MenuItem value="" disabled><em>Select a guest…</em></MenuItem>
 				{accountsData.items.map((acc) => (
 					<MenuItem key={acc.id} value={String(acc.id)}>
 						{acc.full_name}
-						{acc.user?.username ? (
+						{acc.user?.username && (
 							<Typography component="span" variant="caption" color="textSecondary" sx={{ ml: 1 }}>
 								@{acc.user.username}
 							</Typography>
-						) : null}
+						)}
 					</MenuItem>
 				))}
 			</Select>
@@ -182,12 +211,7 @@ export default function EpisodeGuestsView() {
 		<>
 			<FormControl fullWidth>
 				<FormLabel required>Episode</FormLabel>
-				<Select
-					size="small"
-					value={form.episode_id}
-					onChange={(e) => setField('episode_id', e.target.value)}
-					displayEmpty
-				>
+				<Select size="small" value={form.episode_id} onChange={(e) => setField('episode_id', e.target.value)} displayEmpty>
 					<MenuItem value="" disabled><em>Select an episode…</em></MenuItem>
 					{episodesData?.items.map((ep) => (
 						<MenuItem key={ep.id} value={String(ep.id)}>{ep.name}</MenuItem>
@@ -202,12 +226,7 @@ export default function EpisodeGuestsView() {
 
 			<FormControl fullWidth>
 				<FormLabel required>Guest Type / Role</FormLabel>
-				<Select
-					size="small"
-					value={form.guest_type_id}
-					onChange={(e) => setField('guest_type_id', e.target.value)}
-					displayEmpty
-				>
+				<Select size="small" value={form.guest_type_id} onChange={(e) => setField('guest_type_id', e.target.value)} displayEmpty>
 					<MenuItem value="" disabled><em>Select a type…</em></MenuItem>
 					{guestTypes?.items.map((t) => (
 						<MenuItem key={t.id} value={String(t.id)}>{t.name}</MenuItem>
