@@ -126,16 +126,18 @@ export default function AdminEpisodesView() {
 	});
 
 	const buildUpdatePayload = (): Omit<UpdateEpisodePayload, 'id'> => {
-		const payload: Omit<UpdateEpisodePayload, 'id'> = {
+		return {
 			name: form.name.trim(),
+			slug: form.slug.trim() || undefined,
+			description: form.description.trim() || undefined,
+			emission_id: form.emission_id ? Number(form.emission_id) : undefined,
+			season_id: form.season_id ? Number(form.season_id) : undefined,
+			publishing_date: form.publishing_date || undefined,
+			online_date: form.online_date || undefined,
+			remove_tags: [],
+			add_tags: [],
+			transcription: {},
 		};
-		if (form.slug.trim())        payload.slug            = form.slug.trim();
-		if (form.description.trim()) payload.description     = form.description.trim();
-		if (form.emission_id)        payload.emission_id     = Number(form.emission_id);
-		if (form.season_id)          payload.season_id       = Number(form.season_id);
-		if (form.publishing_date)    payload.publishing_date = form.publishing_date;
-		if (form.online_date)        payload.online_date     = form.online_date;
-		return payload;
 	};
 
 	const handleAdd = () => {
