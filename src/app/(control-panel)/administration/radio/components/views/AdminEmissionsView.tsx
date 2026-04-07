@@ -191,7 +191,7 @@ export default function AdminEmissionsView() {
 	 */
 	const buildUpdatePayload = (): Omit<UpdateEmissionPayload, 'id'> => {
 		const payload: Omit<UpdateEmissionPayload, 'id'> = {
-			name:        form.name.trim(),
+			name: form.name.trim(),
 			language_id: Number(form.language_id),
 		};
 

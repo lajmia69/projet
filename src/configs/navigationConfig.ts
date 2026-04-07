@@ -37,111 +37,38 @@ const navigationConfig: FuseNavItemType[] = [
 		]
 	},
 	{
-		id: 'culture',
-		type: 'group',
-		title: 'Culture',
-		translate: 'CULTURE',
-		children: [
-			// ── Cours culturels ──────────────────────────────────────────────
-			{
-				id: 'culture-courses',
-				title: 'Cours',
-				type: 'item',
-				icon: 'heroicons-outline:book-open',
-				url: '/culture/courses'
-			},
-
-			// ── Projets culturels ────────────────────────────────────────────
-			{
-				id: 'culture-projects',
-				title: 'Projets Culturels',
-				type: 'collapse',
-				icon: 'heroicons-outline:folder-open',
-				children: [
-					{
-						id: 'culture-projects-list',
-						title: 'Tous les projets',
-						type: 'item',
-						icon: 'heroicons-outline:view-grid',
-						url: '/culture/projects'
-					},
-					{
-						id: 'culture-projects-in-progress',
-						title: 'En cours',
-						type: 'item',
-						icon: 'heroicons-outline:play',
-						url: '/culture/projects?status=in_progress'
-					},
-					{
-						id: 'culture-projects-planning',
-						title: 'En planification',
-						type: 'item',
-						icon: 'heroicons-outline:calendar',
-						url: '/culture/projects?status=planning'
-					},
-					{
-						id: 'culture-projects-completed',
-						title: 'Terminés',
-						type: 'item',
-						icon: 'heroicons-outline:check-circle',
-						url: '/culture/projects?status=completed'
-					}
-				]
-			},
-
-			// ── Activités culturelles ────────────────────────────────────────
-			{
-				id: 'culture-activities',
-				title: 'Activités Culturelles',
-				type: 'collapse',
-				icon: 'heroicons-outline:sparkles',
-				children: [
-					{
-						id: 'culture-activities-list',
-						title: 'Toutes les activités',
-						type: 'item',
-						icon: 'heroicons-outline:view-grid',
-						url: '/culture/activities'
-					},
-					{
-						id: 'culture-activities-workshops',
-						title: 'Ateliers',
-						type: 'item',
-						icon: 'heroicons-outline:pencil',
-						url: '/culture/activities?type=workshop'
-					},
-					{
-						id: 'culture-activities-exhibitions',
-						title: 'Expositions',
-						type: 'item',
-						icon: 'heroicons-outline:photograph',
-						url: '/culture/activities?type=exhibition'
-					},
-					{
-						id: 'culture-activities-concerts',
-						title: 'Concerts',
-						type: 'item',
-						icon: 'heroicons-outline:music-note',
-						url: '/culture/activities?type=concert'
-					},
-					{
-						id: 'culture-activities-conferences',
-						title: 'Conférences',
-						type: 'item',
-						icon: 'heroicons-outline:presentation-chart-bar',
-						url: '/culture/activities?type=conference'
-					},
-					{
-						id: 'culture-activities-festivals',
-						title: 'Festivals',
-						type: 'item',
-						icon: 'heroicons-outline:star',
-						url: '/culture/activities?type=festival'
-					}
-				]
-			}
-		]
-	},
+    id: 'culture',
+    type: 'group',
+    title: 'Culture',
+    children: [
+        {
+            id: 'culture-projects',
+            title: 'Cultural Projects',
+            type: 'collapse',
+            icon: 'heroicons-outline:folder-open',
+            children: [
+                { id: 'culture-projects-list',        title: 'All Projects', type: 'item', icon: 'heroicons-outline:view-grid',    url: '/culture/projects' },
+                { id: 'culture-projects-in-progress', title: 'In Progress',  type: 'item', icon: 'heroicons-outline:play',         url: '/culture/projects?status=in_progress' },
+                { id: 'culture-projects-planning',    title: 'Planning',     type: 'item', icon: 'heroicons-outline:calendar',     url: '/culture/projects?status=planning' },
+                { id: 'culture-projects-completed',   title: 'Completed',   type: 'item', icon: 'heroicons-outline:check-circle', url: '/culture/projects?status=completed' }
+            ]
+        },
+        {
+            id: 'culture-activities',
+            title: 'Cultural Activities',
+            type: 'collapse',
+            icon: 'heroicons-outline:sparkles',
+            children: [
+                { id: 'culture-activities-list',        title: 'All Activities', type: 'item', icon: 'heroicons-outline:view-grid',               url: '/culture/activities' },
+                { id: 'culture-activities-workshops',   title: 'Workshops',      type: 'item', icon: 'heroicons-outline:pencil',                   url: '/culture/activities?type=workshop' },
+                { id: 'culture-activities-exhibitions', title: 'Exhibitions',    type: 'item', icon: 'heroicons-outline:photograph',               url: '/culture/activities?type=exhibition' },
+                { id: 'culture-activities-concerts',    title: 'Concerts',       type: 'item', icon: 'heroicons-outline:music-note',               url: '/culture/activities?type=concert' },
+                { id: 'culture-activities-conferences', title: 'Conferences',    type: 'item', icon: 'heroicons-outline:presentation-chart-bar',   url: '/culture/activities?type=conference' },
+                { id: 'culture-activities-festivals',   title: 'Festivals',      type: 'item', icon: 'heroicons-outline:star',                     url: '/culture/activities?type=festival' }
+            ]
+        }
+    ]
+},
 	{
 		id: 'administration',
 		type: 'group',

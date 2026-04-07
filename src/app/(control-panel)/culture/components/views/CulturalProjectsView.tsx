@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -36,21 +36,21 @@ const STATUS_META: Record<
 	CulturalProjectStatus,
 	{ label: string; color: string; bg: string; icon: string }
 > = {
-	planning:    { label: 'Planification',  color: '#b45309', bg: '#fef9c3', icon: 'lucide:calendar-clock' },
-	in_progress: { label: 'En cours',       color: '#1d4ed8', bg: '#dbeafe', icon: 'lucide:play-circle' },
-	completed:   { label: 'Terminé',        color: '#15803d', bg: '#dcfce7', icon: 'lucide:check-circle' },
-	cancelled:   { label: 'Annulé',         color: '#b91c1c', bg: '#fee2e2', icon: 'lucide:x-circle' }
+	planning:    { label: 'Planning',       color: '#b45309', bg: '#fef9c3', icon: 'lucide:calendar-clock' },
+	in_progress: { label: 'In Progress',    color: '#1d4ed8', bg: '#dbeafe', icon: 'lucide:play-circle' },
+	completed:   { label: 'Completed',      color: '#15803d', bg: '#dcfce7', icon: 'lucide:check-circle' },
+	cancelled:   { label: 'Cancelled',      color: '#b91c1c', bg: '#fee2e2', icon: 'lucide:x-circle' }
 };
 
 const CATEGORY_OPTIONS = [
-	'art', 'festival', 'musique', 'theatre', 'cinema', 'numerique', 'litterature',
-	'artisanat', 'patrimoine', 'danse', 'autre'
+	'art', 'festival', 'music', 'theater', 'cinema', 'digital', 'literature',
+	'crafts', 'heritage', 'dance', 'other'
 ];
 
 function safeFormat(dateStr?: string) {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
-	return isValid(d) ? format(d, 'd MMM yyyy', { locale: fr }) : '—';
+	return isValid(d) ? format(d, 'MMM d, yyyy', { locale: enUS }) : '—';
 }
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
@@ -123,13 +123,13 @@ function ProjectCard({
 						{project.teamSize && (
 							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
 								<FuseSvgIcon size={13}>lucide:users</FuseSvgIcon>
-								<span>{project.teamSize} membres</span>
+								<span>{project.teamSize} members</span>
 							</div>
 						)}
 						{project.budget != null && (
 							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
 								<FuseSvgIcon size={13}>lucide:wallet</FuseSvgIcon>
-								<span>{project.budget.toLocaleString('fr-FR')} DT</span>
+								<span>{project.budget.toLocaleString('en-US')} DT</span>
 							</div>
 						)}
 					</div>
@@ -139,7 +139,7 @@ function ProjectCard({
 					className="px-4 py-3 flex items-center justify-between"
 					sx={{ borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.default' }}
 				>
-					<Tooltip title="Supprimer">
+					<Tooltip title="Delete">
 						<IconButton
 							size="small"
 							color="error"
@@ -158,27 +158,27 @@ function ProjectCard({
 						endIcon={<FuseSvgIcon size={14}>lucide:arrow-right</FuseSvgIcon>}
 						sx={{ textTransform: 'none', fontWeight: 700 }}
 					>
-						Voir le projet
+						View Project
 					</Button>
 				</CardActions>
 			</Card>
 
 			{/* Confirm delete */}
 			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
-				<DialogTitle sx={{ fontWeight: 700 }}>Supprimer le projet ?</DialogTitle>
+				<DialogTitle sx={{ fontWeight: 700 }}>Delete Project?</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						<strong>{project.title}</strong> sera définitivement supprimé. Cette action est irréversible.
+						<strong>{project.title}</strong> will be permanently deleted. This action is irreversible.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-					<Button onClick={() => setConfirmOpen(false)} variant="outlined">Annuler</Button>
+					<Button onClick={() => setConfirmOpen(false)} variant="outlined">Cancel</Button>
 					<Button
 						onClick={() => { onDelete(project.id); setConfirmOpen(false); }}
 						variant="contained"
 						color="error"
 					>
-						Supprimer
+						Delete
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -226,33 +226,33 @@ function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => 
 
 	return (
 		<Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
-			<DialogTitle sx={{ fontWeight: 800 }}>Nouveau projet culturel</DialogTitle>
+			<DialogTitle sx={{ fontWeight: 800 }}>New Cultural Project</DialogTitle>
 			<Divider />
 			<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-				<TextField label="Titre *" size="small" value={form.title} onChange={(e) => setField('title', e.target.value)} fullWidth />
+				<TextField label="Title *" size="small" value={form.title} onChange={(e) => setField('title', e.target.value)} fullWidth />
 				<TextField label="Description" size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} fullWidth />
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
 					<FormControl size="small" fullWidth>
-						<InputLabel>Catégorie</InputLabel>
-						<Select value={form.category} label="Catégorie" onChange={(e) => setField('category', e.target.value)}>
+						<InputLabel>Category</InputLabel>
+						<Select value={form.category} label="Category" onChange={(e) => setField('category', e.target.value)}>
 							{CATEGORY_OPTIONS.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
 						</Select>
 					</FormControl>
 					<FormControl size="small" fullWidth>
-						<InputLabel>Statut</InputLabel>
-						<Select value={form.status} label="Statut" onChange={(e) => setField('status', e.target.value as CulturalProjectStatus)}>
+						<InputLabel>Status</InputLabel>
+						<Select value={form.status} label="Status" onChange={(e) => setField('status', e.target.value as CulturalProjectStatus)}>
 							{Object.entries(STATUS_META).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
 						</Select>
 					</FormControl>
 				</Box>
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
-					<TextField label="Date de début *" type="date" size="small" value={form.startDate} onChange={(e) => setField('startDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-					<TextField label="Date de fin" type="date" size="small" value={form.endDate} onChange={(e) => setField('endDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+					<TextField label="Start Date *" type="date" size="small" value={form.startDate} onChange={(e) => setField('startDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+					<TextField label="End Date" type="date" size="small" value={form.endDate} onChange={(e) => setField('endDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
 				</Box>
 
-				<TextField label="Lieu" size="small" value={form.location} onChange={(e) => setField('location', e.target.value)} fullWidth />
+				<TextField label="Location" size="small" value={form.location} onChange={(e) => setField('location', e.target.value)} fullWidth />
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
 					<TextField
@@ -262,25 +262,25 @@ function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => 
 						fullWidth
 					/>
 					<TextField
-						label="Équipe" type="number" size="small" value={form.teamSize}
+						label="Team" type="number" size="small" value={form.teamSize}
 						onChange={(e) => setField('teamSize', e.target.value)}
-						InputProps={{ endAdornment: <InputAdornment position="end">pers.</InputAdornment> }}
+						InputProps={{ endAdornment: <InputAdornment position="end">people</InputAdornment> }}
 						fullWidth
 					/>
 				</Box>
 
 				<TextField
-					label="Tags (séparés par des virgules)"
+					label="Tags (comma-separated)"
 					size="small"
 					value={form.tags}
 					onChange={(e) => setField('tags', e.target.value)}
 					fullWidth
-					helperText="ex: culture, patrimoine, festival"
+					helperText="e.g., culture, heritage, festival"
 				/>
 			</DialogContent>
 			<Divider />
 			<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-				<Button onClick={onClose} variant="outlined" disabled={isPending}>Annuler</Button>
+				<Button onClick={onClose} variant="outlined" disabled={isPending}>Cancel</Button>
 				<Button
 					onClick={handleSubmit}
 					variant="contained"
@@ -288,7 +288,7 @@ function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => 
 					disabled={!canSubmit || isPending}
 					startIcon={isPending ? <CircularProgress size={14} /> : <FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 				>
-					{isPending ? 'Création…' : 'Créer le projet'}
+					{isPending ? 'Creating...' : 'Create Project'}
 				</Button>
 			</DialogActions>
 		</Dialog>
@@ -337,7 +337,7 @@ export default function CulturalProjectsView() {
 									color="inherit"
 									className="text-center text-4xl font-extrabold tracking-tight sm:text-6xl"
 								>
-									Projets Culturels
+									Cultural Projects
 								</Typography>
 							</motion.div>
 							<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.2 } }}>
@@ -345,7 +345,7 @@ export default function CulturalProjectsView() {
 									color="inherit"
 									className="mt-3 max-w-xl text-center text-lg opacity-75"
 								>
-									Gérez et suivez l'ensemble des projets culturels de votre organisation.
+									Manage and track all cultural projects for your organization.
 								</Typography>
 							</motion.div>
 						</div>
@@ -365,7 +365,7 @@ export default function CulturalProjectsView() {
 						<div className="flex flex-wrap items-center gap-2 mb-6">
 							<TextField
 								size="small"
-								placeholder="Rechercher un projet…"
+								placeholder="Search for a project..."
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								InputProps={{ startAdornment: <InputAdornment position="start"><FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon></InputAdornment> }}
@@ -373,9 +373,9 @@ export default function CulturalProjectsView() {
 							/>
 
 							<FormControl size="small" sx={{ minWidth: 130 }}>
-								<InputLabel>Statut</InputLabel>
-								<Select value={statusFilter} label="Statut" onChange={(e) => setStatusFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
-									<MenuItem value="all"><em>Tous</em></MenuItem>
+								<InputLabel>Status</InputLabel>
+								<Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
+									<MenuItem value="all"><em>All</em></MenuItem>
 									{Object.entries(STATUS_META).map(([k, v]) => (
 										<MenuItem key={k} value={k}>{v.label}</MenuItem>
 									))}
@@ -383,16 +383,16 @@ export default function CulturalProjectsView() {
 							</FormControl>
 
 							<FormControl size="small" sx={{ minWidth: 130 }}>
-								<InputLabel>Catégorie</InputLabel>
-								<Select value={categoryFilter} label="Catégorie" onChange={(e) => setCategoryFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
-									<MenuItem value="all"><em>Toutes</em></MenuItem>
+								<InputLabel>Category</InputLabel>
+								<Select value={categoryFilter} label="Category" onChange={(e) => setCategoryFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
+									<MenuItem value="all"><em>All</em></MenuItem>
 									{categories.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
 								</Select>
 							</FormControl>
 
 							{filtered.length > 0 && (
 								<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', ml: 1 }}>
-									{filtered.length} projet{filtered.length > 1 ? 's' : ''}
+									{filtered.length} {filtered.length === 1 ? 'project' : 'projects'}
 								</Typography>
 							)}
 
@@ -404,7 +404,7 @@ export default function CulturalProjectsView() {
 								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 								sx={{ ml: 'auto', textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
 							>
-								Nouveau projet
+								New project
 							</Button>
 						</div>
 
@@ -449,15 +449,15 @@ export default function CulturalProjectsView() {
 							<div className="flex flex-1 items-center justify-center py-20">
 								<div className="flex flex-col items-center gap-3">
 									<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:folder-open</FuseSvgIcon>
-									<Typography color="text.secondary" variant="h6">Aucun projet trouvé</Typography>
-									<Typography color="text.disabled" variant="body2">Modifiez vos filtres ou créez un nouveau projet</Typography>
+									<Typography color="text.secondary" variant="h6">No projects found</Typography>
+									<Typography color="text.disabled" variant="body2">Modify your filters or create a new project</Typography>
 									<Button
 										onClick={() => setCreateOpen(true)}
 										variant="outlined"
 										color="secondary"
 										startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 									>
-										Créer un projet
+										Create a project
 									</Button>
 								</div>
 							</div>

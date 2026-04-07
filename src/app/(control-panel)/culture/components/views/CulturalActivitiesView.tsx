@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -33,18 +33,18 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 }));
 
 const TYPE_META: Record<CulturalActivityType, { label: string; icon: string; color: string }> = {
-	workshop:    { label: 'Atelier',       icon: 'lucide:pencil-ruler',  color: '#7c3aed' },
-	exhibition:  { label: 'Exposition',    icon: 'lucide:image',         color: '#0284c7' },
+	workshop:    { label: 'Workshop',      icon: 'lucide:pencil-ruler',  color: '#7c3aed' },
+	exhibition:  { label: 'Exhibition',    icon: 'lucide:image',         color: '#0284c7' },
 	concert:     { label: 'Concert',       icon: 'lucide:music-2',       color: '#be185d' },
-	conference:  { label: 'Conférence',    icon: 'lucide:presentation',  color: '#047857' },
+	conference:  { label: 'Conference',    icon: 'lucide:presentation',  color: '#047857' },
 	festival:    { label: 'Festival',      icon: 'lucide:party-popper',  color: '#b45309' },
-	other:       { label: 'Autre',         icon: 'lucide:sparkles',      color: '#374151' }
+	other:       { label: 'Other',         icon: 'lucide:sparkles',      color: '#374151' }
 };
 
 function safeFormat(dateStr?: string) {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
-	return isValid(d) ? format(d, 'd MMM yyyy', { locale: fr }) : '—';
+	return isValid(d) ? format(d, 'MMM d, yyyy', { locale: enUS }) : '—';
 }
 
 // ─── Activity Card ────────────────────────────────────────────────────────────
@@ -78,10 +78,10 @@ function ActivityCard({
 							sx={{ fontSize: '0.68rem', fontWeight: 700, height: 22, color: typeMeta.color, backgroundColor: `${typeMeta.color}18` }}
 						/>
 						{activity.isFree && (
-							<Chip size="small" label="Gratuit" sx={{ fontSize: '0.65rem', fontWeight: 700, height: 20, color: '#15803d', backgroundColor: '#dcfce7' }} />
+							<Chip size="small" label="Free" sx={{ fontSize: '0.65rem', fontWeight: 700, height: 20, color: '#15803d', backgroundColor: '#dcfce7' }} />
 						)}
 						{activity.isOnline && (
-							<Chip size="small" icon={<FuseSvgIcon size={11}>lucide:globe</FuseSvgIcon>} label="En ligne" sx={{ fontSize: '0.65rem', fontWeight: 700, height: 20, color: '#1d4ed8', backgroundColor: '#dbeafe' }} />
+							<Chip size="small" icon={<FuseSvgIcon size={11}>lucide:globe</FuseSvgIcon>} label="Online" sx={{ fontSize: '0.65rem', fontWeight: 700, height: 20, color: '#1d4ed8', backgroundColor: '#dbeafe' }} />
 						)}
 					</div>
 
@@ -110,13 +110,13 @@ function ActivityCard({
 						{activity.capacity && (
 							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
 								<FuseSvgIcon size={13}>lucide:users</FuseSvgIcon>
-								<span>Capacité : {activity.capacity} pers.</span>
+								<span>Capacity: {activity.capacity} people</span>
 							</div>
 						)}
 						{!activity.isFree && activity.price != null && (
 							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
 								<FuseSvgIcon size={13}>lucide:ticket</FuseSvgIcon>
-								<span>{activity.price} DT / personne</span>
+								<span>{activity.price} DT / person</span>
 							</div>
 						)}
 					</div>
@@ -126,7 +126,7 @@ function ActivityCard({
 					className="px-4 py-3 flex items-center justify-between"
 					sx={{ borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.default' }}
 				>
-					<Tooltip title="Supprimer">
+					<Tooltip title="Delete">
 						<IconButton size="small" color="error" onClick={() => setConfirmOpen(true)}>
 							<FuseSvgIcon size={16}>lucide:trash-2</FuseSvgIcon>
 						</IconButton>
@@ -141,23 +141,23 @@ function ActivityCard({
 						endIcon={<FuseSvgIcon size={14}>lucide:arrow-right</FuseSvgIcon>}
 						sx={{ textTransform: 'none', fontWeight: 700 }}
 					>
-						Voir les détails
+						View Details
 					</Button>
 				</CardActions>
 			</Card>
 
 			{/* Confirm delete */}
 			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
-				<DialogTitle sx={{ fontWeight: 700 }}>Supprimer l'activité ?</DialogTitle>
+				<DialogTitle sx={{ fontWeight: 700 }}>Delete Activity?</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						<strong>{activity.title}</strong> sera définitivement supprimée. Cette action est irréversible.
+						<strong>{activity.title}</strong> will be permanently deleted. This action is irreversible.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-					<Button onClick={() => setConfirmOpen(false)} variant="outlined">Annuler</Button>
+					<Button onClick={() => setConfirmOpen(false)} variant="outlined">Cancel</Button>
 					<Button onClick={() => { onDelete(activity.id); setConfirmOpen(false); }} variant="contained" color="error">
-						Supprimer
+						Delete
 					</Button>
 				</DialogActions>
 			</Dialog>
@@ -211,10 +211,10 @@ function CreateActivityDialog({ open, onClose }: { open: boolean; onClose: () =>
 
 	return (
 		<Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
-			<DialogTitle sx={{ fontWeight: 800 }}>Nouvelle activité culturelle</DialogTitle>
+			<DialogTitle sx={{ fontWeight: 800 }}>New Cultural Activity</DialogTitle>
 			<Divider />
 			<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-				<TextField label="Titre *" size="small" value={form.title} onChange={(e) => setField('title', e.target.value)} fullWidth />
+				<TextField label="Title *" size="small" value={form.title} onChange={(e) => setField('title', e.target.value)} fullWidth />
 				<TextField label="Description" size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} fullWidth />
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
@@ -224,25 +224,25 @@ function CreateActivityDialog({ open, onClose }: { open: boolean; onClose: () =>
 							{Object.entries(TYPE_META).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
 						</Select>
 					</FormControl>
-					<TextField label="Catégorie" size="small" value={form.category} onChange={(e) => setField('category', e.target.value)} fullWidth />
+					<TextField label="Category" size="small" value={form.category} onChange={(e) => setField('category', e.target.value)} fullWidth />
 				</Box>
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
 					<TextField label="Date *" type="date" size="small" value={form.date} onChange={(e) => setField('date', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-					<TextField label="Date de fin" type="date" size="small" value={form.endDate} onChange={(e) => setField('endDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+					<TextField label="End Date" type="date" size="small" value={form.endDate} onChange={(e) => setField('endDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
 				</Box>
 
-				<TextField label="Lieu *" size="small" value={form.location} onChange={(e) => setField('location', e.target.value)} fullWidth />
+				<TextField label="Location *" size="small" value={form.location} onChange={(e) => setField('location', e.target.value)} fullWidth />
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
 					<TextField
-						label="Capacité" type="number" size="small" value={form.capacity}
+						label="Capacity" type="number" size="small" value={form.capacity}
 						onChange={(e) => setField('capacity', e.target.value)}
-						InputProps={{ endAdornment: <InputAdornment position="end">pers.</InputAdornment> }}
+						InputProps={{ endAdornment: <InputAdornment position="end">people</InputAdornment> }}
 						fullWidth
 					/>
 					<TextField
-						label="Prix"
+						label="Price"
 						type="number"
 						size="small"
 						value={form.price}
@@ -256,26 +256,26 @@ function CreateActivityDialog({ open, onClose }: { open: boolean; onClose: () =>
 				<Box sx={{ display: 'flex', gap: 3 }}>
 					<FormControlLabel
 						control={<Switch checked={form.isFree} onChange={(e) => setField('isFree', e.target.checked)} color="success" />}
-						label="Gratuit"
+						label="Free"
 					/>
 					<FormControlLabel
 						control={<Switch checked={form.isOnline} onChange={(e) => setField('isOnline', e.target.checked)} color="info" />}
-						label="En ligne"
+						label="Online"
 					/>
 				</Box>
 
 				<TextField
-					label="Tags (séparés par des virgules)"
+					label="Tags (comma-separated)"
 					size="small"
 					value={form.tags}
 					onChange={(e) => setField('tags', e.target.value)}
 					fullWidth
-					helperText="ex: culture, jeunesse, art"
+					helperText="e.g., culture, youth, art"
 				/>
 			</DialogContent>
 			<Divider />
 			<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-				<Button onClick={onClose} variant="outlined" disabled={isPending}>Annuler</Button>
+				<Button onClick={onClose} variant="outlined" disabled={isPending}>Cancel</Button>
 				<Button
 					onClick={handleSubmit}
 					variant="contained"
@@ -283,7 +283,7 @@ function CreateActivityDialog({ open, onClose }: { open: boolean; onClose: () =>
 					disabled={!canSubmit || isPending}
 					startIcon={isPending ? <CircularProgress size={14} /> : <FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 				>
-					{isPending ? 'Création…' : "Créer l'activité"}
+					{isPending ? 'Creating...' : "Create Activity"}
 				</Button>
 			</DialogActions>
 		</Dialog>
@@ -337,21 +337,21 @@ export default function CulturalActivitiesView() {
 							</motion.div>
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05 } }}>
 								<Typography color="inherit" className="text-center text-4xl font-extrabold tracking-tight sm:text-6xl">
-									Activités Culturelles
+									Cultural Activities
 								</Typography>
 							</motion.div>
 							<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.2 } }}>
 								<Typography color="inherit" className="mt-3 max-w-xl text-center text-lg opacity-75">
-									Explorez et gérez tous les ateliers, expositions, concerts et événements culturels.
+									Explore and manage all workshops, exhibitions, concerts, and cultural events.
 								</Typography>
 							</motion.div>
 
 							{/* quick stats */}
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.3 } }} className="mt-6 flex gap-4 flex-wrap justify-center">
 								{[
-									{ label: `${stats.total} activités`, icon: 'lucide:calendar' },
-									{ label: `${stats.free} gratuites`, icon: 'lucide:ticket' },
-									{ label: `${stats.online} en ligne`, icon: 'lucide:globe' }
+									{ label: `${stats.total} activities`, icon: 'lucide:calendar' },
+									{ label: `${stats.free} free`, icon: 'lucide:ticket' },
+									{ label: `${stats.online} online`, icon: 'lucide:globe' }
 								].map(({ label, icon }) => (
 									<div key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.25)', backgroundColor: 'rgba(255,255,255,0.1)' }}>
 										<FuseSvgIcon size={13} sx={{ color: 'rgba(255,255,255,0.7)' }}>{icon}</FuseSvgIcon>
@@ -375,7 +375,7 @@ export default function CulturalActivitiesView() {
 						<div className="flex flex-wrap items-center gap-2 mb-6">
 							<TextField
 								size="small"
-								placeholder="Rechercher une activité…"
+								placeholder="Search for an activity..."
 								value={search}
 								onChange={(e) => setSearch(e.target.value)}
 								InputProps={{ startAdornment: <InputAdornment position="start"><FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon></InputAdornment> }}
@@ -385,7 +385,7 @@ export default function CulturalActivitiesView() {
 							<FormControl size="small" sx={{ minWidth: 140 }}>
 								<InputLabel>Type</InputLabel>
 								<Select value={typeFilter} label="Type" onChange={(e) => setTypeFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
-									<MenuItem value="all"><em>Tous</em></MenuItem>
+									<MenuItem value="all"><em>All</em></MenuItem>
 									{Object.entries(TYPE_META).map(([k, v]) => (
 										<MenuItem key={k} value={k}>
 											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -399,13 +399,13 @@ export default function CulturalActivitiesView() {
 
 							<FormControlLabel
 								control={<Switch size="small" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} color="success" />}
-								label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Gratuit seulement</Typography>}
+								label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Free only</Typography>}
 								sx={{ ml: 0 }}
 							/>
 
 							{filtered.length > 0 && (
 								<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', ml: 1 }}>
-									{filtered.length} activité{filtered.length > 1 ? 's' : ''}
+									{filtered.length} {filtered.length === 1 ? 'activity' : 'activities'}
 								</Typography>
 							)}
 
@@ -417,7 +417,7 @@ export default function CulturalActivitiesView() {
 								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 								sx={{ ml: 'auto', textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
 							>
-								Nouvelle activité
+								New activity
 							</Button>
 						</div>
 
@@ -463,15 +463,15 @@ export default function CulturalActivitiesView() {
 							<div className="flex flex-1 items-center justify-center py-20">
 								<div className="flex flex-col items-center gap-3">
 									<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:calendar-x</FuseSvgIcon>
-									<Typography color="text.secondary" variant="h6">Aucune activité trouvée</Typography>
-									<Typography color="text.disabled" variant="body2">Modifiez vos filtres ou créez une nouvelle activité</Typography>
+									<Typography color="text.secondary" variant="h6">No activities found</Typography>
+									<Typography color="text.disabled" variant="body2">Modify your filters or create a new activity</Typography>
 									<Button
 										onClick={() => setCreateOpen(true)}
 										variant="outlined"
 										color="secondary"
 										startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 									>
-										Créer une activité
+										Create Activity
 									</Button>
 								</div>
 							</div>
