@@ -1,6 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useSelector } from 'react-redux';
 import * as api from '../services/cultureApiService';
 import {
 	CreateCulturalProjectPayload,
@@ -9,20 +9,88 @@ import {
 	UpdateCulturalActivityPayload
 } from '../types/projectsAndActivities';
 
-// ─── Account ID helper ────────────────────────────────────────────────────────
+// ─── JWT helpers ─────────────────────────────────────────────────────────────
 
 /**
- * Reads the current account's numeric ID from the Redux store.
- * Tries several common locations used by Fuse-based backends.
+ * Decodes the payload section of a JWT without verifying the signature.
+ * Returns null if the token is missing or malformed.
+ */
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+	try {
+		const part = token.split('.')[1];
+		if (!part) return null;
+		// atob requires standard base64; JWT uses base64url
+		const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+		return JSON.parse(atob(base64));
+	} catch {
+		return null;
+	}
+}
+
+function readTokenFromStorage(): string {
+	if (typeof window === 'undefined') return '';
+	return (
+		localStorage.getItem('jwt_access_token') ||
+		localStorage.getItem('fusejs_access_token') ||
+		localStorage.getItem('access_token') ||
+		''
+	);
+}
+
+/**
+ * Reads the current account's numeric ID from the JWT stored in localStorage.
+ *
+ * Common JWT payload field names tried in order:
+ *   account_id → user_account_id → account → id → user_id → sub
+ *
+ * Falls back to 1 when none are found so queries still fire (they will
+ * receive a 401 from the API if the token itself is missing/expired).
+ *
+ * This hook intentionally has NO react-redux dependency so it works
+ * whether or not a <Provider> wraps the current route tree.
  */
 export function useAccountId(): number {
-	return useSelector(
-		(state: any) =>
-			state?.user?.data?.account_id ??
-			state?.user?.data?.id ??
-			state?.auth?.user?.data?.id ??
-			1
-	) as number;
+	const [accountId, setAccountId] = useState<number>(() => {
+		const token = readTokenFromStorage();
+		const payload = decodeJwtPayload(token);
+		if (!payload) return 1;
+
+		const value =
+			payload['account_id'] ??
+			payload['user_account_id'] ??
+			payload['account'] ??
+			payload['id'] ??
+			payload['user_id'] ??
+			payload['sub'];
+
+		const num = Number(value);
+		return Number.isFinite(num) && num > 0 ? num : 1;
+	});
+
+	// Re-read whenever localStorage changes (e.g. after login in another tab)
+	useEffect(() => {
+		const sync = () => {
+			const token = readTokenFromStorage();
+			const payload = decodeJwtPayload(token);
+			if (!payload) return;
+
+			const value =
+				payload['account_id'] ??
+				payload['user_account_id'] ??
+				payload['account'] ??
+				payload['id'] ??
+				payload['user_id'] ??
+				payload['sub'];
+
+			const num = Number(value);
+			if (Number.isFinite(num) && num > 0) setAccountId(num);
+		};
+
+		window.addEventListener('storage', sync);
+		return () => window.removeEventListener('storage', sync);
+	}, []);
+
+	return accountId;
 }
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
@@ -45,7 +113,7 @@ export const useCulturalProjectTypes = () => {
 	return useQuery({
 		queryKey: projectTypesQueryKey,
 		queryFn: () => api.getProjectTypes(accountId),
-		enabled: !!accountId
+		enabled: accountId > 0
 	});
 };
 
@@ -54,7 +122,7 @@ export const useCulturalActivityTypes = () => {
 	return useQuery({
 		queryKey: activityTypesQueryKey,
 		queryFn: () => api.getActivityTypes(accountId),
-		enabled: !!accountId
+		enabled: accountId > 0
 	});
 };
 
@@ -67,7 +135,7 @@ export const useCulturalProjects = () => {
 	return useQuery({
 		queryKey: projectsQueryKey,
 		queryFn: () => api.getProjects(accountId),
-		enabled: !!accountId
+		enabled: accountId > 0
 	});
 };
 
@@ -76,7 +144,7 @@ export const useCulturalProject = (id: number) => {
 	return useQuery({
 		queryKey: projectQueryKey(id),
 		queryFn: () => api.getProject(accountId, id),
-		enabled: !!id && !!accountId
+		enabled: id > 0 && accountId > 0
 	});
 };
 
@@ -137,7 +205,7 @@ export const useCulturalActivities = () => {
 	return useQuery({
 		queryKey: activitiesQueryKey,
 		queryFn: () => api.getActivities(accountId),
-		enabled: !!accountId
+		enabled: accountId > 0
 	});
 };
 
@@ -146,7 +214,7 @@ export const useCulturalActivity = (id: number) => {
 	return useQuery({
 		queryKey: activityQueryKey(id),
 		queryFn: () => api.getActivity(accountId, id),
-		enabled: !!id && !!accountId
+		enabled: id > 0 && accountId > 0
 	});
 };
 
