@@ -5,8 +5,8 @@ import { motion } from 'motion/react';
 import {
 	Box, Button, Card, CardActions, CardContent, Chip, CircularProgress,
 	Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl,
-	FormControlLabel, InputAdornment, InputLabel, MenuItem, Select, Switch,
-	TextField, Tooltip, Typography, IconButton
+	InputAdornment, InputLabel, MenuItem, Select, TextField, Typography,
+	Tooltip, IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
@@ -19,9 +19,10 @@ import Link from '@fuse/core/Link';
 import {
 	useCulturalActivities,
 	useCreateCulturalActivity,
-	useDeleteCulturalActivity
+	useDeleteCulturalActivity,
+	useCulturalActivityTypes
 } from '../../api/hooks/useCultureProjectsActivities';
-import { CulturalActivity, CulturalActivityType } from '../../api/types/projectsAndActivities';
+import { CulturalActivity, CreateCulturalActivityPayload } from '../../api/types/projectsAndActivities';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,31 +33,22 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 	}
 }));
 
-const TYPE_META: Record<CulturalActivityType, { label: string; icon: string; color: string }> = {
-	workshop:    { label: 'Workshop',      icon: 'lucide:pencil-ruler',  color: '#7c3aed' },
-	exhibition:  { label: 'Exhibition',    icon: 'lucide:image',         color: '#0284c7' },
-	concert:     { label: 'Concert',       icon: 'lucide:music-2',       color: '#be185d' },
-	conference:  { label: 'Conference',    icon: 'lucide:presentation',  color: '#047857' },
-	festival:    { label: 'Festival',      icon: 'lucide:party-popper',  color: '#b45309' },
-	other:       { label: 'Other',         icon: 'lucide:sparkles',      color: '#374151' }
-};
-
 function safeFormat(dateStr?: string) {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
 	return isValid(d) ? format(d, 'MMM d, yyyy', { locale: enUS }) : '—';
 }
 
+function statusBadge(a: CulturalActivity) {
+	if (a.is_published) return { label: 'Published', color: '#15803d', bg: '#dcfce7' };
+	if (a.is_approved_content) return { label: 'Approved', color: '#1d4ed8', bg: '#dbeafe' };
+	return { label: 'Draft', color: '#b45309', bg: '#fef9c3' };
+}
+
 // ─── Activity Card ────────────────────────────────────────────────────────────
 
-function ActivityCard({
-	activity,
-	onDelete
-}: {
-	activity: CulturalActivity;
-	onDelete: (id: string) => void;
-}) {
-	const typeMeta = TYPE_META[activity.type];
+function ActivityCard({ activity, onDelete }: { activity: CulturalActivity; onDelete: (id: number) => void }) {
+	const badge = statusBadge(activity);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	return (
@@ -65,58 +57,44 @@ function ActivityCard({
 				className="flex flex-col h-full shadow-sm"
 				sx={{ borderRadius: '14px', overflow: 'hidden', transition: 'transform .2s, box-shadow .2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 } }}
 			>
-				{/* Type colour stripe */}
-				<div style={{ height: 4, backgroundColor: typeMeta.color }} />
+				<div style={{ height: 4, backgroundColor: badge.color }} />
 
 				<CardContent className="flex flex-col flex-1 p-4 gap-2">
-					{/* Type + free/online badges */}
 					<div className="flex items-center gap-1.5 flex-wrap">
-						<Chip
-							size="small"
-							icon={<FuseSvgIcon size={12}>{typeMeta.icon}</FuseSvgIcon>}
-							label={typeMeta.label}
-							sx={{ fontSize: '0.68rem', fontWeight: 700, height: 22, color: typeMeta.color, backgroundColor: `${typeMeta.color}18` }}
-						/>
-						{activity.isFree && (
-							<Chip size="small" label="Free" sx={{ fontSize: '0.65rem', fontWeight: 700, height: 20, color: '#15803d', backgroundColor: '#dcfce7' }} />
+						<Chip size="small" label={badge.label}
+							sx={{ fontSize: '0.68rem', fontWeight: 700, height: 22, color: badge.color, backgroundColor: badge.bg }} />
+						{activity.cultural_activity_type && (
+							<Chip size="small" label={activity.cultural_activity_type.name} variant="outlined"
+								sx={{ fontSize: '0.68rem', height: 22 }} />
 						)}
-						{activity.isOnline && (
-							<Chip size="small" icon={<FuseSvgIcon size={11}>lucide:globe</FuseSvgIcon>} label="Online" sx={{ fontSize: '0.65rem', fontWeight: 700, height: 20, color: '#1d4ed8', backgroundColor: '#dbeafe' }} />
+						{activity.language && (
+							<Chip size="small" label={activity.language.short_name.toUpperCase()} sx={{ fontSize: '0.65rem', height: 20 }} />
 						)}
 					</div>
 
-					{/* Title */}
 					<Typography className="font-bold line-clamp-2" sx={{ fontSize: '1rem' }}>
-						{activity.title}
+						{activity.name}
 					</Typography>
 
-					{/* Description */}
 					<Typography className="line-clamp-2 text-sm flex-1" color="text.secondary">
 						{activity.description}
 					</Typography>
 
 					<Divider sx={{ my: 1 }} />
 
-					{/* Meta */}
 					<div className="flex flex-col gap-1">
 						<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
 							<FuseSvgIcon size={13}>lucide:calendar</FuseSvgIcon>
-							<span>{safeFormat(activity.date)}{activity.endDate ? ` → ${safeFormat(activity.endDate)}` : ''}</span>
+							<span>{safeFormat(activity.date)}</span>
 						</div>
 						<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-							<FuseSvgIcon size={13}>lucide:map-pin</FuseSvgIcon>
-							<span className="truncate">{activity.location}</span>
+							<FuseSvgIcon size={13}>lucide:eye</FuseSvgIcon>
+							<span>{activity.view_number} views</span>
 						</div>
-						{activity.capacity && (
-							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-								<FuseSvgIcon size={13}>lucide:users</FuseSvgIcon>
-								<span>Capacity: {activity.capacity} people</span>
-							</div>
-						)}
-						{!activity.isFree && activity.price != null && (
-							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-								<FuseSvgIcon size={13}>lucide:ticket</FuseSvgIcon>
-								<span>{activity.price} DT / person</span>
+						{activity.tags.length > 0 && (
+							<div className="flex items-center gap-1.5 text-xs flex-wrap" style={{ color: 'var(--mui-palette-text-secondary)' }}>
+								<FuseSvgIcon size={13}>lucide:tag</FuseSvgIcon>
+								<span className="truncate">{activity.tags.map(t => t.name).join(', ')}</span>
 							</div>
 						)}
 					</div>
@@ -131,13 +109,10 @@ function ActivityCard({
 							<FuseSvgIcon size={16}>lucide:trash-2</FuseSvgIcon>
 						</IconButton>
 					</Tooltip>
-
 					<Button
 						component={Link}
 						to={`/culture/activities/${activity.id}`}
-						size="small"
-						variant="contained"
-						color="secondary"
+						size="small" variant="contained" color="secondary"
 						endIcon={<FuseSvgIcon size={14}>lucide:arrow-right</FuseSvgIcon>}
 						sx={{ textTransform: 'none', fontWeight: 700 }}
 					>
@@ -146,67 +121,55 @@ function ActivityCard({
 				</CardActions>
 			</Card>
 
-			{/* Confirm delete */}
 			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Delete Activity?</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						<strong>{activity.title}</strong> will be permanently deleted. This action is irreversible.
+						<strong>{activity.name}</strong> will be permanently deleted. This action is irreversible.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
 					<Button onClick={() => setConfirmOpen(false)} variant="outlined">Cancel</Button>
-					<Button onClick={() => { onDelete(activity.id); setConfirmOpen(false); }} variant="contained" color="error">
-						Delete
-					</Button>
+					<Button onClick={() => { onDelete(activity.id); setConfirmOpen(false); }} variant="contained" color="error">Delete</Button>
 				</DialogActions>
 			</Dialog>
 		</>
 	);
 }
 
-// ─── Create dialog ────────────────────────────────────────────────────────────
+// ─── Create Dialog ────────────────────────────────────────────────────────────
 
-type CreateForm = {
-	title: string; description: string; type: CulturalActivityType; category: string;
-	date: string; endDate: string; location: string; capacity: string; price: string;
-	isFree: boolean; isOnline: boolean; tags: string;
-};
+const todayIso = new Date().toISOString().split('T')[0];
 
-const emptyForm: CreateForm = {
-	title: '', description: '', type: 'workshop', category: '',
-	date: '', endDate: '', location: '', capacity: '', price: '',
-	isFree: true, isOnline: false, tags: ''
+const emptyForm = {
+	name: '', description: '', poster_description: '',
+	date: `${todayIso}T09:00:00`,
+	publishing_date: todayIso,
+	cultural_activity_type_id: 0, language_id: 1, tags: ''
 };
 
 function CreateActivityDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const { mutate: create, isPending } = useCreateCulturalActivity();
-	const [form, setForm] = useState<CreateForm>(emptyForm);
+	const { data: activityTypes = [] } = useCulturalActivityTypes();
+	const [form, setForm] = useState(emptyForm);
 
-	const setField = <K extends keyof CreateForm>(k: K, v: CreateForm[K]) =>
-		setForm((p) => ({ ...p, [k]: v }));
+	const set = (k: keyof typeof emptyForm, v: string | number) =>
+		setForm(p => ({ ...p, [k]: v }));
 
-	const canSubmit = !!form.title.trim() && !!form.date && !!form.location.trim();
+	const canSubmit = !!form.name.trim() && !!form.date && form.cultural_activity_type_id > 0;
 
 	const handleSubmit = () => {
-		create(
-			{
-				title: form.title.trim(),
-				slug: form.title.toLowerCase().replace(/\s+/g, '-'),
-				description: form.description.trim(),
-				type: form.type,
-				category: form.category,
-				date: form.date,
-				endDate: form.endDate || undefined,
-				location: form.location.trim(),
-				capacity: form.capacity ? Number(form.capacity) : undefined,
-				price: form.isFree ? 0 : (form.price ? Number(form.price) : 0),
-				isFree: form.isFree,
-				isOnline: form.isOnline,
-				tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
-			},
-			{ onSuccess: () => { setForm(emptyForm); onClose(); } }
-		);
+		const payload: CreateCulturalActivityPayload = {
+			name: form.name.trim(),
+			slug: form.name.toLowerCase().replace(/\s+/g, '-'),
+			description: form.description.trim(),
+			poster_description: form.poster_description.trim() || form.name.trim(),
+			date: form.date.includes('T') ? form.date : `${form.date}T09:00:00`,
+			language_id: form.language_id,
+			cultural_activity_type_id: form.cultural_activity_type_id,
+			tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+		};
+		create(payload, { onSuccess: () => { setForm(emptyForm); onClose(); } });
 	};
 
 	return (
@@ -214,76 +177,41 @@ function CreateActivityDialog({ open, onClose }: { open: boolean; onClose: () =>
 			<DialogTitle sx={{ fontWeight: 800 }}>New Cultural Activity</DialogTitle>
 			<Divider />
 			<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-				<TextField label="Title *" size="small" value={form.title} onChange={(e) => setField('title', e.target.value)} fullWidth />
-				<TextField label="Description" size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} fullWidth />
+				<TextField label="Name *" size="small" value={form.name} onChange={e => set('name', e.target.value)} fullWidth />
+				<TextField label="Description" size="small" multiline minRows={3} value={form.description} onChange={e => set('description', e.target.value)} fullWidth />
+				<TextField label="Poster description" size="small" value={form.poster_description} onChange={e => set('poster_description', e.target.value)} fullWidth />
 
-				<Box sx={{ display: 'flex', gap: 2 }}>
-					<FormControl size="small" fullWidth>
-						<InputLabel>Type *</InputLabel>
-						<Select value={form.type} label="Type *" onChange={(e) => setField('type', e.target.value as CulturalActivityType)}>
-							{Object.entries(TYPE_META).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
-						</Select>
-					</FormControl>
-					<TextField label="Category" size="small" value={form.category} onChange={(e) => setField('category', e.target.value)} fullWidth />
-				</Box>
-
-				<Box sx={{ display: 'flex', gap: 2 }}>
-					<TextField label="Date *" type="date" size="small" value={form.date} onChange={(e) => setField('date', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-					<TextField label="End Date" type="date" size="small" value={form.endDate} onChange={(e) => setField('endDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-				</Box>
-
-				<TextField label="Location *" size="small" value={form.location} onChange={(e) => setField('location', e.target.value)} fullWidth />
-
-				<Box sx={{ display: 'flex', gap: 2 }}>
-					<TextField
-						label="Capacity" type="number" size="small" value={form.capacity}
-						onChange={(e) => setField('capacity', e.target.value)}
-						InputProps={{ endAdornment: <InputAdornment position="end">people</InputAdornment> }}
-						fullWidth
-					/>
-					<TextField
-						label="Price"
-						type="number"
-						size="small"
-						value={form.price}
-						onChange={(e) => setField('price', e.target.value)}
-						disabled={form.isFree}
-						InputProps={{ endAdornment: <InputAdornment position="end">DT</InputAdornment> }}
-						fullWidth
-					/>
-				</Box>
-
-				<Box sx={{ display: 'flex', gap: 3 }}>
-					<FormControlLabel
-						control={<Switch checked={form.isFree} onChange={(e) => setField('isFree', e.target.checked)} color="success" />}
-						label="Free"
-					/>
-					<FormControlLabel
-						control={<Switch checked={form.isOnline} onChange={(e) => setField('isOnline', e.target.checked)} color="info" />}
-						label="Online"
-					/>
-				</Box>
+				<FormControl size="small" fullWidth>
+					<InputLabel>Activity Type *</InputLabel>
+					<Select value={form.cultural_activity_type_id} label="Activity Type *"
+						onChange={e => set('cultural_activity_type_id', Number(e.target.value))}>
+						<MenuItem value={0}><em>Select a type…</em></MenuItem>
+						{activityTypes.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
+					</Select>
+				</FormControl>
 
 				<TextField
-					label="Tags (comma-separated)"
-					size="small"
-					value={form.tags}
-					onChange={(e) => setField('tags', e.target.value)}
-					fullWidth
-					helperText="e.g., culture, youth, art"
+					label="Date & Time *" type="datetime-local" size="small"
+					value={form.date.substring(0, 16)}
+					onChange={e => set('date', `${e.target.value}:00`)}
+					InputLabelProps={{ shrink: true }} fullWidth
 				/>
+
+				<TextField label="Publishing Date" type="date" size="small" value={form.publishing_date}
+					onChange={e => set('publishing_date', e.target.value)}
+					InputLabelProps={{ shrink: true }} fullWidth />
+
+				<TextField label="Tags (comma-separated)" size="small" value={form.tags}
+					onChange={e => set('tags', e.target.value)} fullWidth
+					helperText="e.g., culture, youth, art" />
 			</DialogContent>
 			<Divider />
 			<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
 				<Button onClick={onClose} variant="outlined" disabled={isPending}>Cancel</Button>
-				<Button
-					onClick={handleSubmit}
-					variant="contained"
-					color="secondary"
+				<Button onClick={handleSubmit} variant="contained" color="secondary"
 					disabled={!canSubmit || isPending}
-					startIcon={isPending ? <CircularProgress size={14} /> : <FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-				>
-					{isPending ? 'Creating...' : "Create Activity"}
+					startIcon={isPending ? <CircularProgress size={14} /> : <FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>
+					{isPending ? 'Creating…' : 'Create Activity'}
 				</Button>
 			</DialogActions>
 		</Dialog>
@@ -300,29 +228,31 @@ export default function CulturalActivitiesView() {
 	const { mutate: deleteActivity } = useDeleteCulturalActivity();
 
 	const [search, setSearch] = useState('');
+	const [statusFilter, setStatusFilter] = useState<string>('all');
 	const [typeFilter, setTypeFilter] = useState<string>('all');
-	const [freeOnly, setFreeOnly] = useState(false);
 	const [createOpen, setCreateOpen] = useState(false);
 
-	const filtered = useMemo(() => {
-		return activities.filter((a) => {
-			const matchSearch =
-				a.title.toLowerCase().includes(search.toLowerCase()) ||
-				a.description.toLowerCase().includes(search.toLowerCase());
-			const matchType = typeFilter === 'all' || a.type === typeFilter;
-			const matchFree = !freeOnly || a.isFree;
-			return matchSearch && matchType && matchFree;
-		});
-	}, [activities, search, typeFilter, freeOnly]);
-
-	const stats = useMemo(
-		() => ({
-			total: activities.length,
-			free: activities.filter((a) => a.isFree).length,
-			online: activities.filter((a) => a.isOnline).length
-		}),
+	const activityTypes = useMemo(
+		() => [...new Set(activities.map(a => a.cultural_activity_type?.name).filter(Boolean))],
 		[activities]
 	);
+
+	const filtered = useMemo(() => activities.filter(a => {
+		const matchSearch =
+			a.name.toLowerCase().includes(search.toLowerCase()) ||
+			a.description.toLowerCase().includes(search.toLowerCase());
+		const badge = statusBadge(a);
+		const matchStatus = statusFilter === 'all' || badge.label.toLowerCase() === statusFilter;
+		const matchType = typeFilter === 'all' || a.cultural_activity_type?.name === typeFilter;
+		return matchSearch && matchStatus && matchType;
+	}), [activities, search, statusFilter, typeFilter]);
+
+	const stats = useMemo(() => ({
+		total: activities.length,
+		published: activities.filter(a => a.is_published).length,
+		approved: activities.filter(a => a.is_approved_content && !a.is_published).length,
+		draft: activities.filter(a => !a.is_approved_content && !a.is_published).length
+	}), [activities]);
 
 	if (isLoading) return <FuseLoading />;
 
@@ -346,12 +276,12 @@ export default function CulturalActivitiesView() {
 								</Typography>
 							</motion.div>
 
-							{/* quick stats */}
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.3 } }} className="mt-6 flex gap-4 flex-wrap justify-center">
 								{[
 									{ label: `${stats.total} activities`, icon: 'lucide:calendar' },
-									{ label: `${stats.free} free`, icon: 'lucide:ticket' },
-									{ label: `${stats.online} online`, icon: 'lucide:globe' }
+									{ label: `${stats.published} published`, icon: 'lucide:check-circle' },
+									{ label: `${stats.approved} approved`, icon: 'lucide:shield-check' },
+									{ label: `${stats.draft} draft`, icon: 'lucide:file-edit' }
 								].map(({ label, icon }) => (
 									<div key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.25)', backgroundColor: 'rgba(255,255,255,0.1)' }}>
 										<FuseSvgIcon size={13} sx={{ color: 'rgba(255,255,255,0.7)' }}>{icon}</FuseSvgIcon>
@@ -360,11 +290,9 @@ export default function CulturalActivitiesView() {
 								))}
 							</motion.div>
 						</div>
-
 						<svg className="pointer-events-none absolute inset-0" viewBox="0 0 960 540" width="100%" height="100%" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
 							<g className="opacity-5" fill="none" stroke="currentColor" strokeWidth="100">
-								<circle r="234" cx="196" cy="23" />
-								<circle r="234" cx="790" cy="491" />
+								<circle r="234" cx="196" cy="23" /><circle r="234" cx="790" cy="491" />
 							</g>
 						</svg>
 					</Box>
@@ -374,34 +302,31 @@ export default function CulturalActivitiesView() {
 						{/* Toolbar */}
 						<div className="flex flex-wrap items-center gap-2 mb-6">
 							<TextField
-								size="small"
-								placeholder="Search for an activity..."
-								value={search}
-								onChange={(e) => setSearch(e.target.value)}
+								size="small" placeholder="Search for an activity…" value={search}
+								onChange={e => setSearch(e.target.value)}
 								InputProps={{ startAdornment: <InputAdornment position="start"><FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon></InputAdornment> }}
 								sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
 							/>
 
-							<FormControl size="small" sx={{ minWidth: 140 }}>
-								<InputLabel>Type</InputLabel>
-								<Select value={typeFilter} label="Type" onChange={(e) => setTypeFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
+							<FormControl size="small" sx={{ minWidth: 130 }}>
+								<InputLabel>Status</InputLabel>
+								<Select value={statusFilter} label="Status" onChange={e => setStatusFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
 									<MenuItem value="all"><em>All</em></MenuItem>
-									{Object.entries(TYPE_META).map(([k, v]) => (
-										<MenuItem key={k} value={k}>
-											<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-												<FuseSvgIcon size={14} sx={{ color: v.color }}>{v.icon}</FuseSvgIcon>
-												{v.label}
-											</Box>
-										</MenuItem>
-									))}
+									<MenuItem value="published">Published</MenuItem>
+									<MenuItem value="approved">Approved</MenuItem>
+									<MenuItem value="draft">Draft</MenuItem>
 								</Select>
 							</FormControl>
 
-							<FormControlLabel
-								control={<Switch size="small" checked={freeOnly} onChange={(e) => setFreeOnly(e.target.checked)} color="success" />}
-								label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Free only</Typography>}
-								sx={{ ml: 0 }}
-							/>
+							{activityTypes.length > 0 && (
+								<FormControl size="small" sx={{ minWidth: 140 }}>
+									<InputLabel>Type</InputLabel>
+									<Select value={typeFilter} label="Type" onChange={e => setTypeFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
+										<MenuItem value="all"><em>All types</em></MenuItem>
+										{activityTypes.map(t => <MenuItem key={t} value={t!}>{t}</MenuItem>)}
+									</Select>
+								</FormControl>
+							)}
 
 							{filtered.length > 0 && (
 								<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', ml: 1 }}>
@@ -409,51 +334,58 @@ export default function CulturalActivitiesView() {
 								</Typography>
 							)}
 
-							<Button
-								onClick={() => setCreateOpen(true)}
-								variant="contained"
-								color="secondary"
-								size="small"
+							<Button onClick={() => setCreateOpen(true)} variant="contained" color="secondary" size="small"
 								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-								sx={{ ml: 'auto', textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
-							>
+								sx={{ ml: 'auto', textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}>
 								New activity
 							</Button>
 						</div>
 
-						{/* Type filter chips */}
+						{/* Status chips */}
 						<div className="flex flex-wrap gap-2 mb-6">
-							{Object.entries(TYPE_META).map(([type, meta]) => {
-								const count = activities.filter((a) => a.type === type).length;
-								if (count === 0) return null;
+							{(['published', 'approved', 'draft'] as const).map(s => {
+								const count = activities.filter(a => statusBadge(a).label.toLowerCase() === s).length;
+								const meta = s === 'published'
+									? { color: '#15803d', bg: '#dcfce7' }
+									: s === 'approved'
+									? { color: '#1d4ed8', bg: '#dbeafe' }
+									: { color: '#b45309', bg: '#fef9c3' };
 								return (
-									<Chip
-										key={type}
-										icon={<FuseSvgIcon size={13}>{meta.icon}</FuseSvgIcon>}
-										label={`${meta.label} (${count})`}
-										size="small"
-										clickable
-										onClick={() => setTypeFilter(typeFilter === type ? 'all' : type)}
+									<Chip key={s}
+										label={`${s.charAt(0).toUpperCase() + s.slice(1)} (${count})`}
+										size="small" clickable
+										onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
 										sx={{
 											fontWeight: 600,
-											color: typeFilter === type ? meta.color : 'text.secondary',
-											backgroundColor: typeFilter === type ? `${meta.color}18` : 'action.hover',
-											border: typeFilter === type ? `1.5px solid ${meta.color}` : '1.5px solid transparent'
+											color: statusFilter === s ? meta.color : 'text.secondary',
+											backgroundColor: statusFilter === s ? meta.bg : 'action.hover',
+											border: statusFilter === s ? `1.5px solid ${meta.color}` : '1.5px solid transparent'
 										}}
 									/>
 								);
 							})}
+							{activityTypes.map(type => (
+								<Chip key={type}
+									label={`${type} (${activities.filter(a => a.cultural_activity_type?.name === type).length})`}
+									size="small" clickable
+									onClick={() => setTypeFilter(typeFilter === type ? 'all' : type!)}
+									sx={{
+										fontWeight: 600,
+										color: typeFilter === type ? '#374151' : 'text.secondary',
+										backgroundColor: typeFilter === type ? '#f3f4f6' : 'action.hover',
+										border: typeFilter === type ? '1.5px solid #374151' : '1.5px solid transparent'
+									}}
+								/>
+							))}
 						</div>
 
 						{/* Grid */}
 						{filtered.length > 0 ? (
 							<motion.div
 								className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-								variants={cardContainer}
-								initial="hidden"
-								animate="show"
+								variants={cardContainer} initial="hidden" animate="show"
 							>
-								{filtered.map((activity) => (
+								{filtered.map(activity => (
 									<motion.div variants={cardItem} key={activity.id}>
 										<ActivityCard activity={activity} onDelete={deleteActivity} />
 									</motion.div>
@@ -465,12 +397,8 @@ export default function CulturalActivitiesView() {
 									<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:calendar-x</FuseSvgIcon>
 									<Typography color="text.secondary" variant="h6">No activities found</Typography>
 									<Typography color="text.disabled" variant="body2">Modify your filters or create a new activity</Typography>
-									<Button
-										onClick={() => setCreateOpen(true)}
-										variant="outlined"
-										color="secondary"
-										startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-									>
+									<Button onClick={() => setCreateOpen(true)} variant="outlined" color="secondary"
+										startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>
 										Create Activity
 									</Button>
 								</div>

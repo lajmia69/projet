@@ -3,10 +3,10 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import {
-	Box, Button, Card, CardActions, CardContent, Chip, Dialog, DialogActions,
-	DialogContent, DialogTitle, Divider, FormControl, Grid, InputAdornment,
-	InputLabel, MenuItem, Select, TextField, Typography, CircularProgress,
-	LinearProgress, Tooltip, IconButton
+	Box, Button, Card, CardActions, CardContent, Chip, CircularProgress,
+	Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl,
+	InputAdornment, InputLabel, MenuItem, Select, TextField, Typography,
+	Tooltip, IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
@@ -19,9 +19,10 @@ import Link from '@fuse/core/Link';
 import {
 	useCulturalProjects,
 	useCreateCulturalProject,
-	useDeleteCulturalProject
+	useDeleteCulturalProject,
+	useCulturalProjectTypes
 } from '../../api/hooks/useCultureProjectsActivities';
-import { CulturalProject, CulturalProjectStatus } from '../../api/types/projectsAndActivities';
+import { CulturalProject, CreateCulturalProjectPayload } from '../../api/types/projectsAndActivities';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,37 +33,22 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 	}
 }));
 
-const STATUS_META: Record<
-	CulturalProjectStatus,
-	{ label: string; color: string; bg: string; icon: string }
-> = {
-	planning:    { label: 'Planning',       color: '#b45309', bg: '#fef9c3', icon: 'lucide:calendar-clock' },
-	in_progress: { label: 'In Progress',    color: '#1d4ed8', bg: '#dbeafe', icon: 'lucide:play-circle' },
-	completed:   { label: 'Completed',      color: '#15803d', bg: '#dcfce7', icon: 'lucide:check-circle' },
-	cancelled:   { label: 'Cancelled',      color: '#b91c1c', bg: '#fee2e2', icon: 'lucide:x-circle' }
-};
-
-const CATEGORY_OPTIONS = [
-	'art', 'festival', 'music', 'theater', 'cinema', 'digital', 'literature',
-	'crafts', 'heritage', 'dance', 'other'
-];
-
 function safeFormat(dateStr?: string) {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
 	return isValid(d) ? format(d, 'MMM d, yyyy', { locale: enUS }) : '—';
 }
 
+function statusBadge(p: CulturalProject) {
+	if (p.is_published) return { label: 'Published', color: '#15803d', bg: '#dcfce7' };
+	if (p.is_approved_content) return { label: 'Approved', color: '#1d4ed8', bg: '#dbeafe' };
+	return { label: 'Draft', color: '#b45309', bg: '#fef9c3' };
+}
+
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function ProjectCard({
-	project,
-	onDelete
-}: {
-	project: CulturalProject;
-	onDelete: (id: string) => void;
-}) {
-	const meta = STATUS_META[project.status];
+function ProjectCard({ project, onDelete }: { project: CulturalProject; onDelete: (id: number) => void }) {
+	const badge = statusBadge(project);
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	return (
@@ -71,65 +57,46 @@ function ProjectCard({
 				className="flex flex-col h-full shadow-sm"
 				sx={{ borderRadius: '14px', overflow: 'hidden', transition: 'transform .2s, box-shadow .2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 } }}
 			>
-				{/* status stripe */}
-				<div style={{ height: 4, backgroundColor: meta.color }} />
+				<div style={{ height: 4, backgroundColor: badge.color }} />
 
 				<CardContent className="flex flex-col flex-1 p-4 gap-2">
-					{/* Status + category row */}
 					<div className="flex items-center gap-1.5 flex-wrap">
 						<Chip
 							size="small"
-							icon={<FuseSvgIcon size={12}>{meta.icon}</FuseSvgIcon>}
-							label={meta.label}
-							sx={{ fontSize: '0.68rem', fontWeight: 700, height: 22, color: meta.color, backgroundColor: meta.bg }}
+							label={badge.label}
+							sx={{ fontSize: '0.68rem', fontWeight: 700, height: 22, color: badge.color, backgroundColor: badge.bg }}
 						/>
-						{project.category && (
-							<Chip
-								size="small"
-								label={project.category}
-								sx={{ fontSize: '0.68rem', height: 22 }}
-								variant="outlined"
-							/>
+						{project.cultural_project_type && (
+							<Chip size="small" label={project.cultural_project_type.name} sx={{ fontSize: '0.68rem', height: 22 }} variant="outlined" />
+						)}
+						{project.language && (
+							<Chip size="small" label={project.language.short_name.toUpperCase()} sx={{ fontSize: '0.65rem', height: 20 }} />
 						)}
 					</div>
 
-					{/* Title */}
 					<Typography className="font-bold line-clamp-2" sx={{ fontSize: '1rem' }}>
-						{project.title}
+						{project.name}
 					</Typography>
 
-					{/* Description */}
-					<Typography
-						className="line-clamp-2 text-sm flex-1"
-						color="text.secondary"
-					>
+					<Typography className="line-clamp-2 text-sm flex-1" color="text.secondary">
 						{project.description}
 					</Typography>
 
 					<Divider sx={{ my: 1 }} />
 
-					{/* Meta */}
 					<div className="flex flex-col gap-1">
-						{project.location && (
-							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-								<FuseSvgIcon size={13}>lucide:map-pin</FuseSvgIcon>
-								<span className="truncate">{project.location}</span>
-							</div>
-						)}
 						<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
 							<FuseSvgIcon size={13}>lucide:calendar</FuseSvgIcon>
-							<span>{safeFormat(project.startDate)}{project.endDate ? ` → ${safeFormat(project.endDate)}` : ''}</span>
+							<span>{safeFormat(project.start_date)}{project.end_date ? ` → ${safeFormat(project.end_date)}` : ''}</span>
 						</div>
-						{project.teamSize && (
-							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-								<FuseSvgIcon size={13}>lucide:users</FuseSvgIcon>
-								<span>{project.teamSize} members</span>
-							</div>
-						)}
-						{project.budget != null && (
-							<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-								<FuseSvgIcon size={13}>lucide:wallet</FuseSvgIcon>
-								<span>{project.budget.toLocaleString('en-US')} DT</span>
+						<div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--mui-palette-text-secondary)' }}>
+							<FuseSvgIcon size={13}>lucide:eye</FuseSvgIcon>
+							<span>{project.view_number} views</span>
+						</div>
+						{project.tags.length > 0 && (
+							<div className="flex items-center gap-1.5 text-xs flex-wrap" style={{ color: 'var(--mui-palette-text-secondary)' }}>
+								<FuseSvgIcon size={13}>lucide:tag</FuseSvgIcon>
+								<span className="truncate">{project.tags.map(t => t.name).join(', ')}</span>
 							</div>
 						)}
 					</div>
@@ -140,15 +107,10 @@ function ProjectCard({
 					sx={{ borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.default' }}
 				>
 					<Tooltip title="Delete">
-						<IconButton
-							size="small"
-							color="error"
-							onClick={() => setConfirmOpen(true)}
-						>
+						<IconButton size="small" color="error" onClick={() => setConfirmOpen(true)}>
 							<FuseSvgIcon size={16}>lucide:trash-2</FuseSvgIcon>
 						</IconButton>
 					</Tooltip>
-
 					<Button
 						component={Link}
 						to={`/culture/projects/${project.id}`}
@@ -163,65 +125,56 @@ function ProjectCard({
 				</CardActions>
 			</Card>
 
-			{/* Confirm delete */}
 			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Delete Project?</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						<strong>{project.title}</strong> will be permanently deleted. This action is irreversible.
+						<strong>{project.name}</strong> will be permanently deleted. This action is irreversible.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
 					<Button onClick={() => setConfirmOpen(false)} variant="outlined">Cancel</Button>
-					<Button
-						onClick={() => { onDelete(project.id); setConfirmOpen(false); }}
-						variant="contained"
-						color="error"
-					>
-						Delete
-					</Button>
+					<Button onClick={() => { onDelete(project.id); setConfirmOpen(false); }} variant="contained" color="error">Delete</Button>
 				</DialogActions>
 			</Dialog>
 		</>
 	);
 }
 
-// ─── Create dialog ────────────────────────────────────────────────────────────
+// ─── Create Dialog ────────────────────────────────────────────────────────────
 
-type CreateForm = {
-	title: string; description: string; category: string; status: CulturalProjectStatus;
-	startDate: string; endDate: string; location: string; budget: string; teamSize: string; tags: string;
-};
+const today = new Date().toISOString().split('T')[0];
 
-const emptyForm: CreateForm = {
-	title: '', description: '', category: '', status: 'planning',
-	startDate: '', endDate: '', location: '', budget: '', teamSize: '', tags: ''
+const emptyForm = {
+	name: '', description: '', poster_description: '',
+	start_date: today, end_date: today, publishing_date: today,
+	cultural_project_type_id: 0, language_id: 1, tags: ''
 };
 
 function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
 	const { mutate: create, isPending } = useCreateCulturalProject();
-	const [form, setForm] = useState<CreateForm>(emptyForm);
+	const { data: projectTypes = [] } = useCulturalProjectTypes();
+	const [form, setForm] = useState(emptyForm);
 
-	const setField = (k: keyof CreateForm, v: string) => setForm((p) => ({ ...p, [k]: v }));
-	const canSubmit = !!form.title.trim() && !!form.startDate;
+	const set = (k: keyof typeof emptyForm, v: string | number) =>
+		setForm(p => ({ ...p, [k]: v }));
+
+	const canSubmit = !!form.name.trim() && !!form.start_date && form.cultural_project_type_id > 0;
 
 	const handleSubmit = () => {
-		create(
-			{
-				title: form.title.trim(),
-				slug: form.title.toLowerCase().replace(/\s+/g, '-'),
-				description: form.description.trim(),
-				category: form.category,
-				status: form.status,
-				startDate: form.startDate,
-				endDate: form.endDate || undefined,
-				location: form.location || undefined,
-				budget: form.budget ? Number(form.budget) : undefined,
-				teamSize: form.teamSize ? Number(form.teamSize) : undefined,
-				tags: form.tags ? form.tags.split(',').map((t) => t.trim()).filter(Boolean) : []
-			},
-			{ onSuccess: () => { setForm(emptyForm); onClose(); } }
-		);
+		const payload: CreateCulturalProjectPayload = {
+			name: form.name.trim(),
+			slug: form.name.toLowerCase().replace(/\s+/g, '-'),
+			description: form.description.trim(),
+			poster_description: form.poster_description.trim() || form.name.trim(),
+			start_date: form.start_date,
+			end_date: form.end_date || form.start_date,
+			publishing_date: form.publishing_date || today,
+			language_id: form.language_id,
+			cultural_project_type_id: form.cultural_project_type_id,
+			tags: form.tags ? form.tags.split(',').map(t => t.trim()).filter(Boolean) : []
+		};
+		create(payload, { onSuccess: () => { setForm(emptyForm); onClose(); } });
 	};
 
 	return (
@@ -229,52 +182,28 @@ function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => 
 			<DialogTitle sx={{ fontWeight: 800 }}>New Cultural Project</DialogTitle>
 			<Divider />
 			<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-				<TextField label="Title *" size="small" value={form.title} onChange={(e) => setField('title', e.target.value)} fullWidth />
-				<TextField label="Description" size="small" multiline minRows={3} value={form.description} onChange={(e) => setField('description', e.target.value)} fullWidth />
+				<TextField label="Name *" size="small" value={form.name} onChange={e => set('name', e.target.value)} fullWidth />
+				<TextField label="Description" size="small" multiline minRows={3} value={form.description} onChange={e => set('description', e.target.value)} fullWidth />
+				<TextField label="Poster description" size="small" value={form.poster_description} onChange={e => set('poster_description', e.target.value)} fullWidth />
+
+				<FormControl size="small" fullWidth>
+					<InputLabel>Project Type *</InputLabel>
+					<Select value={form.cultural_project_type_id} label="Project Type *" onChange={e => set('cultural_project_type_id', Number(e.target.value))}>
+						<MenuItem value={0}><em>Select a type…</em></MenuItem>
+						{projectTypes.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
+					</Select>
+				</FormControl>
 
 				<Box sx={{ display: 'flex', gap: 2 }}>
-					<FormControl size="small" fullWidth>
-						<InputLabel>Category</InputLabel>
-						<Select value={form.category} label="Category" onChange={(e) => setField('category', e.target.value)}>
-							{CATEGORY_OPTIONS.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-						</Select>
-					</FormControl>
-					<FormControl size="small" fullWidth>
-						<InputLabel>Status</InputLabel>
-						<Select value={form.status} label="Status" onChange={(e) => setField('status', e.target.value as CulturalProjectStatus)}>
-							{Object.entries(STATUS_META).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
-						</Select>
-					</FormControl>
+					<TextField label="Start Date *" type="date" size="small" value={form.start_date} onChange={e => set('start_date', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
+					<TextField label="End Date" type="date" size="small" value={form.end_date} onChange={e => set('end_date', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
 				</Box>
 
-				<Box sx={{ display: 'flex', gap: 2 }}>
-					<TextField label="Start Date *" type="date" size="small" value={form.startDate} onChange={(e) => setField('startDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-					<TextField label="End Date" type="date" size="small" value={form.endDate} onChange={(e) => setField('endDate', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
-				</Box>
-
-				<TextField label="Location" size="small" value={form.location} onChange={(e) => setField('location', e.target.value)} fullWidth />
-
-				<Box sx={{ display: 'flex', gap: 2 }}>
-					<TextField
-						label="Budget (DT)" type="number" size="small" value={form.budget}
-						onChange={(e) => setField('budget', e.target.value)}
-						InputProps={{ startAdornment: <InputAdornment position="start">DT</InputAdornment> }}
-						fullWidth
-					/>
-					<TextField
-						label="Team" type="number" size="small" value={form.teamSize}
-						onChange={(e) => setField('teamSize', e.target.value)}
-						InputProps={{ endAdornment: <InputAdornment position="end">people</InputAdornment> }}
-						fullWidth
-					/>
-				</Box>
+				<TextField label="Publishing Date" type="date" size="small" value={form.publishing_date} onChange={e => set('publishing_date', e.target.value)} InputLabelProps={{ shrink: true }} fullWidth />
 
 				<TextField
-					label="Tags (comma-separated)"
-					size="small"
-					value={form.tags}
-					onChange={(e) => setField('tags', e.target.value)}
-					fullWidth
+					label="Tags (comma-separated)" size="small" value={form.tags}
+					onChange={e => set('tags', e.target.value)} fullWidth
 					helperText="e.g., culture, heritage, festival"
 				/>
 			</DialogContent>
@@ -282,13 +211,11 @@ function CreateProjectDialog({ open, onClose }: { open: boolean; onClose: () => 
 			<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
 				<Button onClick={onClose} variant="outlined" disabled={isPending}>Cancel</Button>
 				<Button
-					onClick={handleSubmit}
-					variant="contained"
-					color="secondary"
+					onClick={handleSubmit} variant="contained" color="secondary"
 					disabled={!canSubmit || isPending}
 					startIcon={isPending ? <CircularProgress size={14} /> : <FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 				>
-					{isPending ? 'Creating...' : 'Create Project'}
+					{isPending ? 'Creating…' : 'Create Project'}
 				</Button>
 			</DialogActions>
 		</Dialog>
@@ -306,20 +233,27 @@ export default function CulturalProjectsView() {
 
 	const [search, setSearch] = useState('');
 	const [statusFilter, setStatusFilter] = useState<string>('all');
-	const [categoryFilter, setCategoryFilter] = useState<string>('all');
+	const [typeFilter, setTypeFilter] = useState<string>('all');
 	const [createOpen, setCreateOpen] = useState(false);
 
-	const filtered = useMemo(() => {
-		return projects.filter((p) => {
-			const matchSearch = p.title.toLowerCase().includes(search.toLowerCase()) ||
-				p.description.toLowerCase().includes(search.toLowerCase());
-			const matchStatus = statusFilter === 'all' || p.status === statusFilter;
-			const matchCategory = categoryFilter === 'all' || p.category === categoryFilter;
-			return matchSearch && matchStatus && matchCategory;
-		});
-	}, [projects, search, statusFilter, categoryFilter]);
+	const projectTypes = useMemo(() => [...new Set(projects.map(p => p.cultural_project_type?.name).filter(Boolean))], [projects]);
 
-	const categories = useMemo(() => [...new Set(projects.map((p) => p.category).filter(Boolean))], [projects]);
+	const filtered = useMemo(() => projects.filter(p => {
+		const matchSearch =
+			p.name.toLowerCase().includes(search.toLowerCase()) ||
+			p.description.toLowerCase().includes(search.toLowerCase());
+		const badge = statusBadge(p);
+		const matchStatus = statusFilter === 'all' || badge.label.toLowerCase() === statusFilter;
+		const matchType = typeFilter === 'all' || p.cultural_project_type?.name === typeFilter;
+		return matchSearch && matchStatus && matchType;
+	}), [projects, search, statusFilter, typeFilter]);
+
+	const stats = useMemo(() => ({
+		total: projects.length,
+		published: projects.filter(p => p.is_published).length,
+		approved: projects.filter(p => p.is_approved_content && !p.is_published).length,
+		draft: projects.filter(p => !p.is_approved_content && !p.is_published).length
+	}), [projects]);
 
 	if (isLoading) return <FuseLoading />;
 
@@ -333,28 +267,33 @@ export default function CulturalProjectsView() {
 								<PageBreadcrumb color="inherit" borderColor="inherit" className="mb-4" />
 							</motion.div>
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05 } }}>
-								<Typography
-									color="inherit"
-									className="text-center text-4xl font-extrabold tracking-tight sm:text-6xl"
-								>
+								<Typography color="inherit" className="text-center text-4xl font-extrabold tracking-tight sm:text-6xl">
 									Cultural Projects
 								</Typography>
 							</motion.div>
 							<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.2 } }}>
-								<Typography
-									color="inherit"
-									className="mt-3 max-w-xl text-center text-lg opacity-75"
-								>
-									Manage and track all cultural projects for your organization.
+								<Typography color="inherit" className="mt-3 max-w-xl text-center text-lg opacity-75">
+									Manage and track all cultural projects for your organisation.
 								</Typography>
 							</motion.div>
-						</div>
 
-						{/* decorative circles */}
+							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.3 } }} className="mt-6 flex gap-4 flex-wrap justify-center">
+								{[
+									{ label: `${stats.total} projects`, icon: 'lucide:folder-open' },
+									{ label: `${stats.published} published`, icon: 'lucide:check-circle' },
+									{ label: `${stats.approved} approved`, icon: 'lucide:shield-check' },
+									{ label: `${stats.draft} draft`, icon: 'lucide:file-edit' }
+								].map(({ label, icon }) => (
+									<div key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(255,255,255,0.25)', backgroundColor: 'rgba(255,255,255,0.1)' }}>
+										<FuseSvgIcon size={13} sx={{ color: 'rgba(255,255,255,0.7)' }}>{icon}</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.75rem', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{label}</Typography>
+									</div>
+								))}
+							</motion.div>
+						</div>
 						<svg className="pointer-events-none absolute inset-0" viewBox="0 0 960 540" width="100%" height="100%" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
 							<g className="opacity-5" fill="none" stroke="currentColor" strokeWidth="100">
-								<circle r="234" cx="196" cy="23" />
-								<circle r="234" cx="790" cy="491" />
+								<circle r="234" cx="196" cy="23" /><circle r="234" cx="790" cy="491" />
 							</g>
 						</svg>
 					</Box>
@@ -364,31 +303,31 @@ export default function CulturalProjectsView() {
 						{/* Toolbar */}
 						<div className="flex flex-wrap items-center gap-2 mb-6">
 							<TextField
-								size="small"
-								placeholder="Search for a project..."
-								value={search}
-								onChange={(e) => setSearch(e.target.value)}
+								size="small" placeholder="Search for a project…" value={search}
+								onChange={e => setSearch(e.target.value)}
 								InputProps={{ startAdornment: <InputAdornment position="start"><FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon></InputAdornment> }}
 								sx={{ minWidth: 220, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
 							/>
 
 							<FormControl size="small" sx={{ minWidth: 130 }}>
 								<InputLabel>Status</InputLabel>
-								<Select value={statusFilter} label="Status" onChange={(e) => setStatusFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
+								<Select value={statusFilter} label="Status" onChange={e => setStatusFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
 									<MenuItem value="all"><em>All</em></MenuItem>
-									{Object.entries(STATUS_META).map(([k, v]) => (
-										<MenuItem key={k} value={k}>{v.label}</MenuItem>
-									))}
+									<MenuItem value="published">Published</MenuItem>
+									<MenuItem value="approved">Approved</MenuItem>
+									<MenuItem value="draft">Draft</MenuItem>
 								</Select>
 							</FormControl>
 
-							<FormControl size="small" sx={{ minWidth: 130 }}>
-								<InputLabel>Category</InputLabel>
-								<Select value={categoryFilter} label="Category" onChange={(e) => setCategoryFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
-									<MenuItem value="all"><em>All</em></MenuItem>
-									{categories.map((c) => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-								</Select>
-							</FormControl>
+							{projectTypes.length > 0 && (
+								<FormControl size="small" sx={{ minWidth: 140 }}>
+									<InputLabel>Type</InputLabel>
+									<Select value={typeFilter} label="Type" onChange={e => setTypeFilter(e.target.value)} sx={{ borderRadius: '10px' }}>
+										<MenuItem value="all"><em>All types</em></MenuItem>
+										{projectTypes.map(t => <MenuItem key={t} value={t!}>{t}</MenuItem>)}
+									</Select>
+								</FormControl>
+							)}
 
 							{filtered.length > 0 && (
 								<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', ml: 1 }}>
@@ -397,10 +336,7 @@ export default function CulturalProjectsView() {
 							)}
 
 							<Button
-								onClick={() => setCreateOpen(true)}
-								variant="contained"
-								color="secondary"
-								size="small"
+								onClick={() => setCreateOpen(true)} variant="contained" color="secondary" size="small"
 								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
 								sx={{ ml: 'auto', textTransform: 'none', fontWeight: 700, borderRadius: '10px' }}
 							>
@@ -408,23 +344,26 @@ export default function CulturalProjectsView() {
 							</Button>
 						</div>
 
-						{/* Status summary bar */}
+						{/* Status chips */}
 						<div className="flex flex-wrap gap-2 mb-6">
-							{Object.entries(STATUS_META).map(([status, meta]) => {
-								const count = projects.filter((p) => p.status === status).length;
+							{(['published', 'approved', 'draft'] as const).map(s => {
+								const count = projects.filter(p => statusBadge(p).label.toLowerCase() === s).length;
+								const meta = s === 'published'
+									? { color: '#15803d', bg: '#dcfce7' }
+									: s === 'approved'
+									? { color: '#1d4ed8', bg: '#dbeafe' }
+									: { color: '#b45309', bg: '#fef9c3' };
 								return (
 									<Chip
-										key={status}
-										icon={<FuseSvgIcon size={13}>{meta.icon}</FuseSvgIcon>}
-										label={`${meta.label} (${count})`}
-										size="small"
-										clickable
-										onClick={() => setStatusFilter(statusFilter === status ? 'all' : status)}
+										key={s}
+										label={`${s.charAt(0).toUpperCase() + s.slice(1)} (${count})`}
+										size="small" clickable
+										onClick={() => setStatusFilter(statusFilter === s ? 'all' : s)}
 										sx={{
 											fontWeight: 600,
-											color: statusFilter === status ? meta.color : 'text.secondary',
-											backgroundColor: statusFilter === status ? meta.bg : 'action.hover',
-											border: statusFilter === status ? `1.5px solid ${meta.color}` : '1.5px solid transparent'
+											color: statusFilter === s ? meta.color : 'text.secondary',
+											backgroundColor: statusFilter === s ? meta.bg : 'action.hover',
+											border: statusFilter === s ? `1.5px solid ${meta.color}` : '1.5px solid transparent'
 										}}
 									/>
 								);
@@ -435,11 +374,9 @@ export default function CulturalProjectsView() {
 						{filtered.length > 0 ? (
 							<motion.div
 								className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-								variants={cardContainer}
-								initial="hidden"
-								animate="show"
+								variants={cardContainer} initial="hidden" animate="show"
 							>
-								{filtered.map((project) => (
+								{filtered.map(project => (
 									<motion.div variants={cardItem} key={project.id}>
 										<ProjectCard project={project} onDelete={deleteProject} />
 									</motion.div>
@@ -451,12 +388,7 @@ export default function CulturalProjectsView() {
 									<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:folder-open</FuseSvgIcon>
 									<Typography color="text.secondary" variant="h6">No projects found</Typography>
 									<Typography color="text.disabled" variant="body2">Modify your filters or create a new project</Typography>
-									<Button
-										onClick={() => setCreateOpen(true)}
-										variant="outlined"
-										color="secondary"
-										startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-									>
+									<Button onClick={() => setCreateOpen(true)} variant="outlined" color="secondary" startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>
 										Create a project
 									</Button>
 								</div>

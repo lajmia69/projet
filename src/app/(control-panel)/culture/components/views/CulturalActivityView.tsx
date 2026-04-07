@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import {
 	Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
-	DialogTitle, Divider, FormControl, FormControlLabel, IconButton, InputAdornment,
-	InputLabel, MenuItem, Paper, Select, Switch, TextField, Typography
+	DialogTitle, Divider, FormControl, IconButton, InputLabel, MenuItem,
+	Paper, Select, TextField, Typography
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import { enUS } from 'date-fns/locale';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -18,9 +18,10 @@ import useNavigate from '@fuse/hooks/useNavigate';
 import {
 	useCulturalActivity,
 	useUpdateCulturalActivity,
-	useDeleteCulturalActivity
+	useDeleteCulturalActivity,
+	useCulturalActivityTypes
 } from '../../api/hooks/useCultureProjectsActivities';
-import { CulturalActivity, CulturalActivityType } from '../../api/types/projectsAndActivities';
+import { UpdateCulturalActivityPayload } from '../../api/types/projectsAndActivities';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -31,19 +32,16 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 	}
 }));
 
-const TYPE_META: Record<CulturalActivityType, { label: string; icon: string; color: string }> = {
-	workshop:    { label: 'Atelier',      icon: 'lucide:pencil-ruler', color: '#7c3aed' },
-	exhibition:  { label: 'Exposition',   icon: 'lucide:image',        color: '#0284c7' },
-	concert:     { label: 'Concert',      icon: 'lucide:music-2',      color: '#be185d' },
-	conference:  { label: 'Conférence',   icon: 'lucide:presentation', color: '#047857' },
-	festival:    { label: 'Festival',     icon: 'lucide:party-popper', color: '#b45309' },
-	other:       { label: 'Autre',        icon: 'lucide:sparkles',     color: '#374151' }
-};
-
 function safeFormat(dateStr?: string) {
 	if (!dateStr) return '—';
 	const d = parseISO(dateStr);
-	return isValid(d) ? format(d, 'd MMMM yyyy', { locale: fr }) : '—';
+	return isValid(d) ? format(d, 'd MMMM yyyy – HH:mm', { locale: enUS }) : '—';
+}
+
+function safeFormatDate(dateStr?: string) {
+	if (!dateStr) return '—';
+	const d = parseISO(dateStr);
+	return isValid(d) ? format(d, 'd MMMM yyyy', { locale: enUS }) : '—';
 }
 
 function InfoRow({ icon, label, value }: { icon: string; label: string; value: React.ReactNode }) {
@@ -64,39 +62,81 @@ function InfoRow({ icon, label, value }: { icon: string; label: string; value: R
 	);
 }
 
+const today = new Date().toISOString().split('T')[0];
+
 export default function CulturalActivityView() {
 	const { activityId } = useParams<{ activityId: string }>();
-	const { data: activity, isLoading } = useCulturalActivity(activityId);
+	const id = Number(activityId);
+	const { data: activity, isLoading } = useCulturalActivity(id);
 	const { mutate: update, isPending: isUpdating } = useUpdateCulturalActivity();
 	const { mutate: deleteActivity } = useDeleteCulturalActivity();
+	const { data: activityTypes = [] } = useCulturalActivityTypes();
 	const navigate = useNavigate();
 
 	const [editOpen, setEditOpen] = useState(false);
 	const [confirmDelete, setConfirmDelete] = useState(false);
-	const [editForm, setEditForm] = useState<Partial<CulturalActivity>>({});
+	const [editForm, setEditForm] = useState<{
+		name: string; description: string; poster_description: string;
+		date: string; publishing_date: string;
+		language_id: number; cultural_activity_type_id: number; tags: string;
+	} | null>(null);
 
 	const openEdit = () => {
 		if (!activity) return;
-		setEditForm({ ...activity });
+		// date from backend is ISO datetime e.g. "2025-05-15T09:00:00"
+		const dateLocal = activity.date?.substring(0, 16) ?? `${today}T09:00`;
+		setEditForm({
+			name: activity.name,
+			description: activity.description,
+			poster_description: activity.poster_description,
+			date: dateLocal,
+			publishing_date: activity.publishing_date ?? today,
+			language_id: activity.language?.id ?? 1,
+			cultural_activity_type_id: activity.cultural_activity_type?.id ?? 0,
+			tags: activity.tags.map(t => t.name).join(', ')
+		});
 		setEditOpen(true);
 	};
 
 	const handleUpdate = () => {
-		update({ id: activityId, data: editForm }, { onSuccess: () => setEditOpen(false) });
+		if (!editForm || !activity) return;
+		const newTags = editForm.tags.split(',').map(t => t.trim()).filter(Boolean);
+		const oldTags = activity.tags.map(t => t.name);
+		const add_tags = newTags.filter(t => !oldTags.includes(t));
+		const remove_tags = oldTags.filter(t => !newTags.includes(t));
+
+		const payload: UpdateCulturalActivityPayload = {
+			id: activity.id,
+			name: editForm.name,
+			slug: editForm.name.toLowerCase().replace(/\s+/g, '-'),
+			description: editForm.description,
+			poster_description: editForm.poster_description || editForm.name,
+			date: editForm.date.includes('T') ? `${editForm.date}:00` : `${editForm.date}T09:00:00`,
+			publishing_date: editForm.publishing_date,
+			language_id: editForm.language_id,
+			cultural_activity_type_id: editForm.cultural_activity_type_id,
+			add_tags,
+			remove_tags
+		};
+		update(payload, { onSuccess: () => setEditOpen(false) });
 	};
 
 	const handleDelete = () => {
-		deleteActivity(activityId, { onSuccess: () => navigate('/culture/activities') });
+		deleteActivity(id, { onSuccess: () => navigate('/culture/activities') });
 	};
 
 	if (isLoading) return <FuseLoading />;
 	if (!activity) return (
 		<div className="flex flex-1 items-center justify-center">
-			<Typography color="text.secondary">Activité introuvable.</Typography>
+			<Typography color="text.secondary">Activity not found.</Typography>
 		</div>
 	);
 
-	const meta = TYPE_META[activity.type];
+	const publishBadge = activity.is_published
+		? { label: 'Published', color: '#15803d', bg: '#dcfce7' }
+		: activity.is_approved_content
+		? { label: 'Approved', color: '#1d4ed8', bg: '#dbeafe' }
+		: { label: 'Draft', color: '#b45309', bg: '#fef9c3' };
 
 	return (
 		<>
@@ -107,74 +147,67 @@ export default function CulturalActivityView() {
 							<FuseSvgIcon>lucide:arrow-left</FuseSvgIcon>
 						</IconButton>
 						<div className="flex flex-col min-w-0 flex-1">
-							<Typography variant="h5" className="font-bold truncate">{activity.title}</Typography>
-							<div className="flex items-center gap-1.5 mt-0.5">
-								<Chip
-									size="small"
-									icon={<FuseSvgIcon size={12}>{meta.icon}</FuseSvgIcon>}
-									label={meta.label}
-									sx={{ fontSize: '0.7rem', fontWeight: 700, color: meta.color, backgroundColor: `${meta.color}18` }}
-								/>
-								{activity.isFree && <Chip size="small" label="Gratuit" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#15803d', backgroundColor: '#dcfce7' }} />}
-								{activity.isOnline && <Chip size="small" label="En ligne" sx={{ fontSize: '0.65rem', fontWeight: 700, color: '#1d4ed8', backgroundColor: '#dbeafe' }} />}
+							<Typography variant="h5" className="font-bold truncate">{activity.name}</Typography>
+							<div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+								<Chip size="small" label={publishBadge.label}
+									sx={{ fontWeight: 700, fontSize: '0.7rem', color: publishBadge.color, backgroundColor: publishBadge.bg }} />
+								{activity.cultural_activity_type && (
+									<Chip size="small" label={activity.cultural_activity_type.name} variant="outlined" sx={{ fontSize: '0.7rem' }} />
+								)}
+								{activity.language && (
+									<Chip size="small" label={activity.language.name} sx={{ fontSize: '0.7rem' }} />
+								)}
 							</div>
 						</div>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="small"
+						<Button variant="outlined" color="secondary" size="small"
 							startIcon={<FuseSvgIcon size={15}>lucide:pencil</FuseSvgIcon>}
-							onClick={openEdit}
-							sx={{ textTransform: 'none', fontWeight: 700 }}
-						>
-							Modifier
+							onClick={openEdit} sx={{ textTransform: 'none', fontWeight: 700 }}>
+							Edit
 						</Button>
-						<Button
-							variant="outlined"
-							color="error"
-							size="small"
+						<Button variant="outlined" color="error" size="small"
 							startIcon={<FuseSvgIcon size={15}>lucide:trash-2</FuseSvgIcon>}
-							onClick={() => setConfirmDelete(true)}
-							sx={{ textTransform: 'none', fontWeight: 700 }}
-						>
-							Supprimer
+							onClick={() => setConfirmDelete(true)} sx={{ textTransform: 'none', fontWeight: 700 }}>
+							Delete
 						</Button>
 					</div>
 				}
 				content={
 					<div className="mx-auto w-full max-w-3xl p-6 flex flex-col gap-6">
-						{/* Description */}
 						<Paper sx={{ p: 3, borderRadius: '14px' }}>
 							<Typography variant="h6" className="font-bold mb-2">Description</Typography>
 							<Typography color="text.secondary">{activity.description || '—'}</Typography>
 						</Paper>
 
-						{/* Details */}
 						<Paper sx={{ p: 3, borderRadius: '14px' }}>
-							<Typography variant="h6" className="font-bold mb-2">Informations</Typography>
-							<InfoRow icon="lucide:calendar" label="Date" value={`${safeFormat(activity.date)}${activity.endDate ? ` → ${safeFormat(activity.endDate)}` : ''}`} />
-							<InfoRow icon="lucide:map-pin" label="Lieu" value={activity.location} />
-							{activity.capacity && <InfoRow icon="lucide:users" label="Capacité" value={`${activity.capacity} personnes`} />}
-							<InfoRow
-								icon="lucide:ticket"
-								label="Tarif"
-								value={activity.isFree ? <Chip label="Gratuit" size="small" sx={{ color: '#15803d', backgroundColor: '#dcfce7', fontWeight: 700 }} /> : `${activity.price ?? 0} DT`}
+							<Typography variant="h6" className="font-bold mb-2">Details</Typography>
+							<InfoRow icon="lucide:layers" label="Type" value={activity.cultural_activity_type?.name || '—'} />
+							<InfoRow icon="lucide:globe" label="Language" value={activity.language?.name || '—'} />
+							<InfoRow icon="lucide:calendar" label="Date" value={safeFormat(activity.date)} />
+							<InfoRow icon="lucide:send" label="Publishing date" value={safeFormatDate(activity.publishing_date)} />
+							<InfoRow icon="lucide:eye" label="Views" value={`${activity.view_number}`} />
+							<InfoRow icon="lucide:user" label="Created by" value={activity.created_by?.full_name || '—'} />
+							{activity.approved_by && (
+								<InfoRow icon="lucide:shield-check" label="Approved by" value={activity.approved_by.full_name} />
+							)}
+							<InfoRow icon="lucide:check-circle" label="Status"
+								value={
+									<div className="flex gap-1.5 flex-wrap mt-0.5">
+										<Chip size="small" label={publishBadge.label}
+											sx={{ fontWeight: 700, fontSize: '0.68rem', color: publishBadge.color, backgroundColor: publishBadge.bg }} />
+										{activity.is_pubic_content && (
+											<Chip size="small" label="Public" sx={{ fontWeight: 700, fontSize: '0.68rem', color: '#374151', backgroundColor: '#f3f4f6' }} />
+										)}
+									</div>
+								}
 							/>
-							<InfoRow
-								icon="lucide:globe"
-								label="Format"
-								value={activity.isOnline ? <Chip label="En ligne" size="small" sx={{ color: '#1d4ed8', backgroundColor: '#dbeafe', fontWeight: 700 }} /> : 'Présentiel'}
-							/>
-							<InfoRow icon="lucide:tag" label="Catégorie" value={activity.category || '—'} />
 						</Paper>
 
-						{/* Tags */}
 						{activity.tags?.length > 0 && (
 							<Paper sx={{ p: 3, borderRadius: '14px' }}>
 								<Typography variant="h6" className="font-bold mb-3">Tags</Typography>
 								<div className="flex flex-wrap gap-1.5">
-									{activity.tags.map((tag) => (
-										<Chip key={tag} label={tag} size="small" variant="outlined" />
+									{activity.tags.map(tag => (
+										<Chip key={tag.id} label={tag.name} size="small" variant="outlined" />
 									))}
 								</div>
 							</Paper>
@@ -184,91 +217,60 @@ export default function CulturalActivityView() {
 			/>
 
 			{/* Edit dialog */}
-			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
-				<DialogTitle sx={{ fontWeight: 800 }}>Modifier l'activité</DialogTitle>
-				<Divider />
-				<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-					<TextField label="Titre" size="small" value={editForm.title ?? ''} onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))} fullWidth />
-					<TextField label="Description" size="small" multiline minRows={3} value={editForm.description ?? ''} onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))} fullWidth />
+			{editForm && (
+				<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
+					<DialogTitle sx={{ fontWeight: 800 }}>Edit Activity</DialogTitle>
+					<Divider />
+					<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
+						<TextField label="Name" size="small" value={editForm.name}
+							onChange={e => setEditForm(p => p && ({ ...p, name: e.target.value }))} fullWidth />
+						<TextField label="Description" size="small" multiline minRows={3} value={editForm.description}
+							onChange={e => setEditForm(p => p && ({ ...p, description: e.target.value }))} fullWidth />
+						<TextField label="Poster description" size="small" value={editForm.poster_description}
+							onChange={e => setEditForm(p => p && ({ ...p, poster_description: e.target.value }))} fullWidth />
 
-					<Box sx={{ display: 'flex', gap: 2 }}>
 						<FormControl size="small" fullWidth>
-							<InputLabel>Type</InputLabel>
-							<Select value={editForm.type ?? 'workshop'} label="Type" onChange={(e) => setEditForm((p) => ({ ...p, type: e.target.value as CulturalActivityType }))}>
-								{Object.entries(TYPE_META).map(([k, v]) => <MenuItem key={k} value={k}>{v.label}</MenuItem>)}
+							<InputLabel>Activity Type</InputLabel>
+							<Select value={editForm.cultural_activity_type_id} label="Activity Type"
+								onChange={e => setEditForm(p => p && ({ ...p, cultural_activity_type_id: Number(e.target.value) }))}>
+								{activityTypes.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
 							</Select>
 						</FormControl>
-						<TextField label="Catégorie" size="small" value={editForm.category ?? ''} onChange={(e) => setEditForm((p) => ({ ...p, category: e.target.value }))} fullWidth />
-					</Box>
 
-					<Box sx={{ display: 'flex', gap: 2 }}>
-						<TextField label="Date" type="date" size="small" value={editForm.date ?? ''} onChange={(e) => setEditForm((p) => ({ ...p, date: e.target.value }))} InputLabelProps={{ shrink: true }} fullWidth />
-						<TextField label="Date de fin" type="date" size="small" value={editForm.endDate ?? ''} onChange={(e) => setEditForm((p) => ({ ...p, endDate: e.target.value }))} InputLabelProps={{ shrink: true }} fullWidth />
-					</Box>
+						<TextField label="Date & Time" type="datetime-local" size="small"
+							value={editForm.date.substring(0, 16)}
+							onChange={e => setEditForm(p => p && ({ ...p, date: `${e.target.value}:00` }))}
+							InputLabelProps={{ shrink: true }} fullWidth />
 
-					<TextField label="Lieu" size="small" value={editForm.location ?? ''} onChange={(e) => setEditForm((p) => ({ ...p, location: e.target.value }))} fullWidth />
+						<TextField label="Publishing Date" type="date" size="small" value={editForm.publishing_date}
+							onChange={e => setEditForm(p => p && ({ ...p, publishing_date: e.target.value }))}
+							InputLabelProps={{ shrink: true }} fullWidth />
 
-					<Box sx={{ display: 'flex', gap: 2 }}>
-						<TextField
-							label="Capacité" type="number" size="small" value={editForm.capacity ?? ''}
-							onChange={(e) => setEditForm((p) => ({ ...p, capacity: Number(e.target.value) }))}
-							InputProps={{ endAdornment: <InputAdornment position="end">pers.</InputAdornment> }}
-							fullWidth
-						/>
-						<TextField
-							label="Prix" type="number" size="small" value={editForm.price ?? ''}
-							onChange={(e) => setEditForm((p) => ({ ...p, price: Number(e.target.value) }))}
-							disabled={editForm.isFree}
-							InputProps={{ endAdornment: <InputAdornment position="end">DT</InputAdornment> }}
-							fullWidth
-						/>
-					</Box>
-
-					<Box sx={{ display: 'flex', gap: 3 }}>
-						<FormControlLabel
-							control={<Switch size="small" checked={editForm.isFree ?? true} onChange={(e) => setEditForm((p) => ({ ...p, isFree: e.target.checked }))} color="success" />}
-							label="Gratuit"
-						/>
-						<FormControlLabel
-							control={<Switch size="small" checked={editForm.isOnline ?? false} onChange={(e) => setEditForm((p) => ({ ...p, isOnline: e.target.checked }))} color="info" />}
-							label="En ligne"
-						/>
-					</Box>
-
-					<TextField
-						label="Tags (séparés par des virgules)"
-						size="small"
-						value={(editForm.tags ?? []).join(', ')}
-						onChange={(e) => setEditForm((p) => ({ ...p, tags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean) }))}
-						fullWidth
-					/>
-				</DialogContent>
-				<Divider />
-				<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-					<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isUpdating}>Annuler</Button>
-					<Button
-						onClick={handleUpdate}
-						variant="contained"
-						color="secondary"
-						disabled={isUpdating}
-						startIcon={isUpdating ? <CircularProgress size={14} /> : undefined}
-					>
-						{isUpdating ? 'Enregistrement…' : 'Enregistrer'}
-					</Button>
-				</DialogActions>
-			</Dialog>
+						<TextField label="Tags (comma-separated)" size="small" value={editForm.tags}
+							onChange={e => setEditForm(p => p && ({ ...p, tags: e.target.value }))} fullWidth />
+					</DialogContent>
+					<Divider />
+					<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
+						<Button onClick={() => setEditOpen(false)} variant="outlined" disabled={isUpdating}>Cancel</Button>
+						<Button onClick={handleUpdate} variant="contained" color="secondary" disabled={isUpdating}
+							startIcon={isUpdating ? <CircularProgress size={14} /> : undefined}>
+							{isUpdating ? 'Saving…' : 'Save'}
+						</Button>
+					</DialogActions>
+				</Dialog>
+			)}
 
 			{/* Confirm delete */}
 			<Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
-				<DialogTitle sx={{ fontWeight: 700 }}>Supprimer l'activité ?</DialogTitle>
+				<DialogTitle sx={{ fontWeight: 700 }}>Delete Activity?</DialogTitle>
 				<DialogContent>
 					<Typography variant="body2">
-						<strong>{activity.title}</strong> sera définitivement supprimée. Cette action est irréversible.
+						<strong>{activity.name}</strong> will be permanently deleted. This action is irreversible.
 					</Typography>
 				</DialogContent>
 				<DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-					<Button onClick={() => setConfirmDelete(false)} variant="outlined">Annuler</Button>
-					<Button onClick={handleDelete} variant="contained" color="error">Supprimer</Button>
+					<Button onClick={() => setConfirmDelete(false)} variant="outlined">Cancel</Button>
+					<Button onClick={handleDelete} variant="contained" color="error">Delete</Button>
 				</DialogActions>
 			</Dialog>
 		</>
