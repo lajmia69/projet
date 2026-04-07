@@ -26,6 +26,17 @@ export type CulturalProjectType = {
 	description: string;
 };
 
+export type CreateCulturalProjectTypePayload = {
+	name: string;
+	description: string;
+};
+
+export type UpdateCulturalProjectTypePayload = {
+	id: number;
+	name: string;
+	description: string;
+};
+
 // ─── Cultural Project ─────────────────────────────────────────────────────────
 
 export type CulturalProject = {
@@ -35,9 +46,9 @@ export type CulturalProject = {
 	description: string;
 	poster: string;
 	poster_description: string;
-	start_date: string;        // "YYYY-MM-DD"
-	end_date: string;          // "YYYY-MM-DD"
-	publishing_date: string;   // "YYYY-MM-DD"
+	start_date: string;
+	end_date: string;
+	publishing_date: string;
 	is_approved_content: boolean;
 	is_pubic_content: boolean;
 	is_published: boolean;
@@ -86,6 +97,17 @@ export type CulturalActivityType = {
 	description: string;
 };
 
+export type CreateCulturalActivityTypePayload = {
+	name: string;
+	description: string;
+};
+
+export type UpdateCulturalActivityTypePayload = {
+	id: number;
+	name: string;
+	description: string;
+};
+
 // ─── Cultural Activity ────────────────────────────────────────────────────────
 
 export type CulturalActivity = {
@@ -95,8 +117,8 @@ export type CulturalActivity = {
 	description: string;
 	poster: string;
 	poster_description: string;
-	date: string;              // ISO datetime "YYYY-MM-DDTHH:mm:ss"
-	publishing_date: string;   // "YYYY-MM-DD"
+	date: string;
+	publishing_date: string;
 	is_approved_content: boolean;
 	is_pubic_content: boolean;
 	is_published: boolean;
@@ -114,7 +136,7 @@ export type CreateCulturalActivityPayload = {
 	slug: string;
 	description: string;
 	poster_description: string;
-	date: string;              // ISO datetime
+	date: string;
 	language_id: number;
 	cultural_activity_type_id: number;
 	tags: string[];

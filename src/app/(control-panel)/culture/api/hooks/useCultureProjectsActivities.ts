@@ -6,20 +6,19 @@ import {
 	CreateCulturalProjectPayload,
 	UpdateCulturalProjectPayload,
 	CreateCulturalActivityPayload,
-	UpdateCulturalActivityPayload
+	UpdateCulturalActivityPayload,
+	CreateCulturalProjectTypePayload,
+	UpdateCulturalProjectTypePayload,
+	CreateCulturalActivityTypePayload,
+	UpdateCulturalActivityTypePayload
 } from '../types/projectsAndActivities';
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 
-/**
- * Decodes the payload section of a JWT without verifying the signature.
- * Returns null if the token is missing or malformed.
- */
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
 	try {
 		const part = token.split('.')[1];
 		if (!part) return null;
-		// atob requires standard base64; JWT uses base64url
 		const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
 		return JSON.parse(atob(base64));
 	} catch {
@@ -37,24 +36,11 @@ function readTokenFromStorage(): string {
 	);
 }
 
-/**
- * Reads the current account's numeric ID from the JWT stored in localStorage.
- *
- * Common JWT payload field names tried in order:
- *   account_id → user_account_id → account → id → user_id → sub
- *
- * Falls back to 1 when none are found so queries still fire (they will
- * receive a 401 from the API if the token itself is missing/expired).
- *
- * This hook intentionally has NO react-redux dependency so it works
- * whether or not a <Provider> wraps the current route tree.
- */
 export function useAccountId(): number {
 	const [accountId, setAccountId] = useState<number>(() => {
 		const token = readTokenFromStorage();
 		const payload = decodeJwtPayload(token);
 		if (!payload) return 1;
-
 		const value =
 			payload['account_id'] ??
 			payload['user_account_id'] ??
@@ -62,18 +48,15 @@ export function useAccountId(): number {
 			payload['id'] ??
 			payload['user_id'] ??
 			payload['sub'];
-
 		const num = Number(value);
 		return Number.isFinite(num) && num > 0 ? num : 1;
 	});
 
-	// Re-read whenever localStorage changes (e.g. after login in another tab)
 	useEffect(() => {
 		const sync = () => {
 			const token = readTokenFromStorage();
 			const payload = decodeJwtPayload(token);
 			if (!payload) return;
-
 			const value =
 				payload['account_id'] ??
 				payload['user_account_id'] ??
@@ -81,11 +64,9 @@ export function useAccountId(): number {
 				payload['id'] ??
 				payload['user_id'] ??
 				payload['sub'];
-
 			const num = Number(value);
 			if (Number.isFinite(num) && num > 0) setAccountId(num);
 		};
-
 		window.addEventListener('storage', sync);
 		return () => window.removeEventListener('storage', sync);
 	}, []);
@@ -97,15 +78,13 @@ export function useAccountId(): number {
 
 export const projectTypesQueryKey = ['culture', 'project-types'];
 export const activityTypesQueryKey = ['culture', 'activity-types'];
-
 export const projectsQueryKey = ['culture', 'projects'];
 export const projectQueryKey = (id: number) => ['culture', 'project', id];
-
 export const activitiesQueryKey = ['culture', 'activities'];
 export const activityQueryKey = (id: number) => ['culture', 'activity', id];
 
 // ════════════════════════════════════════════════════════════════════════════
-// TYPES
+// PROJECT TYPES — full CRUD
 // ════════════════════════════════════════════════════════════════════════════
 
 export const useCulturalProjectTypes = () => {
@@ -117,12 +96,110 @@ export const useCulturalProjectTypes = () => {
 	});
 };
 
+export const useCreateCulturalProjectType = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (payload: CreateCulturalProjectTypePayload) =>
+			api.createProjectType(accountId, payload),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: projectTypesQueryKey });
+			enqueueSnackbar('Project type created', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const useUpdateCulturalProjectType = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (payload: UpdateCulturalProjectTypePayload) =>
+			api.updateProjectType(accountId, payload),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: projectTypesQueryKey });
+			enqueueSnackbar('Project type updated', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const useDeleteCulturalProjectType = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (id: number) => api.deleteProjectType(accountId, id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: projectTypesQueryKey });
+			enqueueSnackbar('Project type deleted', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+	});
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// ACTIVITY TYPES — full CRUD
+// ════════════════════════════════════════════════════════════════════════════
+
 export const useCulturalActivityTypes = () => {
 	const accountId = useAccountId();
 	return useQuery({
 		queryKey: activityTypesQueryKey,
 		queryFn: () => api.getActivityTypes(accountId),
 		enabled: accountId > 0
+	});
+};
+
+export const useCreateCulturalActivityType = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (payload: CreateCulturalActivityTypePayload) =>
+			api.createActivityType(accountId, payload),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: activityTypesQueryKey });
+			enqueueSnackbar('Activity type created', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const useUpdateCulturalActivityType = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (payload: UpdateCulturalActivityTypePayload) =>
+			api.updateActivityType(accountId, payload),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: activityTypesQueryKey });
+			enqueueSnackbar('Activity type updated', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const useDeleteCulturalActivityType = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (id: number) => api.deleteActivityType(accountId, id),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: activityTypesQueryKey });
+			enqueueSnackbar('Activity type deleted', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
 	});
 };
 

@@ -36,39 +36,64 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
+
+	// ── Culture ──────────────────────────────────────────────────────────────
 	{
-    id: 'culture',
-    type: 'group',
-    title: 'Culture',
-    children: [
-        {
-            id: 'culture-projects',
-            title: 'Cultural Projects',
-            type: 'collapse',
-            icon: 'heroicons-outline:folder-open',
-            children: [
-                { id: 'culture-projects-list',        title: 'All Projects', type: 'item', icon: 'heroicons-outline:view-grid',    url: '/culture/projects' },
-                { id: 'culture-projects-in-progress', title: 'In Progress',  type: 'item', icon: 'heroicons-outline:play',         url: '/culture/projects?status=in_progress' },
-                { id: 'culture-projects-planning',    title: 'Planning',     type: 'item', icon: 'heroicons-outline:calendar',     url: '/culture/projects?status=planning' },
-                { id: 'culture-projects-completed',   title: 'Completed',   type: 'item', icon: 'heroicons-outline:check-circle', url: '/culture/projects?status=completed' }
-            ]
-        },
-        {
-            id: 'culture-activities',
-            title: 'Cultural Activities',
-            type: 'collapse',
-            icon: 'heroicons-outline:sparkles',
-            children: [
-                { id: 'culture-activities-list',        title: 'All Activities', type: 'item', icon: 'heroicons-outline:view-grid',               url: '/culture/activities' },
-                { id: 'culture-activities-workshops',   title: 'Workshops',      type: 'item', icon: 'heroicons-outline:pencil',                   url: '/culture/activities?type=workshop' },
-                { id: 'culture-activities-exhibitions', title: 'Exhibitions',    type: 'item', icon: 'heroicons-outline:photograph',               url: '/culture/activities?type=exhibition' },
-                { id: 'culture-activities-concerts',    title: 'Concerts',       type: 'item', icon: 'heroicons-outline:music-note',               url: '/culture/activities?type=concert' },
-                { id: 'culture-activities-conferences', title: 'Conferences',    type: 'item', icon: 'heroicons-outline:presentation-chart-bar',   url: '/culture/activities?type=conference' },
-                { id: 'culture-activities-festivals',   title: 'Festivals',      type: 'item', icon: 'heroicons-outline:star',                     url: '/culture/activities?type=festival' }
-            ]
-        }
-    ]
-},
+		id: 'culture',
+		type: 'group',
+		title: 'Culture',
+		children: [
+			// ── Projects ─────────────────────────────────────────────────────
+			{
+				id: 'culture-projects',
+				title: 'Cultural Projects',
+				type: 'collapse',
+				icon: 'heroicons-outline:folder-open',
+				children: [
+					{
+						id: 'culture-projects-list',
+						title: 'All Projects',
+						type: 'item',
+						icon: 'heroicons-outline:view-grid',
+						url: '/culture/projects'
+					},
+					{
+						id: 'culture-project-types',
+						title: 'Project Types',
+						type: 'item',
+						icon: 'heroicons-outline:tag',
+						url: '/culture/project-types'
+					}
+				]
+			},
+
+			// ── Activities ───────────────────────────────────────────────────
+			{
+				id: 'culture-activities',
+				title: 'Cultural Activities',
+				type: 'collapse',
+				icon: 'heroicons-outline:sparkles',
+				children: [
+					{
+						id: 'culture-activities-list',
+						title: 'All Activities',
+						type: 'item',
+						icon: 'heroicons-outline:view-grid',
+						url: '/culture/activities'
+					},
+					{
+						id: 'culture-activity-types',
+						title: 'Activity Types',
+						type: 'item',
+						icon: 'heroicons-outline:tag',
+						url: '/culture/activity-types'
+					}
+				]
+			}
+		]
+	},
+
+	// ── Administration ───────────────────────────────────────────────────────
 	{
 		id: 'administration',
 		type: 'group',
@@ -127,6 +152,8 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
+
+	// ── Studio ───────────────────────────────────────────────────────────────
 	{
 		id: 'studio',
 		type: 'group',
@@ -144,6 +171,8 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
+
+	// ── Content ──────────────────────────────────────────────────────────────
 	{
 		id: 'content',
 		type: 'group',
@@ -183,6 +212,8 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
+
+	// ── Member ───────────────────────────────────────────────────────────────
 	{
 		id: 'member',
 		type: 'group',
