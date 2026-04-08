@@ -1,4 +1,3 @@
-// src/app/(control-panel)/culture/api/utils/authTokenUtils.ts
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 

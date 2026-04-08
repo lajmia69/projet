@@ -206,6 +206,7 @@ export default function CulturalProjectView() {
 						)}
 					</div>
 				}
+				scroll="page"
 			/>
 
 			{/* Edit dialog */}
@@ -214,9 +215,12 @@ export default function CulturalProjectView() {
 					<DialogTitle sx={{ fontWeight: 800 }}>Edit Project</DialogTitle>
 					<Divider />
 					<DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
-						<TextField label="Name" size="small" value={editForm.name} onChange={e => setEditForm(p => p && ({ ...p, name: e.target.value }))} fullWidth />
-						<TextField label="Description" size="small" multiline minRows={3} value={editForm.description} onChange={e => setEditForm(p => p && ({ ...p, description: e.target.value }))} fullWidth />
-						<TextField label="Poster description" size="small" value={editForm.poster_description} onChange={e => setEditForm(p => p && ({ ...p, poster_description: e.target.value }))} fullWidth />
+						<TextField label="Name" size="small" value={editForm.name}
+							onChange={e => setEditForm(p => p && ({ ...p, name: e.target.value }))} fullWidth />
+						<TextField label="Description" size="small" multiline minRows={3} value={editForm.description}
+							onChange={e => setEditForm(p => p && ({ ...p, description: e.target.value }))} fullWidth />
+						<TextField label="Poster description" size="small" value={editForm.poster_description}
+							onChange={e => setEditForm(p => p && ({ ...p, poster_description: e.target.value }))} fullWidth />
 
 						<FormControl size="small" fullWidth>
 							<InputLabel>Project Type</InputLabel>

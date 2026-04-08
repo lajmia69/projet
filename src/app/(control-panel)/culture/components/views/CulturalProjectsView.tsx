@@ -30,6 +30,15 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
 		backgroundColor: theme.vars.palette.primary.dark,
 		color: theme.palette.getContrastText(theme.palette.primary.main)
+	},
+	'& .FusePageSimple-contentWrapper': {
+		overflowY: 'auto',
+		WebkitOverflowScrolling: 'touch',
+	},
+	'& .FusePageSimple-content': {
+		display: 'flex',
+		flexDirection: 'column',
+		flex: '1 1 auto',
 	}
 }));
 
