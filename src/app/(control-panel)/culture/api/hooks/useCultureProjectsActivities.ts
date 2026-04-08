@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import * as api from '../services/cultureApiService';
+import { getNextAuthAccountId } from '../utils/authTokenUtils';
 import {
 	CreateCulturalProjectPayload,
 	UpdateCulturalProjectPayload,
@@ -13,62 +14,25 @@ import {
 	UpdateCulturalActivityTypePayload
 } from '../types/projectsAndActivities';
 
-// ─── JWT helpers ──────────────────────────────────────────────────────────────
+// ─── useAccountId ─────────────────────────────────────────────────────────────
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-	try {
-		const part = token.split('.')[1];
-		if (!part) return null;
-		const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
-		return JSON.parse(atob(base64));
-	} catch {
-		return null;
-	}
-}
-
-function readTokenFromStorage(): string {
-	if (typeof window === 'undefined') return '';
-	return (
-		localStorage.getItem('jwt_access_token') ||
-		localStorage.getItem('fusejs_access_token') ||
-		localStorage.getItem('access_token') ||
-		''
-	);
-}
-
+/**
+ * Resolves the account id from the NextAuth session (session.db.id).
+ * Starts at 0 and updates asynchronously once the session is fetched.
+ * Queries that depend on this are gated with `enabled: accountId > 0`
+ * so they won't fire until we have a real id.
+ */
 export function useAccountId(): number {
-	const [accountId, setAccountId] = useState<number>(() => {
-		const token = readTokenFromStorage();
-		const payload = decodeJwtPayload(token);
-		if (!payload) return 1;
-		const value =
-			payload['account_id'] ??
-			payload['user_account_id'] ??
-			payload['account'] ??
-			payload['id'] ??
-			payload['user_id'] ??
-			payload['sub'];
-		const num = Number(value);
-		return Number.isFinite(num) && num > 0 ? num : 1;
-	});
+	const [accountId, setAccountId] = useState<number>(0);
 
 	useEffect(() => {
-		const sync = () => {
-			const token = readTokenFromStorage();
-			const payload = decodeJwtPayload(token);
-			if (!payload) return;
-			const value =
-				payload['account_id'] ??
-				payload['user_account_id'] ??
-				payload['account'] ??
-				payload['id'] ??
-				payload['user_id'] ??
-				payload['sub'];
-			const num = Number(value);
-			if (Number.isFinite(num) && num > 0) setAccountId(num);
+		let cancelled = false;
+		getNextAuthAccountId().then((id) => {
+			if (!cancelled && id > 0) setAccountId(id);
+		});
+		return () => {
+			cancelled = true;
 		};
-		window.addEventListener('storage', sync);
-		return () => window.removeEventListener('storage', sync);
 	}, []);
 
 	return accountId;
@@ -83,8 +47,6 @@ export const projectQueryKey = (id: number) => ['culture', 'project', id];
 export const activitiesQueryKey = ['culture', 'activities'];
 export const activityQueryKey = (id: number) => ['culture', 'activity', id];
 
-// Don't retry on 401/403 – these won't succeed without a new login.
-
 // ════════════════════════════════════════════════════════════════════════════
 // PROJECT TYPES
 // ════════════════════════════════════════════════════════════════════════════
@@ -95,7 +57,8 @@ export const useCulturalProjectTypes = () => {
 		queryKey: projectTypesQueryKey,
 		queryFn: () => api.getProjectTypes(accountId),
 		enabled: accountId > 0,
-		retry: false, refetchOnWindowFocus: false
+		retry: false,
+		refetchOnWindowFocus: false
 	});
 };
 
@@ -159,7 +122,8 @@ export const useCulturalActivityTypes = () => {
 		queryKey: activityTypesQueryKey,
 		queryFn: () => api.getActivityTypes(accountId),
 		enabled: accountId > 0,
-		retry: false, refetchOnWindowFocus: false
+		retry: false,
+		refetchOnWindowFocus: false
 	});
 };
 
@@ -223,7 +187,8 @@ export const useCulturalProjects = () => {
 		queryKey: projectsQueryKey,
 		queryFn: () => api.getProjects(accountId),
 		enabled: accountId > 0,
-		retry: false, refetchOnWindowFocus: false
+		retry: false,
+		refetchOnWindowFocus: false
 	});
 };
 
@@ -233,7 +198,8 @@ export const useCulturalProject = (id: number) => {
 		queryKey: projectQueryKey(id),
 		queryFn: () => api.getProject(accountId, id),
 		enabled: id > 0 && accountId > 0,
-		retry: false, refetchOnWindowFocus: false
+		retry: false,
+		refetchOnWindowFocus: false
 	});
 };
 
@@ -298,7 +264,8 @@ export const useCulturalActivities = () => {
 		queryKey: activitiesQueryKey,
 		queryFn: () => api.getActivities(accountId),
 		enabled: accountId > 0,
-		retry: false, refetchOnWindowFocus: false
+		retry: false,
+		refetchOnWindowFocus: false
 	});
 };
 
@@ -308,7 +275,8 @@ export const useCulturalActivity = (id: number) => {
 		queryKey: activityQueryKey(id),
 		queryFn: () => api.getActivity(accountId, id),
 		enabled: id > 0 && accountId > 0,
-		retry: false, refetchOnWindowFocus: false
+		retry: false,
+		refetchOnWindowFocus: false
 	});
 };
 
