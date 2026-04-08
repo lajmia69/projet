@@ -1,5 +1,3 @@
-// src/app/(control-panel)/culture/api/services/cultureApiService.ts
-
 import {
 	CulturalProject,
 	CulturalActivity,
@@ -160,7 +158,9 @@ export const validateProject = async (
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ id: projectId })
 	});
-	return handleResponse<CulturalProject>(res);
+	const data = await handleResponse<CulturalProject>(res);
+	console.log('validateProject response:', JSON.stringify(data, null, 2));
+	return data;
 };
 
 export const publishProject = async (
@@ -172,7 +172,9 @@ export const publishProject = async (
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ id: projectId })
 	});
-	return handleResponse<CulturalProject>(res);
+	const data = await handleResponse<CulturalProject>(res);
+	console.log('publishProject response:', JSON.stringify(data, null, 2));
+	return data;
 };
 
 export const deleteProject = async (accountId: number, projectId: number): Promise<void> => {
@@ -235,7 +237,9 @@ export const validateActivity = async (
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ id: activityId })
 	});
-	return handleResponse<CulturalActivity>(res);
+	const data = await handleResponse<CulturalActivity>(res);
+	console.log('validateActivity response:', JSON.stringify(data, null, 2));
+	return data;
 };
 
 export const publishActivity = async (
@@ -247,7 +251,9 @@ export const publishActivity = async (
 		headers: { 'Content-Type': 'application/json' },
 		body: JSON.stringify({ id: activityId })
 	});
-	return handleResponse<CulturalActivity>(res);
+	const data = await handleResponse<CulturalActivity>(res);
+	console.log('publishActivity response:', JSON.stringify(data, null, 2));
+	return data;
 };
 
 export const deleteActivity = async (accountId: number, activityId: number): Promise<void> => {

@@ -238,8 +238,10 @@ export const useValidateCulturalProject = () => {
 		mutationFn: (id: number) => api.validateProject(accountId, id),
 		retry: false,
 		onSuccess: (_, id) => {
+			qc.setQueryData(projectQueryKey(id), (old: any) =>
+				old ? { ...old, is_approved_content: true } : old
+			);
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
-			qc.invalidateQueries({ queryKey: projectQueryKey(id) });
 			enqueueSnackbar('Project validated successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
@@ -255,8 +257,10 @@ export const usePublishCulturalProject = () => {
 		mutationFn: (id: number) => api.publishProject(accountId, id),
 		retry: false,
 		onSuccess: (_, id) => {
+			qc.setQueryData(projectQueryKey(id), (old: any) =>
+				old ? { ...old, is_published: true } : old
+			);
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
-			qc.invalidateQueries({ queryKey: projectQueryKey(id) });
 			enqueueSnackbar('Project published successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
@@ -349,8 +353,10 @@ export const useValidateCulturalActivity = () => {
 		mutationFn: (id: number) => api.validateActivity(accountId, id),
 		retry: false,
 		onSuccess: (_, id) => {
+			qc.setQueryData(activityQueryKey(id), (old: any) =>
+				old ? { ...old, is_approved_content: true } : old
+			);
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
-			qc.invalidateQueries({ queryKey: activityQueryKey(id) });
 			enqueueSnackbar('Activity validated successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
@@ -366,8 +372,10 @@ export const usePublishCulturalActivity = () => {
 		mutationFn: (id: number) => api.publishActivity(accountId, id),
 		retry: false,
 		onSuccess: (_, id) => {
+			qc.setQueryData(activityQueryKey(id), (old: any) =>
+				old ? { ...old, is_published: true } : old
+			);
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
-			qc.invalidateQueries({ queryKey: activityQueryKey(id) });
 			enqueueSnackbar('Activity published successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
