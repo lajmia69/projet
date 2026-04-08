@@ -199,16 +199,7 @@ function LessonsView() {
                                     Browse our lessons — step through real content, one session at a time.
                                 </Typography>
                             </motion.div>
-                            {lessons?.count != null && (
-                                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(148,163,184,0.18)', backgroundColor: 'rgba(148,163,184,0.07)' }}>
-                                        <FuseSvgIcon size={13} sx={{ color: 'rgba(148,163,184,0.5)' }}>lucide:library</FuseSvgIcon>
-                                        <Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(148,163,184,0.65)' }}>
-                                            {lessons.count} lessons available
-                                        </Typography>
-                                    </div>
-                                </motion.div>
-                            )}
+                           
                         </div>
                     </div>
                 }
