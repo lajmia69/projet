@@ -2,6 +2,13 @@
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
+export class AuthExpiredError extends Error {
+  constructor() {
+    super('Session expired. Please log in again.');
+    this.name = 'AuthExpiredError';
+  }
+}
+
 export function getAccessToken(): string {
 	if (typeof window === 'undefined') return '';
 	return (
@@ -61,29 +68,28 @@ async function refreshAccessToken(): Promise<string> {
 }
 
 export async function fetchWithAuth(
-	input: RequestInfo | URL,
-	init: RequestInit = {}
+  input: RequestInfo | URL,
+  init: RequestInit = {}
 ): Promise<Response> {
-	const withBearer = (token: string): RequestInit => ({
-		...init,
-		headers: {
-			...((init.headers as Record<string, string>) ?? {}),
-			Authorization: `Bearer ${token}`
-		}
-	});
+  const withBearer = (token: string): RequestInit => ({
+    ...init,
+    headers: {
+      ...((init.headers as Record<string, string>) ?? {}),
+      Authorization: `Bearer ${token}`
+    }
+  });
 
-	let token = getAccessToken();
-	let res = await fetch(input, withBearer(token));
+  let token = getAccessToken();
+  let res = await fetch(input, withBearer(token));
 
-	if (res.status !== 401) return res;
+  if (res.status !== 401) return res;
 
-	try {
-		token = await refreshAccessToken();
-		if (!token) return res; // no token → return original 401
-		return await fetch(input, withBearer(token));
-	} catch {
-		// Refresh failed (no refresh token, expired, etc.)
-		// Return the original 401 so React Query's onError handles it.
-		return res;
-	}
+  try {
+    token = await refreshAccessToken();
+    if (!token) throw new AuthExpiredError();
+    return await fetch(input, withBearer(token));
+  } catch (e) {
+    if (e instanceof AuthExpiredError) throw e;
+    throw new AuthExpiredError();
+  }
 }
