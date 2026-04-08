@@ -15,7 +15,7 @@ import {
 	UpdateCulturalActivityTypePayload,
 	Paged
 } from '../types/projectsAndActivities';
-import { fetchWithAuth, getAccessToken } from '../utils/authTokenUtils';
+import { fetchWithAuth } from '../utils/authTokenUtils';
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
@@ -61,9 +61,10 @@ export const updateProjectType = async (
 };
 
 export const deleteProjectType = async (accountId: number, typeId: number): Promise<void> => {
-	const res = await fetchWithAuth(`${BASE_URL}/culture/project/type/delete/${accountId}/${typeId}/`, {
-		method: 'DELETE'
-	});
+	const res = await fetchWithAuth(
+		`${BASE_URL}/culture/project/type/delete/${accountId}/${typeId}/`,
+		{ method: 'DELETE' }
+	);
 	await handleResponse<void>(res);
 };
 
@@ -100,9 +101,10 @@ export const updateActivityType = async (
 };
 
 export const deleteActivityType = async (accountId: number, typeId: number): Promise<void> => {
-	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/type/delete/${accountId}/${typeId}/`, {
-		method: 'DELETE'
-	});
+	const res = await fetchWithAuth(
+		`${BASE_URL}/culture/activity/type/delete/${accountId}/${typeId}/`,
+		{ method: 'DELETE' }
+	);
 	await handleResponse<void>(res);
 };
 
@@ -114,8 +116,13 @@ export const getProjects = async (accountId: number): Promise<CulturalProject[]>
 	return data.items;
 };
 
-export const getProject = async (accountId: number, projectId: number): Promise<CulturalProject> => {
-	const res = await fetchWithAuth(`${BASE_URL}/culture/project/detail/${accountId}/${projectId}/`);
+export const getProject = async (
+	accountId: number,
+	projectId: number
+): Promise<CulturalProject> => {
+	const res = await fetchWithAuth(
+		`${BASE_URL}/culture/project/detail/${accountId}/${projectId}/`
+	);
 	return handleResponse<CulturalProject>(res);
 };
 
@@ -125,7 +132,6 @@ export const createProject = async (
 ): Promise<CulturalProject> => {
 	const formData = new FormData();
 	formData.append('payload', JSON.stringify(payload));
-	// FormData requests: don't set Content-Type (browser sets it with boundary)
 	const res = await fetchWithAuth(`${BASE_URL}/culture/project/create/${accountId}/`, {
 		method: 'POST',
 		body: formData
@@ -145,10 +151,35 @@ export const updateProject = async (
 	return handleResponse<CulturalProject>(res);
 };
 
-export const deleteProject = async (accountId: number, projectId: number): Promise<void> => {
-	const res = await fetchWithAuth(`${BASE_URL}/culture/project/delete/${accountId}/${projectId}/`, {
-		method: 'DELETE'
+export const validateProject = async (
+	accountId: number,
+	projectId: number
+): Promise<CulturalProject> => {
+	const res = await fetchWithAuth(`${BASE_URL}/culture/project/validate/${accountId}/`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ id: projectId })
 	});
+	return handleResponse<CulturalProject>(res);
+};
+
+export const publishProject = async (
+	accountId: number,
+	projectId: number
+): Promise<CulturalProject> => {
+	const res = await fetchWithAuth(`${BASE_URL}/culture/project/publish/${accountId}/`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ id: projectId })
+	});
+	return handleResponse<CulturalProject>(res);
+};
+
+export const deleteProject = async (accountId: number, projectId: number): Promise<void> => {
+	const res = await fetchWithAuth(
+		`${BASE_URL}/culture/project/delete/${accountId}/${projectId}/`,
+		{ method: 'DELETE' }
+	);
 	await handleResponse<void>(res);
 };
 
@@ -160,8 +191,13 @@ export const getActivities = async (accountId: number): Promise<CulturalActivity
 	return data.items;
 };
 
-export const getActivity = async (accountId: number, activityId: number): Promise<CulturalActivity> => {
-	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/detail/${accountId}/${activityId}/`);
+export const getActivity = async (
+	accountId: number,
+	activityId: number
+): Promise<CulturalActivity> => {
+	const res = await fetchWithAuth(
+		`${BASE_URL}/culture/activity/detail/${accountId}/${activityId}/`
+	);
 	return handleResponse<CulturalActivity>(res);
 };
 
@@ -190,9 +226,34 @@ export const updateActivity = async (
 	return handleResponse<CulturalActivity>(res);
 };
 
-export const deleteActivity = async (accountId: number, activityId: number): Promise<void> => {
-	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/delete/${accountId}/${activityId}/`, {
-		method: 'DELETE'
+export const validateActivity = async (
+	accountId: number,
+	activityId: number
+): Promise<CulturalActivity> => {
+	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/validate/${accountId}/`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ id: activityId })
 	});
+	return handleResponse<CulturalActivity>(res);
+};
+
+export const publishActivity = async (
+	accountId: number,
+	activityId: number
+): Promise<CulturalActivity> => {
+	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/publish/${accountId}/`, {
+		method: 'PATCH',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ id: activityId })
+	});
+	return handleResponse<CulturalActivity>(res);
+};
+
+export const deleteActivity = async (accountId: number, activityId: number): Promise<void> => {
+	const res = await fetchWithAuth(
+		`${BASE_URL}/culture/activity/delete/${accountId}/${activityId}/`,
+		{ method: 'DELETE' }
+	);
 	await handleResponse<void>(res);
 };

@@ -16,12 +16,6 @@ import {
 
 // ─── useAccountId ─────────────────────────────────────────────────────────────
 
-/**
- * Resolves the account id from the NextAuth session (session.db.id).
- * Starts at 0 and updates asynchronously once the session is fetched.
- * Queries that depend on this are gated with `enabled: accountId > 0`
- * so they won't fire until we have a real id.
- */
 export function useAccountId(): number {
 	const [accountId, setAccountId] = useState<number>(0);
 
@@ -30,9 +24,7 @@ export function useAccountId(): number {
 		getNextAuthAccountId().then((id) => {
 			if (!cancelled && id > 0) setAccountId(id);
 		});
-		return () => {
-			cancelled = true;
-		};
+		return () => { cancelled = true; };
 	}, []);
 
 	return accountId;
@@ -238,6 +230,40 @@ export const useUpdateCulturalProject = () => {
 	});
 };
 
+export const useValidateCulturalProject = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (id: number) => api.validateProject(accountId, id),
+		retry: false,
+		onSuccess: (_, id) => {
+			qc.invalidateQueries({ queryKey: projectsQueryKey });
+			qc.invalidateQueries({ queryKey: projectQueryKey(id) });
+			enqueueSnackbar('Project validated successfully', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error validating project: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const usePublishCulturalProject = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (id: number) => api.publishProject(accountId, id),
+		retry: false,
+		onSuccess: (_, id) => {
+			qc.invalidateQueries({ queryKey: projectsQueryKey });
+			qc.invalidateQueries({ queryKey: projectQueryKey(id) });
+			enqueueSnackbar('Project published successfully', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error publishing project: ${err.message}`, { variant: 'error' })
+	});
+};
+
 export const useDeleteCulturalProject = () => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
@@ -312,6 +338,40 @@ export const useUpdateCulturalActivity = () => {
 		},
 		onError: (err: Error) =>
 			enqueueSnackbar(`Error updating activity: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const useValidateCulturalActivity = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (id: number) => api.validateActivity(accountId, id),
+		retry: false,
+		onSuccess: (_, id) => {
+			qc.invalidateQueries({ queryKey: activitiesQueryKey });
+			qc.invalidateQueries({ queryKey: activityQueryKey(id) });
+			enqueueSnackbar('Activity validated successfully', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error validating activity: ${err.message}`, { variant: 'error' })
+	});
+};
+
+export const usePublishCulturalActivity = () => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+	const accountId = useAccountId();
+	return useMutation({
+		mutationFn: (id: number) => api.publishActivity(accountId, id),
+		retry: false,
+		onSuccess: (_, id) => {
+			qc.invalidateQueries({ queryKey: activitiesQueryKey });
+			qc.invalidateQueries({ queryKey: activityQueryKey(id) });
+			enqueueSnackbar('Activity published successfully', { variant: 'success' });
+		},
+		onError: (err: Error) =>
+			enqueueSnackbar(`Error publishing activity: ${err.message}`, { variant: 'error' })
 	});
 };
 
