@@ -13,7 +13,7 @@ import {
 	UpdateCulturalActivityTypePayload
 } from '../types/projectsAndActivities';
 
-// ─── JWT helpers ─────────────────────────────────────────────────────────────
+// ─── JWT helpers ──────────────────────────────────────────────────────────────
 
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
 	try {
@@ -83,8 +83,10 @@ export const projectQueryKey = (id: number) => ['culture', 'project', id];
 export const activitiesQueryKey = ['culture', 'activities'];
 export const activityQueryKey = (id: number) => ['culture', 'activity', id];
 
+// Don't retry on 401/403 – these won't succeed without a new login.
+
 // ════════════════════════════════════════════════════════════════════════════
-// PROJECT TYPES — full CRUD
+// PROJECT TYPES
 // ════════════════════════════════════════════════════════════════════════════
 
 export const useCulturalProjectTypes = () => {
@@ -92,7 +94,8 @@ export const useCulturalProjectTypes = () => {
 	return useQuery({
 		queryKey: projectTypesQueryKey,
 		queryFn: () => api.getProjectTypes(accountId),
-		enabled: accountId > 0
+		enabled: accountId > 0,
+		retry: false, refetchOnWindowFocus: false
 	});
 };
 
@@ -103,6 +106,7 @@ export const useCreateCulturalProjectType = () => {
 	return useMutation({
 		mutationFn: (payload: CreateCulturalProjectTypePayload) =>
 			api.createProjectType(accountId, payload),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: projectTypesQueryKey });
 			enqueueSnackbar('Project type created', { variant: 'success' });
@@ -119,6 +123,7 @@ export const useUpdateCulturalProjectType = () => {
 	return useMutation({
 		mutationFn: (payload: UpdateCulturalProjectTypePayload) =>
 			api.updateProjectType(accountId, payload),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: projectTypesQueryKey });
 			enqueueSnackbar('Project type updated', { variant: 'success' });
@@ -134,6 +139,7 @@ export const useDeleteCulturalProjectType = () => {
 	const accountId = useAccountId();
 	return useMutation({
 		mutationFn: (id: number) => api.deleteProjectType(accountId, id),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: projectTypesQueryKey });
 			enqueueSnackbar('Project type deleted', { variant: 'success' });
@@ -144,7 +150,7 @@ export const useDeleteCulturalProjectType = () => {
 };
 
 // ════════════════════════════════════════════════════════════════════════════
-// ACTIVITY TYPES — full CRUD
+// ACTIVITY TYPES
 // ════════════════════════════════════════════════════════════════════════════
 
 export const useCulturalActivityTypes = () => {
@@ -152,7 +158,8 @@ export const useCulturalActivityTypes = () => {
 	return useQuery({
 		queryKey: activityTypesQueryKey,
 		queryFn: () => api.getActivityTypes(accountId),
-		enabled: accountId > 0
+		enabled: accountId > 0,
+		retry: false, refetchOnWindowFocus: false
 	});
 };
 
@@ -163,6 +170,7 @@ export const useCreateCulturalActivityType = () => {
 	return useMutation({
 		mutationFn: (payload: CreateCulturalActivityTypePayload) =>
 			api.createActivityType(accountId, payload),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: activityTypesQueryKey });
 			enqueueSnackbar('Activity type created', { variant: 'success' });
@@ -179,6 +187,7 @@ export const useUpdateCulturalActivityType = () => {
 	return useMutation({
 		mutationFn: (payload: UpdateCulturalActivityTypePayload) =>
 			api.updateActivityType(accountId, payload),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: activityTypesQueryKey });
 			enqueueSnackbar('Activity type updated', { variant: 'success' });
@@ -194,6 +203,7 @@ export const useDeleteCulturalActivityType = () => {
 	const accountId = useAccountId();
 	return useMutation({
 		mutationFn: (id: number) => api.deleteActivityType(accountId, id),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: activityTypesQueryKey });
 			enqueueSnackbar('Activity type deleted', { variant: 'success' });
@@ -212,7 +222,8 @@ export const useCulturalProjects = () => {
 	return useQuery({
 		queryKey: projectsQueryKey,
 		queryFn: () => api.getProjects(accountId),
-		enabled: accountId > 0
+		enabled: accountId > 0,
+		retry: false, refetchOnWindowFocus: false
 	});
 };
 
@@ -221,7 +232,8 @@ export const useCulturalProject = (id: number) => {
 	return useQuery({
 		queryKey: projectQueryKey(id),
 		queryFn: () => api.getProject(accountId, id),
-		enabled: id > 0 && accountId > 0
+		enabled: id > 0 && accountId > 0,
+		retry: false, refetchOnWindowFocus: false
 	});
 };
 
@@ -232,6 +244,7 @@ export const useCreateCulturalProject = () => {
 	return useMutation({
 		mutationFn: (payload: CreateCulturalProjectPayload) =>
 			api.createProject(accountId, payload),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
 			enqueueSnackbar('Project created successfully', { variant: 'success' });
@@ -248,6 +261,7 @@ export const useUpdateCulturalProject = () => {
 	return useMutation({
 		mutationFn: (payload: UpdateCulturalProjectPayload) =>
 			api.updateProject(accountId, payload),
+		retry: false,
 		onSuccess: (_, payload) => {
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
 			qc.invalidateQueries({ queryKey: projectQueryKey(payload.id) });
@@ -264,6 +278,7 @@ export const useDeleteCulturalProject = () => {
 	const accountId = useAccountId();
 	return useMutation({
 		mutationFn: (id: number) => api.deleteProject(accountId, id),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
 			enqueueSnackbar('Project deleted', { variant: 'success' });
@@ -282,7 +297,8 @@ export const useCulturalActivities = () => {
 	return useQuery({
 		queryKey: activitiesQueryKey,
 		queryFn: () => api.getActivities(accountId),
-		enabled: accountId > 0
+		enabled: accountId > 0,
+		retry: false, refetchOnWindowFocus: false
 	});
 };
 
@@ -291,7 +307,8 @@ export const useCulturalActivity = (id: number) => {
 	return useQuery({
 		queryKey: activityQueryKey(id),
 		queryFn: () => api.getActivity(accountId, id),
-		enabled: id > 0 && accountId > 0
+		enabled: id > 0 && accountId > 0,
+		retry: false, refetchOnWindowFocus: false
 	});
 };
 
@@ -302,6 +319,7 @@ export const useCreateCulturalActivity = () => {
 	return useMutation({
 		mutationFn: (payload: CreateCulturalActivityPayload) =>
 			api.createActivity(accountId, payload),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
 			enqueueSnackbar('Activity created successfully', { variant: 'success' });
@@ -318,6 +336,7 @@ export const useUpdateCulturalActivity = () => {
 	return useMutation({
 		mutationFn: (payload: UpdateCulturalActivityPayload) =>
 			api.updateActivity(accountId, payload),
+		retry: false,
 		onSuccess: (_, payload) => {
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
 			qc.invalidateQueries({ queryKey: activityQueryKey(payload.id) });
@@ -334,6 +353,7 @@ export const useDeleteCulturalActivity = () => {
 	const accountId = useAccountId();
 	return useMutation({
 		mutationFn: (id: number) => api.deleteActivity(accountId, id),
+		retry: false,
 		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
 			enqueueSnackbar('Activity deleted', { variant: 'success' });
