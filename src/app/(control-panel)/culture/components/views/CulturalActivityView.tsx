@@ -32,7 +32,17 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 		borderBottomWidth: 1,
 		borderStyle: 'solid',
 		borderColor: theme.vars.palette.divider
-	}
+	},
+	'& .FusePageSimple-root': {
+		overflow: 'hidden',
+	},
+	'& .FusePageSimple-wrapper': {
+		overflow: 'hidden',
+	},
+	'& .FusePageSimple-contentWrapper': {
+		overflowY: 'auto',
+		WebkitOverflowScrolling: 'touch',
+	},
 }));
 
 function safeFormat(dateStr?: string) {
@@ -160,6 +170,7 @@ export default function CulturalActivityView() {
 	return (
 		<>
 			<Root
+				scroll="content"
 				header={
 					<div className="flex items-center gap-2 px-6 py-4 flex-wrap">
 						<IconButton component={NavLinkAdapter} to="/culture/activities" size="small">
@@ -182,7 +193,6 @@ export default function CulturalActivityView() {
 							</div>
 						</div>
 
-						{/* ── Actions ── */}
 						<div className="flex items-center gap-2 flex-wrap">
 							{canValidate && (
 								<Tooltip title="Validate this activity so it can be published">
@@ -193,10 +203,7 @@ export default function CulturalActivityView() {
 										startIcon={isValidating
 											? <CircularProgress size={14} />
 											: <FuseSvgIcon size={15}>lucide:shield-check</FuseSvgIcon>}
-										sx={{
-											textTransform: 'none', fontWeight: 700,
-											backgroundColor: '#1d4ed8', '&:hover': { backgroundColor: '#1e40af' }
-										}}
+										sx={{ textTransform: 'none', fontWeight: 700, backgroundColor: '#1d4ed8', '&:hover': { backgroundColor: '#1e40af' } }}
 									>
 										{isValidating ? 'Validating…' : 'Validate'}
 									</Button>
@@ -212,10 +219,7 @@ export default function CulturalActivityView() {
 										startIcon={isPublishing
 											? <CircularProgress size={14} />
 											: <FuseSvgIcon size={15}>lucide:send</FuseSvgIcon>}
-										sx={{
-											textTransform: 'none', fontWeight: 700,
-											backgroundColor: '#15803d', '&:hover': { backgroundColor: '#166534' }
-										}}
+										sx={{ textTransform: 'none', fontWeight: 700, backgroundColor: '#15803d', '&:hover': { backgroundColor: '#166534' } }}
 									>
 										{isPublishing ? 'Publishing…' : 'Publish'}
 									</Button>
@@ -253,7 +257,6 @@ export default function CulturalActivityView() {
 				content={
 					<div className="mx-auto w-full max-w-3xl p-6 flex flex-col gap-6">
 
-						{/* Draft banner */}
 						{canValidate && (
 							<motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
 								<Paper sx={{ p: 2, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 2, backgroundColor: '#fefce8', border: '1px solid #fde047' }}>
@@ -279,7 +282,6 @@ export default function CulturalActivityView() {
 							</motion.div>
 						)}
 
-						{/* Approved-not-published banner */}
 						{canPublish && (
 							<motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
 								<Paper sx={{ p: 2, borderRadius: '12px', display: 'flex', alignItems: 'center', gap: 2, backgroundColor: '#eff6ff', border: '1px solid #93c5fd' }}>
@@ -351,7 +353,6 @@ export default function CulturalActivityView() {
 				}
 			/>
 
-			{/* ── Edit dialog ── */}
 			{editForm && (
 				<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 					<DialogTitle sx={{ fontWeight: 800 }}>Edit Activity</DialogTitle>
@@ -395,7 +396,6 @@ export default function CulturalActivityView() {
 				</Dialog>
 			)}
 
-			{/* ── Confirm validate ── */}
 			<Dialog open={confirmValidate} onClose={() => setConfirmValidate(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Validate Activity?</DialogTitle>
 				<DialogContent>
@@ -417,7 +417,6 @@ export default function CulturalActivityView() {
 				</DialogActions>
 			</Dialog>
 
-			{/* ── Confirm publish ── */}
 			<Dialog open={confirmPublish} onClose={() => setConfirmPublish(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Publish Activity?</DialogTitle>
 				<DialogContent>
@@ -438,7 +437,6 @@ export default function CulturalActivityView() {
 				</DialogActions>
 			</Dialog>
 
-			{/* ── Confirm delete ── */}
 			<Dialog open={confirmDelete} onClose={() => setConfirmDelete(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '14px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Delete Activity?</DialogTitle>
 				<DialogContent>

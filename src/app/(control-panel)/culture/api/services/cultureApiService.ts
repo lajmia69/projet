@@ -156,7 +156,7 @@ export const validateProject = async (
 	const res = await fetchWithAuth(`${BASE_URL}/culture/project/validate/${accountId}/`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ id: projectId })
+		body: JSON.stringify({ id: projectId, is_approved_content: true })  // ✅ FIXED
 	});
 	const data = await handleResponse<CulturalProject>(res);
 	console.log('validateProject response:', JSON.stringify(data, null, 2));
@@ -170,7 +170,7 @@ export const publishProject = async (
 	const res = await fetchWithAuth(`${BASE_URL}/culture/project/publish/${accountId}/`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ id: projectId })
+		body: JSON.stringify({ id: projectId, is_published: true })  // ✅ FIXED
 	});
 	const data = await handleResponse<CulturalProject>(res);
 	console.log('publishProject response:', JSON.stringify(data, null, 2));
@@ -235,7 +235,7 @@ export const validateActivity = async (
 	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/validate/${accountId}/`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ id: activityId })
+		body: JSON.stringify({ id: activityId, is_approved_content: true })  // ✅ FIXED
 	});
 	const data = await handleResponse<CulturalActivity>(res);
 	console.log('validateActivity response:', JSON.stringify(data, null, 2));
@@ -249,7 +249,7 @@ export const publishActivity = async (
 	const res = await fetchWithAuth(`${BASE_URL}/culture/activity/publish/${accountId}/`, {
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ id: activityId })
+		body: JSON.stringify({ id: activityId, is_published: true })  // ✅ FIXED
 	});
 	const data = await handleResponse<CulturalActivity>(res);
 	console.log('publishActivity response:', JSON.stringify(data, null, 2));
