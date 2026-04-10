@@ -25,7 +25,7 @@ const quickLinks = [
 		label: 'Lessons',
 		description: 'Browse and listen to educational content',
 		icon: 'heroicons-outline:academic-cap',
-		url: '/lessons',
+		url: '/content/lessons',
 		color: '#2563eb',
 		bg: 'linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%)',
 		accent: 'rgba(37,99,235,0.15)'
@@ -371,7 +371,7 @@ export default function WelcomeView() {
 							>
 								<Button
 									component={Link}
-									to="/lessons"
+									to="/content/lessons"
 									variant="contained"
 									size="medium"
 									startIcon={<FuseSvgIcon size={16}>heroicons-outline:academic-cap</FuseSvgIcon>}

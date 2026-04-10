@@ -23,7 +23,7 @@ const navigationConfig: FuseNavItemType[] = [
 				auth: authRoles.member,
 				type: 'item',
 				icon: 'heroicons-outline:star',
-				url: '/dashboard'
+				url: '/dashboard/welcome'
 			},
 			{
 				id: 'platform-lesson',
@@ -32,7 +32,7 @@ const navigationConfig: FuseNavItemType[] = [
 				auth: authRoles.member,
 				type: 'item',
 				icon: 'heroicons-outline:academic-cap',
-				url: '/lessons'
+				url: '/content/lessons'
 			}
 		]
 	},
