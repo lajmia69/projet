@@ -1,10 +1,11 @@
 interface DurationDisplayProps {
-	isoDuration: string;
+	isoDuration?: string | null;
 	format?: 'short' | 'long' | 'seconds';
 }
 
 export default function DurationDisplay({ isoDuration, format = 'short' }: DurationDisplayProps) {
 	const parseDuration = (duration: string): number => {
+		if (!duration) return 0;
 		const match = duration.match(/P(?:(\d+)D)?T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
 
 		if (!match) return 0;
@@ -42,29 +43,9 @@ export default function DurationDisplay({ isoDuration, format = 'short' }: Durat
 		}
 	};
 
+	if (!isoDuration) return <span className="leading-none whitespace-nowrap">—</span>;
+
 	const totalSeconds = parseDuration(isoDuration);
 
 	return <span className="leading-none whitespace-nowrap">{formatDuration(totalSeconds)}</span>;
 }
-
-// Usage
-// const App = () => {
-// 	return (
-// 		<div>
-// 			<DurationDisplay isoDuration="P0DT00H08M35S" />
-// 			{/* Renders: 8:35 */}
-//
-// 			<DurationDisplay
-// 				isoDuration="P0DT00H08M35S"
-// 				format="long"
-// 			/>
-// 			{/* Renders: 8 minutes, 35 seconds */}
-//
-// 			<DurationDisplay
-// 				isoDuration="P0DT00H08M35S"
-// 				format="seconds"
-// 			/>
-// 			{/* Renders: 515s */}
-// 		</div>
-// 	);
-// };
