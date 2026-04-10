@@ -13,8 +13,9 @@ const Root = styled(FusePageSimple)(() => ({
 	'& .FusePageSimple-header': {
 		display: 'none'
 	},
-	'& .FusePageSimple-contentWrapper': {
-		overflow: 'auto'
+	'& .FusePageSimple-content': {
+		display: 'flex',
+		flexDirection: 'column'
 	}
 }));
 
@@ -237,11 +238,10 @@ export default function WelcomeView() {
 
 	return (
 		<Root
-			scroll="page"
+			scroll="content"
 			content={
 				<div
 					style={{
-						minHeight: '100vh',
 						display: 'flex',
 						flexDirection: 'column'
 					}}
@@ -389,26 +389,6 @@ export default function WelcomeView() {
 									}}
 								>
 									Browse Lessons
-								</Button>
-								<Button
-									component={Link}
-									to="/administration/dashboard"
-									variant="outlined"
-									size="medium"
-									sx={{
-										borderColor: 'rgba(255,255,255,0.2)',
-										color: 'rgba(255,255,255,0.75)',
-										fontWeight: 600,
-										textTransform: 'none',
-										borderRadius: '10px',
-										px: 3,
-										'&:hover': {
-											borderColor: 'rgba(255,255,255,0.45)',
-											backgroundColor: 'rgba(255,255,255,0.06)'
-										}
-									}}
-								>
-									Go to Admin
 								</Button>
 							</motion.div>
 						</div>

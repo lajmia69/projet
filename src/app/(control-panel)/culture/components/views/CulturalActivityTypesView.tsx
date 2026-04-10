@@ -193,7 +193,6 @@ export default function CulturalActivityTypesView() {
 					<Box className="relative flex shrink-0 items-center justify-center overflow-hidden px-4 py-10 md:p-16">
 						<div className="mx-auto flex w-full flex-col items-center justify-center">
 							<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-								<PageBreadcrumb color="inherit" borderColor="inherit" className="mb-4" />
 							</motion.div>
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05 } }}>
 								<Typography color="inherit" className="text-center text-4xl font-extrabold tracking-tight">
