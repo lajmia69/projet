@@ -209,7 +209,7 @@ const navigationConfig: FuseNavItemType[] = [
 				title: 'Lessons',
 				type: 'collapse',
 				icon: 'heroicons-outline:academic-cap',
-				auth: authRoles.contentAdmin,
+				auth: authRoles.LessonContentCreator,
 				children: [
 					{ id: 'lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/content/lessons' }
 				]
@@ -219,7 +219,7 @@ const navigationConfig: FuseNavItemType[] = [
 				title: 'Podcast',
 				type: 'collapse',
 				icon: 'heroicons-outline:microphone',
-				auth: authRoles.contentAdmin,
+				auth: authRoles.podcastContentCreator,
 				children: [
 					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.contentAdmin, type: 'item', url: '/content/podcast/courses' }
 				]

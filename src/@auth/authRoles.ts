@@ -1,47 +1,91 @@
 /**
  * The authRoles object defines the authorization roles for the Fuse application.
+ * Updated to include both spaced and non-spaced strings to match API response.
  */
 const authRoles = {
+	superAdminOnly: ['Super Admin', 'SuperAdmin'],
+	
+	contentAdminOnly: ['Content Admin', 'ContentAdmin', 'Super Admin', 'SuperAdmin'],
+	contentAdmin: ['Content Admin', 'ContentAdmin', 'Super Admin', 'SuperAdmin'],
+	
+	memberAdminOnly: ['Member Admin', 'MemberAdmin', 'Super Admin', 'SuperAdmin'],
+	memberAdmin: ['Member Admin', 'MemberAdmin', 'Super Admin', 'SuperAdmin'],
+	
+	studioAdminOnly: ['Studio Admin', 'StudioAdmin', 'Super Admin', 'SuperAdmin'],
+	studioAdmin: ['Studio Admin', 'StudioAdmin', 'Super Admin', 'SuperAdmin'],
+	
+	Contact: ['Contact', 'Super Admin', 'SuperAdmin'],
+
+	radioContentCreator: [
+		'Radio Content Creator', 
+		'RadioContentCreator', 
+		'Content Admin', 
+		'ContentAdmin', 
+		'Super Admin', 
+		'SuperAdmin'
+	],
+	podcastContentCreator: [
+		'Podcast Content Creator', 
+		'PodcastContentCreator', 
+		'Content Admin', 
+		'ContentAdmin', 
+		'Super Admin', 
+		'SuperAdmin'
+	],
+	cultureContentCreator: [
+		'Culture Content Creator', 
+		'CultureContentCreator', 
+		'Content Admin', 
+		'ContentAdmin', 
+		'Super Admin', 
+		'SuperAdmin'
+	],
+	LessonContentCreator: [
+		'Lesson Content Creator', 
+		'LessonContentCreator', 
+		'Content Admin', 
+		'ContentAdmin', 
+		'Super Admin', 
+		'SuperAdmin'
+	],
+	
+	studioStaff: [
+		'Studio Staff', 
+		'StudioStaff', 
+		'Studio Admin', 
+		'StudioAdmin', 
+		'Super Admin', 
+		'SuperAdmin'
+	],
+
 	/**
-	 * The admin role grants access to users with the 'admin' role.
-	 */
-	superAdminOnly: ['SuperAdmin'],
-	contentAdminOnly: ['ContentAdmin' , 'SuperAdmin'],
-	contentAdmin: ['ContentAdmin', 'SuperAdmin'],
-	memberAdminOnly: ['MemberAdmin' , 'SuperAdmin'],
-	memberAdmin: ['MemberAdmin', 'SuperAdmin'],
-	studioAdminOnly: ['StudioAdmin' , 'SuperAdmin'],
-	studioAdmin: ['StudioAdmin', 'SuperAdmin'],
-	Contact : ['Contact', 'SuperAdmin'],
-	/**
-	 * The staff role grants access to users with the 'admin' or 'staff' role.
-	 */
-	radioContentCreator: ['RadioContentCreator', 'ContentAdmin', 'SuperAdmin'],
-	podcastContentCreator: ['PodcastContentCreator', 'ContentAdmin', 'SuperAdmin'],
-	cultureContentCreator: ['CultureContentCreator', 'ContentAdmin', 'SuperAdmin'],
-	LessonContentCreator: ['	LessonContentCreator', 'ContentAdmin', 'SuperAdmin'],
-	studioStaff: ['StudioStaff', 'StudioAdmin', 'SuperAdmin'],
-	/**
-	 * The user role grants access to users with the 'admin', 'staff', or 'user' role.
+	 * The member array includes all roles that have basic access to the platform.
 	 */
 	member: [
+		'Super Admin',
 		'SuperAdmin',
+		'Content Admin',
 		'ContentAdmin',
+		'Member Admin',
 		'MemberAdmin',
+		'Studio Admin',
 		'StudioAdmin',
+		'Studio Staff',
 		'StudioStaff',
+		'Radio Content Creator',
 		'RadioContentCreator',
-		'PoadcastContentCreator',
+		'Podcast Content Creator',
+		'PodcastContentCreator',
+		'Culture Content Creator',
 		'CultureContentCreator',
+		'Lesson Content Creator',
 		'LessonContentCreator',
 		'Member',
 		'Contact',
+		'Application',
 		'application'
-		],
+	],
 
-	/**
-	 * The onlyGuest role grants access to unauthenticated users.
-	 */
 	onlyGuest: []
 };
 
