@@ -28,16 +28,17 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 	const pathname = usePathname();
 
 	const handleRedirection = useCallback(() => {
-		const redirectUrl = getSessionRedirectUrl() || loginRedirectUrl;
+    const redirectUrl = getSessionRedirectUrl() || loginRedirectUrl;
 
-		if (isGuest) {
-			navigate('/sign-in');
-		} else {
-			navigate(redirectUrl);
-			resetSessionRedirectUrl();
-		}
-	}, [isGuest, loginRedirectUrl, navigate]);
-
+    if (isGuest) {
+        navigate('/sign-in');
+    } else {
+        // Don't loop back into a protected path
+        const safeUrl = redirectUrl === pathname ? '/401' : redirectUrl;
+        navigate(safeUrl);
+        resetSessionRedirectUrl();
+    }
+}, [isGuest, loginRedirectUrl, navigate, pathname]);
 	useEffect(() => {
 		if (isLoading) return;
 
