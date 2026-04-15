@@ -241,24 +241,6 @@ const navigationConfig: FuseNavItemType[] = [
 		]
 	},
 
-	// ── Member ───────────────────────────────────────────────────────────────
-	{
-		id: 'member',
-		type: 'group',
-		title: 'Member',
-		translate: 'MEMBER',
-		children: [
-			{
-				id: 'member-example',
-				title: 'Example',
-				translate: 'EXAMPLE',
-				auth: authRoles.memberAdmin,
-				type: 'item',
-				icon: 'heroicons-outline:star',
-				url: '/member/example'
-			}
-		]
-	}
 ];
 
 export default navigationConfig;
