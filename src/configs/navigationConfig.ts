@@ -41,9 +41,10 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:radio',
 				auth: authRoles.member,
 				children: [
-					{ id: 'radio-content-emissions', title: 'Emissions',  auth: authRoles.member, type: 'item', url: '/content/radio/emissions' },
-					{ id: 'radio-content-episodes',  title: 'Episodes',   auth: authRoles.member, type: 'item', url: '/content/radio/episodes' },
-					{ id: 'radio-content-reportage', title: 'Reportage',  auth: authRoles.member, type: 'item', url: '/content/radio/reportage' }
+					// Add 'platform-' prefix to make IDs unique
+					{ id: 'platform-radio-emissions', title: 'Emissions',  auth: authRoles.member, type: 'item', url: '/content/radio/emissions' },
+					{ id: 'platform-radio-episodes',  title: 'Episodes',   auth: authRoles.member, type: 'item', url: '/content/radio/episodes' },
+					{ id: 'platform-radio-reportage', title: 'Reportage',  auth: authRoles.member, type: 'item', url: '/content/radio/reportage' }
 				]
 			}
 			,{
@@ -53,7 +54,8 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:microphone',
 				auth: authRoles.member,
 				children: [
-					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.member, type: 'item', url: '/content/podcast/courses' }
+					// Add 'platform-' prefix to make ID unique
+					{ id: 'platform-podcast-courses', title: 'Episodes', auth: authRoles.member, type: 'item', url: '/content/podcast/courses' }
 				]
 			}
 		
