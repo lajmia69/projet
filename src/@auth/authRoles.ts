@@ -34,7 +34,7 @@ const authRoles = {
 		'CultureContentCreator',
 		'Teacher',
 		'Member'
-	],
+		],
 
 	/**
 	 * The onlyGuest role grants access to unauthenticated users.

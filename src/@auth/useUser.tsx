@@ -8,20 +8,18 @@ import setIn from '@/utils/setIn';
 type useUser = {
 	data: User | null;
 	isGuest: boolean;
+	isLoading: boolean; // 👈 added
 	updateUser: (updates: Partial<User>) => Promise<User | undefined>;
 	updateUserSettings: (newSettings: User['settings']) => Promise<User['settings'] | undefined>;
 	signOut: () => Promise<void>;
 };
 
 function useUser(): useUser {
-	const { data, update } = useSession();
+	const { data, update, status } = useSession(); // 👈 destructure status
 	const user = useMemo(() => data?.db, [data]);
 	const isGuest = useMemo(() => !user?.role || user?.role?.length === 0, [user]);
+	const isLoading = status === 'loading'; // 👈 reliable loading flag from next-auth
 
-	/**
-	 * Update user
-	 * Uses current auth provider's updateUser method
-	 */
 	async function handleUpdateUser(_data: Partial<User>) {
 		const response = await authUpdateDbUser(_data);
 
@@ -31,7 +29,6 @@ function useUser(): useUser {
 
 		const updatedUser = (await response.json()) as User;
 
-		// Update AuthJs session data
 		setTimeout(() => {
 			update();
 		}, 300);
@@ -39,10 +36,6 @@ function useUser(): useUser {
 		return updatedUser;
 	}
 
-	/**
-	 * Update user settings
-	 * Uses current auth provider's updateUser method
-	 */
 	async function handleUpdateUserSettings(newSettings: User['settings']) {
 		const newUser = setIn(user, 'settings', newSettings) as User;
 
@@ -55,9 +48,6 @@ function useUser(): useUser {
 		return updatedUser?.settings;
 	}
 
-	/**
-	 * Sign out
-	 */
 	async function handleSignOut() {
 		return signOut();
 	}
@@ -65,6 +55,7 @@ function useUser(): useUser {
 	return {
 		data: user,
 		isGuest,
+		isLoading, // 👈 added
 		signOut: handleSignOut,
 		updateUser: handleUpdateUser,
 		updateUserSettings: handleUpdateUserSettings

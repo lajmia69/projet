@@ -64,6 +64,8 @@ const navigationConfig: FuseNavItemType[] = [
 	{
 		id: 'culture',
 		type: 'group',
+		auth : authRoles.cultureContentCreator,
+
 		title: 'Culture',
 		children: [
 			// ── Projects ─────────────────────────────────────────────────────
@@ -71,6 +73,7 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'culture-projects',
 				title: 'Cultural Projects',
 				type: 'collapse',
+						auth : authRoles.cultureContentCreator,
 				icon: 'heroicons-outline:folder-open',
 				children: [
 					{
@@ -84,6 +87,8 @@ const navigationConfig: FuseNavItemType[] = [
 						id: 'culture-project-types',
 						title: 'Project Types',
 						type: 'item',
+						auth : authRoles.cultureContentCreator,
+
 						icon: 'heroicons-outline:tag',
 						url: '/culture/project-types'
 					}
@@ -136,6 +141,7 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'administration-accounts',
 				title: 'Account',
 				type: 'collapse',
+				auth: authRoles.memberAdmin,
 				icon: 'heroicons-outline:user-group',
 				translate: 'ACCOUNTS',
 				children: [
@@ -161,6 +167,7 @@ const navigationConfig: FuseNavItemType[] = [
 				title: 'Radio',
 				type: 'collapse',
 				icon: 'heroicons-outline:radio',
+				auth : authRoles.radioContentCreator,
 				translate: 'RADIO',
 				children: [
 					{ id: 'radio-emissions',     title: 'Emissions',      type: 'item', url: '/administration/radio/emissions' },

@@ -20,14 +20,13 @@ type AuthGuardProps = {
 };
 
 function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuardProps) {
-	const { data: user, isGuest } = useUser();
+	const { data: user, isGuest, isLoading } = useUser(); // 👈 use real isLoading
 	const userRole = user?.role;
 	const navigate = useNavigate();
 
 	const [accessGranted, setAccessGranted] = useState<boolean>(false);
 	const pathname = usePathname();
 
-	// Function to handle redirection
 	const handleRedirection = useCallback(() => {
 		const redirectUrl = getSessionRedirectUrl() || loginRedirectUrl;
 
@@ -39,8 +38,9 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 		}
 	}, [isGuest, loginRedirectUrl, navigate]);
 
-	// Check user's permissions and set access granted state
 	useEffect(() => {
+		if (isLoading) return; // 👈 next-auth is still fetching session, do nothing
+
 		const isOnlyGuestAllowed = Array.isArray(auth) && auth.length === 0;
 		const userHasPermission = FuseUtils.hasPermission(auth, userRole);
 		const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404'];
@@ -54,10 +54,6 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 			if (isGuest && !ignoredPaths.includes(pathname)) {
 				setSessionRedirectUrl(pathname);
 			} else if (!isGuest && !ignoredPaths.includes(pathname)) {
-				/**
-				 * If user is member but don't have permission to view the route
-				 * redirected to main route '/'
-				 */
 				if (isOnlyGuestAllowed) {
 					setSessionRedirectUrl('/');
 				} else {
@@ -67,12 +63,9 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 		}
 
 		handleRedirection();
-	}, [auth, userRole, isGuest, pathname, handleRedirection]);
+	}, [auth, userRole, isGuest, isLoading, pathname, handleRedirection]);
 
-	// Return children if access is granted, otherwise null
 	return accessGranted ? children : <FuseLoading />;
 }
-
-// the landing page "/" redirected to /example but the example npt
 
 export default AuthGuardRedirect;
