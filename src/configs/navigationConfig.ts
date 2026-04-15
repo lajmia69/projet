@@ -20,7 +20,7 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'platform-home',
 				title: 'Home',
 				translate: 'HOME',
-				auth: authRoles.anyUser,
+				auth: authRoles.member,
 				type: 'item',
 				icon: 'heroicons-outline:star',
 				url: '/dashboard/welcome'
@@ -73,20 +73,21 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'culture-projects',
 				title: 'Cultural Projects',
 				type: 'collapse',
-						auth : authRoles.cultureContentCreator,
+				auth : authRoles.cultureContentCreator,
 				icon: 'heroicons-outline:folder-open',
 				children: [
 					{
 						id: 'culture-projects-list',
 						title: 'All Projects',
 						type: 'item',
+						auth : authRoles.cultureContentCreator,
 						icon: 'heroicons-outline:view-grid',
 						url: '/culture/projects'
 					},
 					{
 						id: 'culture-project-types',
 						title: 'Project Types',
-						type: 'item',
+						type: 'item',						
 						auth : authRoles.cultureContentCreator,
 
 						icon: 'heroicons-outline:tag',
@@ -100,12 +101,14 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'culture-activities',
 				title: 'Cultural Activities',
 				type: 'collapse',
+				auth : authRoles.cultureContentCreator,
 				icon: 'heroicons-outline:sparkles',
 				children: [
 					{
 						id: 'culture-activities-list',
 						title: 'All Activities',
 						type: 'item',
+						auth : authRoles.cultureContentCreator,
 						icon: 'heroicons-outline:view-grid',
 						url: '/culture/activities'
 					},
@@ -113,6 +116,7 @@ const navigationConfig: FuseNavItemType[] = [
 						id: 'culture-activity-types',
 						title: 'Activity Types',
 						type: 'item',
+						auth : authRoles.cultureContentCreator,
 						icon: 'heroicons-outline:tag',
 						url: '/culture/activity-types'
 					}
@@ -152,17 +156,6 @@ const navigationConfig: FuseNavItemType[] = [
 				]
 			},
 			{
-				id: 'administration-audio',
-				title: 'Audio',
-				type: 'collapse',
-				icon: 'heroicons-outline:microphone',
-				translate: 'AUDIO',
-				children: [
-					{ id: 'audio-list',    title: 'Audios',  type: 'item', url: '/administration/audios' },
-					{ id: 'audio-formats', title: 'Formats', type: 'item', url: '/administration/formats' }
-				]
-			},
-			{
 				id: 'administration-radio',
 				title: 'Radio',
 				type: 'collapse',
@@ -191,13 +184,16 @@ const navigationConfig: FuseNavItemType[] = [
 		translate: 'STUDIO',
 		children: [
 			{
-				id: 'studio-example',
-				title: 'Example',
-				translate: 'EXAMPLE',
-				auth: authRoles.studioStaff,
-				type: 'item',
-				icon: 'heroicons-outline:star',
-				url: '/studio/example'
+				id: 'administration-audio',
+				title: 'Audio',
+				type: 'collapse',
+				auth : authRoles.studioStaff,
+				icon: 'heroicons-outline:microphone',
+				translate: 'AUDIO',
+				children: [
+					{ id: 'audio-list',    title: 'Audios',  type: 'item', url: '/administration/audios' },
+					{ id: 'audio-formats', title: 'Formats', type: 'item', url: '/administration/formats' }
+				]
 			}
 		]
 	},

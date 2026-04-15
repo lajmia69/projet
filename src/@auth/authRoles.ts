@@ -6,19 +6,20 @@ const authRoles = {
 	 * The admin role grants access to users with the 'admin' role.
 	 */
 	superAdminOnly: ['SuperAdmin'],
-	contentAdminOnly: ['ContentAdmin'],
+	contentAdminOnly: ['ContentAdmin' , 'SuperAdmin'],
 	contentAdmin: ['ContentAdmin', 'SuperAdmin'],
-	memberAdminOnly: ['MemberAdmin'],
+	memberAdminOnly: ['MemberAdmin' , 'SuperAdmin'],
 	memberAdmin: ['MemberAdmin', 'SuperAdmin'],
-	studioAdminOnly: ['StudioAdmin'],
+	studioAdminOnly: ['StudioAdmin' , 'SuperAdmin'],
 	studioAdmin: ['StudioAdmin', 'SuperAdmin'],
+	Contact : ['Contact', 'SuperAdmin'],
 	/**
 	 * The staff role grants access to users with the 'admin' or 'staff' role.
 	 */
 	radioContentCreator: ['RadioContentCreator', 'ContentAdmin', 'SuperAdmin'],
-	broadcastContentCreator: ['BroadcastContentCreator', 'ContentAdmin', 'SuperAdmin'],
+	podcastContentCreator: ['PodcastContentCreator', 'ContentAdmin', 'SuperAdmin'],
 	cultureContentCreator: ['CultureContentCreator', 'ContentAdmin', 'SuperAdmin'],
-	teacher: ['Teacher', 'ContentAdmin', 'SuperAdmin'],
+	LessonContentCreator: ['	LessonContentCreator', 'ContentAdmin', 'SuperAdmin'],
 	studioStaff: ['StudioStaff', 'StudioAdmin', 'SuperAdmin'],
 	/**
 	 * The user role grants access to users with the 'admin', 'staff', or 'user' role.
@@ -30,12 +31,13 @@ const authRoles = {
 		'StudioAdmin',
 		'StudioStaff',
 		'RadioContentCreator',
-		'BroadcastContentCreator',
+		'PoadcastContentCreator',
 		'CultureContentCreator',
-		'Teacher',
-		'Member'
+		'LessonContentCreator',
+		'Member',
+		'Contact',
+		'application'
 		],
-		anyUser: null,
 
 	/**
 	 * The onlyGuest role grants access to unauthenticated users.
