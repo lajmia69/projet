@@ -34,6 +34,29 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:academic-cap',
 				url: '/content/lessons'
 			}
+				,{
+				id: 'platform-radio',
+				title: 'Radio',
+				type: 'collapse',
+				icon: 'heroicons-outline:radio',
+				auth: authRoles.member,
+				children: [
+					{ id: 'radio-content-emissions', title: 'Emissions',  auth: authRoles.member, type: 'item', url: '/content/radio/emissions' },
+					{ id: 'radio-content-episodes',  title: 'Episodes',   auth: authRoles.member, type: 'item', url: '/content/radio/episodes' },
+					{ id: 'radio-content-reportage', title: 'Reportage',  auth: authRoles.member, type: 'item', url: '/content/radio/reportage' }
+				]
+			}
+			,{
+				id: 'platform-podcast',
+				title: 'Podcast',
+				type: 'collapse',
+				icon: 'heroicons-outline:microphone',
+				auth: authRoles.member,
+				children: [
+					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.member, type: 'item', url: '/content/podcast/courses' }
+				]
+			}
+		
 		]
 	},
 
