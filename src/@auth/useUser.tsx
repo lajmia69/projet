@@ -8,17 +8,17 @@ import setIn from '@/utils/setIn';
 type useUser = {
 	data: User | null;
 	isGuest: boolean;
-	isLoading: boolean; // 👈 added
+	isLoading: boolean;
 	updateUser: (updates: Partial<User>) => Promise<User | undefined>;
 	updateUserSettings: (newSettings: User['settings']) => Promise<User['settings'] | undefined>;
 	signOut: () => Promise<void>;
 };
 
 function useUser(): useUser {
-	const { data, update, status } = useSession(); // 👈 destructure status
+	const { data, update, status } = useSession();
 	const user = useMemo(() => data?.db, [data]);
 	const isGuest = useMemo(() => !user?.role || user?.role?.length === 0, [user]);
-	const isLoading = status === 'loading'; // 👈 reliable loading flag from next-auth
+	const isLoading = status === 'loading';
 
 	async function handleUpdateUser(_data: Partial<User>) {
 		const response = await authUpdateDbUser(_data);
@@ -55,7 +55,7 @@ function useUser(): useUser {
 	return {
 		data: user,
 		isGuest,
-		isLoading, // 👈 added
+		isLoading,
 		signOut: handleSignOut,
 		updateUser: handleUpdateUser,
 		updateUserSettings: handleUpdateUserSettings

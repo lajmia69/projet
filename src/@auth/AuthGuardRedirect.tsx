@@ -20,7 +20,7 @@ type AuthGuardProps = {
 };
 
 function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuardProps) {
-	const { data: user, isGuest, isLoading } = useUser(); // 👈 use real isLoading
+	const { data: user, isGuest, isLoading } = useUser();
 	const userRole = user?.role;
 	const navigate = useNavigate();
 
@@ -39,11 +39,21 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 	}, [isGuest, loginRedirectUrl, navigate]);
 
 	useEffect(() => {
-		if (isLoading) return; // 👈 next-auth is still fetching session, do nothing
+		if (isLoading) return;
+
+		// ── TEMPORARY DEBUG — remove after fix ──────────────────────────────
+		console.log('🔐 Auth Debug:', {
+			auth,
+			userRole,
+			isGuest,
+			hasPermission: FuseUtils.hasPermission(auth, userRole),
+			pathname
+		});
+		// ────────────────────────────────────────────────────────────────────
 
 		const isOnlyGuestAllowed = Array.isArray(auth) && auth.length === 0;
 		const userHasPermission = FuseUtils.hasPermission(auth, userRole);
-		const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404'];
+		const ignoredPaths = ['/', '/callback', '/sign-in', '/sign-out', '/logout', '/404', '/401'];
 
 		if (!auth || (auth && userHasPermission) || (isOnlyGuestAllowed && isGuest)) {
 			setAccessGranted(true);
