@@ -4,9 +4,10 @@
  */
 const authRoles = {
 	superAdminOnly: ['Super Admin', 'SuperAdmin'],
+	admins: ['Super Admin', 'SuperAdmin', 'Content Admin', 'ContentAdmin', 'Member Admin', 'MemberAdmin'],
 	
 	contentAdminOnly: ['Content Admin', 'ContentAdmin', 'Super Admin', 'SuperAdmin'],
-	contentAdmin: ['Content Admin', 'ContentAdmin', 'Super Admin', 'SuperAdmin'],
+	contentAdmin: ['Content Admin', 'ContentAdmin', 'Super Admin', 'SuperAdmin' , 'lessonContentCreator', 'Lesson Content Creator', 'podcastContentCreator', 'Podcast Content Creator', 'radioContentCreator', 'Radio Content Creator'],
 	
 	memberAdminOnly: ['Member Admin', 'MemberAdmin', 'Super Admin', 'SuperAdmin'],
 	memberAdmin: ['Member Admin', 'MemberAdmin', 'Super Admin', 'SuperAdmin'],

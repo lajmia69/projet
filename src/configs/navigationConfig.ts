@@ -14,6 +14,7 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'platform',
 		type: 'group',
 		title: 'Platform',
+		auth: authRoles.member,
 		translate: 'PLATFORM',
 		children: [
 			{
@@ -131,6 +132,7 @@ const navigationConfig: FuseNavItemType[] = [
 	{
 		id: 'administration',
 		type: 'group',
+		auth : authRoles.admins,	
 		title: 'Administration',
 		translate: 'ADMINISTRATION',
 		children: [
@@ -165,45 +167,47 @@ const navigationConfig: FuseNavItemType[] = [
 				auth : authRoles.radioContentCreator,
 				translate: 'RADIO',
 				children: [
-					{ id: 'radio-emissions',     title: 'Emissions',      type: 'item', url: '/administration/radio/emissions' },
-					{ id: 'radio-emissiontypes', title: 'Emission Types',  type: 'item', url: '/administration/radio/emission-types' },
-					{ id: 'radio-episodes',      title: 'Episodes',        type: 'item', url: '/administration/radio/episodes' },
-					{ id: 'radio-episodeguests', title: 'Episode Guests',  type: 'item', url: '/administration/radio/episode-guests' },
-					{ id: 'radio-guesttypes',    title: 'Guest Types',     type: 'item', url: '/administration/radio/guest-types' },
-					{ id: 'radio-seasons',       title: 'Seasons',         type: 'item', url: '/administration/radio/seasons' },
-					{ id: 'radio-reportage',     title: 'Reportage',       type: 'item', url: '/administration/radio/reportages' },
-					{ id: 'radio-reportagetype', title: 'Reportage Types', type: 'item', url: '/administration/radio/reportage-types' }
+					{ id: 'radio-emissions',     title: 'Emissions', auth :authRoles.radioContentCreator ,     type: 'item', url: '/administration/radio/emissions' },
+					{ id: 'radio-emissiontypes', title: 'Emission Types', auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/emission-types' },
+					{ id: 'radio-episodes',      title: 'Episodes',       auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/episodes' },
+					{ id: 'radio-episodeguests', title: 'Episode Guests', auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/episode-guests' },
+					{ id: 'radio-guesttypes',    title: 'Guest Types',   auth :authRoles.radioContentCreator ,  type: 'item', url: '/administration/radio/guest-types' },
+					{ id: 'radio-seasons',       title: 'Seasons',      auth :authRoles.radioContentCreator ,   type: 'item', url: '/administration/radio/seasons' },
+					{ id: 'radio-reportage',     title: 'Reportage',    auth :authRoles.radioContentCreator ,   type: 'item', url: '/administration/radio/reportages' },
+					{ id: 'radio-reportagetype', title: 'Reportage Types',auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/reportage-types' }
 				]
-			}
+			},
+						{
+				id: 'administration-podcast',
+				title: 'Podcast',
+				type: 'collapse',
+				icon: 'heroicons-outline:microphone',
+				auth: authRoles.podcastContentCreator,
+				children: [
+					{ id: 'administration-podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcast/courses' },
+					{ id: 'administration-podcast-categories', title: 'Categories', auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcast/categories' }
+				]
+			},
+						{
+				id: 'administration-lessons',
+				title: 'Lessons',
+				type: 'collapse',
+				icon: 'heroicons-outline:academic-cap',
+				auth: authRoles.lessonContentCreator,
+				children: [
+					{ id: 'administration-lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/administration/lessons' }
+				]
+			},
 		]
 	},
 
-	// ── Studio ───────────────────────────────────────────────────────────────
-	{
-		id: 'studio',
-		type: 'group',
-		title: 'Studio',
-		translate: 'STUDIO',
-		children: [
-			{
-				id: 'administration-audio',
-				title: 'Audio',
-				type: 'collapse',
-				auth : authRoles.studioStaff,
-				icon: 'heroicons-outline:microphone',
-				translate: 'AUDIO',
-				children: [
-					{ id: 'audio-list',    title: 'Audios',  type: 'item', url: '/administration/audios' },
-					{ id: 'audio-formats', title: 'Formats', type: 'item', url: '/administration/formats' }
-				]
-			}
-		]
-	},
+
 
 	// ── Content ──────────────────────────────────────────────────────────────
 	{
 		id: 'content',
 		type: 'group',
+		auth : authRoles.contentAdmin,
 		title: 'Content',
 		children: [
 			{
@@ -223,7 +227,7 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:microphone',
 				auth: authRoles.podcastContentCreator,
 				children: [
-					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.contentAdmin, type: 'item', url: '/content/podcast/courses' }
+					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/content/podcast/courses' }
 				]
 			},
 			{
@@ -231,11 +235,33 @@ const navigationConfig: FuseNavItemType[] = [
 				title: 'Radio',
 				type: 'collapse',
 				icon: 'heroicons-outline:radio',
-				auth: authRoles.contentAdmin,
+				auth: authRoles.radioContentCreator,
 				children: [
-					{ id: 'radio-content-emissions', title: 'Emissions',  auth: authRoles.contentAdmin, type: 'item', url: '/content/radio/emissions' },
-					{ id: 'radio-content-episodes',  title: 'Episodes',   auth: authRoles.contentAdmin, type: 'item', url: '/content/radio/episodes' },
-					{ id: 'radio-content-reportage', title: 'Reportage',  auth: authRoles.contentAdmin, type: 'item', url: '/content/radio/reportage' }
+					{ id: 'radio-content-emissions', title: 'Emissions',  auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/emissions' },
+					{ id: 'radio-content-episodes',  title: 'Episodes',   auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/episodes' },
+					{ id: 'radio-content-reportage', title: 'Reportage',  auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/reportage' }
+				]
+			}
+		]
+	},
+		// ── Studio ───────────────────────────────────────────────────────────────
+	{
+		id: 'studio',
+		type: 'group',
+		title: 'Studio',
+		auth : authRoles.studioStaff,
+		translate: 'STUDIO',
+		children: [
+			{
+				id: 'administration-audio',
+				title: 'Audio',
+				type: 'collapse',
+				auth : authRoles.studioStaff,
+				icon: 'heroicons-outline:microphone',
+				translate: 'AUDIO',
+				children: [
+					{ id: 'audio-list',    title: 'Audios',  type: 'item', url: '/administration/audios' },
+					{ id: 'audio-formats', title: 'Formats', type: 'item', url: '/administration/formats' }
 				]
 			}
 		]
