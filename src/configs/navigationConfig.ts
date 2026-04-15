@@ -209,7 +209,7 @@ const navigationConfig: FuseNavItemType[] = [
 				title: 'Lessons',
 				type: 'collapse',
 				icon: 'heroicons-outline:academic-cap',
-				auth: authRoles.LessonContentCreator,
+				auth: authRoles.lessonContentCreator,
 				children: [
 					{ id: 'lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/content/lessons' }
 				]

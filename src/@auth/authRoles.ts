@@ -1,6 +1,6 @@
 /**
  * The authRoles object defines the authorization roles for the Fuse application.
- * Updated to include both spaced and non-spaced strings to match API response.
+ * This version includes both spaced and non-spaced strings to ensure matches.
  */
 const authRoles = {
 	superAdminOnly: ['Super Admin', 'SuperAdmin'],
@@ -40,7 +40,7 @@ const authRoles = {
 		'Super Admin', 
 		'SuperAdmin'
 	],
-	LessonContentCreator: [
+	lessonContentCreator: [
 		'Lesson Content Creator', 
 		'LessonContentCreator', 
 		'Content Admin', 
@@ -59,7 +59,8 @@ const authRoles = {
 	],
 
 	/**
-	 * The member array includes all roles that have basic access to the platform.
+	 * CRITICAL: This array is used by the 'Platform' menu items.
+	 * It MUST contain the spaced versions of the roles.
 	 */
 	member: [
 		'Super Admin',
