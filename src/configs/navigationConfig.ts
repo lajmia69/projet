@@ -20,7 +20,7 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'platform-home',
 				title: 'Home',
 				translate: 'HOME',
-				auth: authRoles.member,
+				auth: authRoles.anyUser,
 				type: 'item',
 				icon: 'heroicons-outline:star',
 				url: '/dashboard/welcome'

@@ -35,6 +35,7 @@ const authRoles = {
 		'Teacher',
 		'Member'
 		],
+		anyUser: null,
 
 	/**
 	 * The onlyGuest role grants access to unauthenticated users.
