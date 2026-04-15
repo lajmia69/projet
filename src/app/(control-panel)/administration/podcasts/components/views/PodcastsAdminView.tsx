@@ -112,7 +112,7 @@ export default function PodcastsAdminView() {
 		const payload: CreatePodcastPayload = {
 			name: form.name.trim(),
 			slug: toSlug(form.name),
-			description: form.description.trim(),
+			description: form.description.trim() || ' ',
 			transcription: {},
 			language_id: Number(form.language_id),
 			podcast_category_id: Number(form.podcast_category_id),
@@ -255,7 +255,8 @@ export default function PodcastsAdminView() {
 									variant="outlined"
 									color="secondary"
 									component={NavLinkAdapter}
-									to="/administration/podcast/categories"
+									// ✅ Fixed: was /administration/podcast/categories (singular, 404)
+									to="/administration/podcasts/categories"
 									startIcon={<FuseSvgIcon>lucide:folder</FuseSvgIcon>}
 								>
 									Categories

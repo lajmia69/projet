@@ -34,32 +34,29 @@ const navigationConfig: FuseNavItemType[] = [
 				type: 'item',
 				icon: 'heroicons-outline:academic-cap',
 				url: '/content/lessons'
-			}
-				,{
+			},
+			{
 				id: 'platform-radio',
 				title: 'Radio',
 				type: 'collapse',
 				icon: 'heroicons-outline:radio',
 				auth: authRoles.member,
 				children: [
-					// Add 'platform-' prefix to make IDs unique
 					{ id: 'platform-radio-emissions', title: 'Emissions',  auth: authRoles.member, type: 'item', url: '/content/radio/emissions' },
 					{ id: 'platform-radio-episodes',  title: 'Episodes',   auth: authRoles.member, type: 'item', url: '/content/radio/episodes' },
 					{ id: 'platform-radio-reportage', title: 'Reportage',  auth: authRoles.member, type: 'item', url: '/content/radio/reportage' }
 				]
-			}
-			,{
+			},
+			{
 				id: 'platform-podcast',
 				title: 'Podcast',
 				type: 'collapse',
 				icon: 'heroicons-outline:microphone',
 				auth: authRoles.member,
 				children: [
-					// Add 'platform-' prefix to make ID unique
 					{ id: 'platform-podcast-courses', title: 'Episodes', auth: authRoles.member, type: 'item', url: '/content/podcast/courses' }
 				]
 			}
-		
 		]
 	},
 
@@ -68,10 +65,8 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'culture',
 		type: 'group',
 		auth : authRoles.cultureContentCreator,
-
 		title: 'Culture',
 		children: [
-			// ── Projects ─────────────────────────────────────────────────────
 			{
 				id: 'culture-projects',
 				title: 'Cultural Projects',
@@ -90,16 +85,13 @@ const navigationConfig: FuseNavItemType[] = [
 					{
 						id: 'culture-project-types',
 						title: 'Project Types',
-						type: 'item',						
+						type: 'item',
 						auth : authRoles.cultureContentCreator,
-
 						icon: 'heroicons-outline:tag',
 						url: '/culture/project-types'
 					}
 				]
 			},
-
-			// ── Activities ───────────────────────────────────────────────────
 			{
 				id: 'culture-activities',
 				title: 'Cultural Activities',
@@ -132,7 +124,7 @@ const navigationConfig: FuseNavItemType[] = [
 	{
 		id: 'administration',
 		type: 'group',
-		auth : authRoles.admins,	
+		auth : authRoles.admins,
 		title: 'Administration',
 		translate: 'ADMINISTRATION',
 		children: [
@@ -167,28 +159,29 @@ const navigationConfig: FuseNavItemType[] = [
 				auth : authRoles.radioContentCreator,
 				translate: 'RADIO',
 				children: [
-					{ id: 'radio-emissions',     title: 'Emissions', auth :authRoles.radioContentCreator ,     type: 'item', url: '/administration/radio/emissions' },
-					{ id: 'radio-emissiontypes', title: 'Emission Types', auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/emission-types' },
-					{ id: 'radio-episodes',      title: 'Episodes',       auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/episodes' },
-					{ id: 'radio-episodeguests', title: 'Episode Guests', auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/episode-guests' },
-					{ id: 'radio-guesttypes',    title: 'Guest Types',   auth :authRoles.radioContentCreator ,  type: 'item', url: '/administration/radio/guest-types' },
-					{ id: 'radio-seasons',       title: 'Seasons',      auth :authRoles.radioContentCreator ,   type: 'item', url: '/administration/radio/seasons' },
-					{ id: 'radio-reportage',     title: 'Reportage',    auth :authRoles.radioContentCreator ,   type: 'item', url: '/administration/radio/reportages' },
-					{ id: 'radio-reportagetype', title: 'Reportage Types',auth :authRoles.radioContentCreator , type: 'item', url: '/administration/radio/reportage-types' }
+					{ id: 'radio-emissions',     title: 'Emissions',      auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/emissions' },
+					{ id: 'radio-emissiontypes', title: 'Emission Types', auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/emission-types' },
+					{ id: 'radio-episodes',      title: 'Episodes',       auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/episodes' },
+					{ id: 'radio-episodeguests', title: 'Episode Guests', auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/episode-guests' },
+					{ id: 'radio-guesttypes',    title: 'Guest Types',    auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/guest-types' },
+					{ id: 'radio-seasons',       title: 'Seasons',        auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/seasons' },
+					{ id: 'radio-reportage',     title: 'Reportage',      auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/reportages' },
+					{ id: 'radio-reportagetype', title: 'Reportage Types',auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/reportage-types' }
 				]
 			},
-						{
+			{
 				id: 'administration-podcast',
 				title: 'Podcast',
 				type: 'collapse',
 				icon: 'heroicons-outline:microphone',
 				auth: authRoles.podcastContentCreator,
 				children: [
-					{ id: 'administration-podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcast/courses' },
-					{ id: 'administration-podcast-categories', title: 'Categories', auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcast/categories' }
+					// ✅ Fixed: was /administration/podcast/... (singular, wrong path)
+					{ id: 'administration-podcast-courses',    title: 'Episodes',   auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcasts' },
+					{ id: 'administration-podcast-categories', title: 'Categories', auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcasts/categories' }
 				]
 			},
-						{
+			{
 				id: 'administration-lessons',
 				title: 'Lessons',
 				type: 'collapse',
@@ -200,8 +193,6 @@ const navigationConfig: FuseNavItemType[] = [
 			},
 		]
 	},
-
-
 
 	// ── Content ──────────────────────────────────────────────────────────────
 	{
@@ -244,7 +235,8 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
-		// ── Studio ───────────────────────────────────────────────────────────────
+
+	// ── Studio ───────────────────────────────────────────────────────────────
 	{
 		id: 'studio',
 		type: 'group',
@@ -266,7 +258,6 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
-
 ];
 
 export default navigationConfig;

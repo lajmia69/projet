@@ -18,7 +18,14 @@ import useUser from '@auth/useUser';
 import DataTable from 'src/components/data-table/DataTable';
 
 import { useSearchLessons } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/useSearchLessons';
-import { useCreateLesson, useUpdateLesson, useDeleteLesson } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
+import {
+	useCreateLesson,
+	useUpdateLesson,
+	useDeleteLesson,
+	useValidateLesson,
+	usePublicLesson,
+	usePublishLesson,
+} from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
 import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
 import { useLessonTypes, useModules } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmetahooks';
 import { Lesson, LessonCreatePayload, LessonUpdatePayload } from '@/app/(control-panel)/content/(lesson)/api/types';
@@ -57,6 +64,10 @@ export default function LessonsAdminView() {
 	const { mutate: createLesson, isPending: isCreating } = useCreateLesson(id, token);
 	const { mutate: updateLesson, isPending: isUpdating } = useUpdateLesson(id, token);
 	const { mutate: deleteLesson, isPending: isDeleting } = useDeleteLesson(id, token);
+	// ✅ Added: validate (approve), public, and publish mutations
+	const { mutate: validateLesson } = useValidateLesson(id, token);
+	const { mutate: publicLesson } = usePublicLesson(id, token);
+	const { mutate: publishLesson } = usePublishLesson(id, token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -96,7 +107,8 @@ export default function LessonsAdminView() {
 		if (!validate()) return;
 		const payload: LessonCreatePayload = {
 			name: form.name.trim(),
-			description: form.description.trim(),
+			// ✅ Fixed: empty description sent as ' ' — API requires non-empty string
+			description: form.description.trim() || ' ',
 			language_id: Number(form.language),
 			lesson_type_id: Number(form.lesson_type),
 			module_id: Number(form.module),
@@ -111,7 +123,8 @@ export default function LessonsAdminView() {
 		const payload: LessonUpdatePayload = {
 			id: editingLesson.id,
 			name: form.name.trim(),
-			description: form.description.trim(),
+			// ✅ Fixed: empty description was causing update to fail (API requires non-empty string)
+			description: form.description.trim() || ' ',
 			language_id: Number(form.language),
 			lesson_type_id: Number(form.lesson_type),
 			module_id: Number(form.module),
@@ -124,9 +137,9 @@ export default function LessonsAdminView() {
 
 	const handleDeleteConfirmed = () => {
 		if (deleteTarget === null) return;
-		const id = deleteTarget;
+		const lessonId = deleteTarget;
 		setDeleteTarget(null);
-		deleteLesson(id);
+		deleteLesson(lessonId);
 	};
 
 	const columns = useMemo<MRT_ColumnDef<Lesson>[]>(() => [
@@ -279,6 +292,18 @@ export default function LessonsAdminView() {
 								renderRowActionMenuItems={({ row, closeMenu }) => [
 									<MenuItem key="edit" onClick={() => { openEdit(row.original); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>Edit
+									</MenuItem>,
+									// ✅ Added: Approve action → PATCH /lesson/validate/ {id, is_approved_content: true}
+									<MenuItem key="approve" onClick={() => { validateLesson({ id: row.original.id, is_approved_content: true }); closeMenu(); }}>
+										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Approve
+									</MenuItem>,
+									// ✅ Added: Make Public action → PATCH /lesson/public/ {id, is_pubic_content: true}
+									<MenuItem key="public" onClick={() => { publicLesson({ id: row.original.id, is_pubic_content: true }); closeMenu(); }}>
+										<ListItemIcon><FuseSvgIcon>lucide:globe</FuseSvgIcon></ListItemIcon>Make Public
+									</MenuItem>,
+									// ✅ Added: Publish action → PATCH /lesson/publish/ {id, is_published: true}
+									<MenuItem key="publish" onClick={() => { publishLesson({ id: row.original.id, is_published: true }); closeMenu(); }}>
+										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish
 									</MenuItem>,
 									<MenuItem key="del" onClick={() => { setDeleteTarget(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>Delete
