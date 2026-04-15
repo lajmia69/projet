@@ -161,7 +161,7 @@ function UserMenu(props: UserMenuProps) {
 					<>
 						<MenuItem
 							component={Link}
-							to="/apps/profile"
+							to="/settings/account"
 							onClick={userMenuClose}
 							role="button"
 						>

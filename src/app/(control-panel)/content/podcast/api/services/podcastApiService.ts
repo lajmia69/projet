@@ -7,9 +7,12 @@ import {
 	PodcastEmotion,
 	PodcastEmotionList,
 	SearchPodcasts,
+	CreatePodcastPayload,
+	UpdatePodcastPayload,
 	CreatePodcastCategoryPayload,
 	UpdatePodcastCategoryPayload,
-	SetPodcastEmotionPayload
+	SetPodcastEmotionPayload,
+	LanguageList
 } from '../types';
 
 const authHeader = (accessToken: string) => ({
@@ -17,7 +20,7 @@ const authHeader = (accessToken: string) => ({
 });
 
 export const podcastApi = {
-	// ─── Podcast ────────────────────────────────────────────────────────────────
+	// ─── Podcast ─────────────────────────────────────────────────────────────
 
 	searchPodcasts: async (
 		currentAccountId: string,
@@ -28,20 +31,16 @@ export const podcastApi = {
 		params.set('limit', String(search.limit ?? 10));
 		params.set('offset', String(search.offset ?? 0));
 		if (search.language) params.set('language', search.language);
-		if (search.category != null) params.set('category', String(search.category));
-
+		if (search.podcast_category) params.set('podcast_category', search.podcast_category);
+		if (search.name) params.set('name', search.name);
+		if (search.tags) params.set('tags', search.tags);
 		return api
 			.get(`podcast/search/${currentAccountId}/?${params.toString()}`, authHeader(accessToken))
 			.json();
 	},
 
-	getPodcasts: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<PodcastList> => {
-		return api
-			.get(`podcast/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
+	getPodcasts: async (currentAccountId: string, accessToken: string): Promise<PodcastList> => {
+		return api.get(`podcast/list/${currentAccountId}/`, authHeader(accessToken)).json();
 	},
 
 	getPodcast: async (
@@ -57,7 +56,7 @@ export const podcastApi = {
 	createPodcast: async (
 		currentAccountId: string,
 		accessToken: string,
-		data: Partial<Podcast>
+		data: CreatePodcastPayload
 	): Promise<Podcast> => {
 		return api
 			.post(`podcast/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
@@ -67,11 +66,24 @@ export const podcastApi = {
 	updatePodcast: async (
 		currentAccountId: string,
 		accessToken: string,
-		data: Partial<Podcast> & { id: number }
+		data: UpdatePodcastPayload
 	): Promise<Podcast> => {
-		return api
-			.put(`podcast/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
+		console.log('[updatePodcast] payload:', JSON.stringify(data, null, 2));
+		const res = await fetch(
+			`${process.env.NEXT_PUBLIC_BASE_URL}/podcast/update/${currentAccountId}/`,
+			{
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${accessToken}`
+				},
+				body: JSON.stringify(data)
+			}
+		);
+		const text = await res.text();
+		console.log(`[updatePodcast] status=${res.status} body:`, text);
+		if (!res.ok) throw new Error(`${res.status}: ${text}`);
+		return JSON.parse(text) as Podcast;
 	},
 
 	validatePodcast: async (
@@ -80,17 +92,10 @@ export const podcastApi = {
 		podcastId: number
 	): Promise<Podcast> => {
 		return api
-			.patch(`podcast/validate/${currentAccountId}/`, { json: { id: podcastId }, ...authHeader(accessToken) })
-			.json();
-	},
-
-	publicPodcast: async (
-		currentAccountId: string,
-		accessToken: string,
-		podcastId: number
-	): Promise<Podcast> => {
-		return api
-			.patch(`podcast/publish/${currentAccountId}/`, { json: { id: podcastId }, ...authHeader(accessToken) })
+			.patch(`podcast/validate/${currentAccountId}/`, {
+				json: { id: podcastId },
+				...authHeader(accessToken)
+			})
 			.json();
 	},
 
@@ -100,7 +105,10 @@ export const podcastApi = {
 		podcastId: number
 	): Promise<Podcast> => {
 		return api
-			.patch(`podcast/publish/${currentAccountId}/`, { json: { id: podcastId }, ...authHeader(accessToken) })
+			.patch(`podcast/publish/${currentAccountId}/`, {
+				json: { id: podcastId, is_published: true },
+				...authHeader(accessToken)
+			})
 			.json();
 	},
 
@@ -110,7 +118,10 @@ export const podcastApi = {
 		podcastId: number
 	): Promise<Podcast> => {
 		return api
-			.patch(`podcast/publish/release/${currentAccountId}/`, { json: { id: podcastId }, ...authHeader(accessToken) })
+			.patch(`podcast/publish/release/${currentAccountId}/`, {
+				json: { id: podcastId, is_published: true },
+				...authHeader(accessToken)
+			})
 			.json();
 	},
 
@@ -119,10 +130,21 @@ export const podcastApi = {
 		accessToken: string,
 		podcastId: number
 	): Promise<void> => {
-		await api.delete(`podcast/delete/${currentAccountId}/${podcastId}/`, authHeader(accessToken));
+		await api.delete(
+			`podcast/delete/${currentAccountId}/${podcastId}/`,
+			authHeader(accessToken)
+		);
 	},
 
-	// ─── Podcast Category ───────────────────────────────────────────────────────
+	// ─── Language ─────────────────────────────────────────────────────────────
+
+	getLanguages: async (currentAccountId: string, accessToken: string): Promise<LanguageList> => {
+		return api
+			.get(`setting/language/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
+
+	// ─── Podcast Category ─────────────────────────────────────────────────────
 
 	getPodcastCategories: async (
 		currentAccountId: string,
@@ -149,7 +171,10 @@ export const podcastApi = {
 		data: CreatePodcastCategoryPayload
 	): Promise<PodcastCategory> => {
 		return api
-			.post(`podcast/category/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.post(`podcast/category/create/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
 			.json();
 	},
 
@@ -159,7 +184,10 @@ export const podcastApi = {
 		data: UpdatePodcastCategoryPayload
 	): Promise<PodcastCategory> => {
 		return api
-			.put(`podcast/category/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.put(`podcast/category/update/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
 			.json();
 	},
 
@@ -168,18 +196,19 @@ export const podcastApi = {
 		accessToken: string,
 		categoryId: number
 	): Promise<void> => {
-		await api.delete(`podcast/category/delete/${currentAccountId}/${categoryId}/`, authHeader(accessToken));
+		await api.delete(
+			`podcast/category/delete/${currentAccountId}/${categoryId}/`,
+			authHeader(accessToken)
+		);
 	},
 
-	// ─── Podcast Emotion ────────────────────────────────────────────────────────
+	// ─── Podcast Emotion ──────────────────────────────────────────────────────
 
 	getPodcastEmotions: async (
 		currentAccountId: string,
 		accessToken: string
 	): Promise<PodcastEmotionList> => {
-		return api
-			.get(`podcast/emotion/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
+		return api.get(`podcast/emotion/list/${currentAccountId}/`, authHeader(accessToken)).json();
 	},
 
 	getPodcastEmotion: async (
@@ -207,6 +236,9 @@ export const podcastApi = {
 		accessToken: string,
 		podcastId: number
 	): Promise<void> => {
-		await api.delete(`podcast/emotion/delete/${currentAccountId}/${podcastId}/`, authHeader(accessToken));
+		await api.delete(
+			`podcast/emotion/delete/${currentAccountId}/${podcastId}/`,
+			authHeader(accessToken)
+		);
 	}
 };
