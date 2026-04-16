@@ -133,6 +133,30 @@ export const podcastApi = {
 	 * Body: { id: podcastId, is_approved_content: true }
 	 * accountId goes in the URL path; podcastId goes in the body.
 	 */
+/**
+ * PATCH /podcast/validate/{accountId}/
+ * Body: { id: podcastId, is_approved_content: true }
+ * accountId goes in the URL path; podcastId goes in the body.
+ */
+// ─── Status / workflow ──────────────────────────────────────────────────────
+
+/**
+ * FIXED: Using payload.id in the URL instead of accountId
+ * Most backends require the resource ID in the path for permission checks.
+ */
+// ─── Status / workflow ──────────────────────────────────────────────────────
+
+/**
+ * Reverted to using accountId in the URL as per API specs.
+ * Body: { id: podcastId, is_approved_content: true }
+ */
+// ── Status / workflow ──────────────────────────────────────────────────────
+
+	/**
+	 * Reverted to accountId in path to match the rest of the API patterns.
+	 * URL: /podcast/validate/{accountId}/
+	 * Body: { id: podcastId, is_approved_content: true }
+	 */
 	validate: (
 		accountId: string | number,
 		token: string,
@@ -143,7 +167,8 @@ export const podcastApi = {
 			.json<Podcast>(),
 
 	/**
-	 * PATCH /podcast/publish/{accountId}/
+	 * Reverted to accountId in path.
+	 * URL: /podcast/publish/{accountId}/
 	 * Body: { id: podcastId, is_published: true }
 	 */
 	publish: (
@@ -154,7 +179,6 @@ export const podcastApi = {
 		createClient(token)
 			.patch(`podcast/publish/${accountId}/`, { json: payload })
 			.json<Podcast>(),
-
 	// ── Categories ─────────────────────────────────────────────────────────────
 
 	getPodcastCategories: (

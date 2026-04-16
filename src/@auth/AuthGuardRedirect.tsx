@@ -28,27 +28,28 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 	const pathname = usePathname();
 
 	const handleRedirection = useCallback(() => {
-    const redirectUrl = getSessionRedirectUrl() || loginRedirectUrl;
+		const redirectUrl = getSessionRedirectUrl() || loginRedirectUrl;
 
-    if (isGuest) {
-        navigate('/sign-in');
-    } else {
-        // Don't loop back into a protected path
-        const safeUrl = redirectUrl === pathname ? '/401' : redirectUrl;
-        navigate(safeUrl);
-        resetSessionRedirectUrl();
-    }
-}, [isGuest, loginRedirectUrl, navigate, pathname]);
+		if (isGuest) {
+			navigate('/sign-in');
+		} else {
+			const safeUrl = redirectUrl === pathname ? '/401' : redirectUrl;
+			navigate(safeUrl);
+			resetSessionRedirectUrl();
+		}
+	}, [isGuest, loginRedirectUrl, navigate, pathname]);
+
 	useEffect(() => {
 		if (isLoading) return;
 
-		// ── TEMPORARY DEBUG — remove after fix ──────────────────────────────
+		// ── DEBUG LOGS ──────────────────────────────────────────────────────
+		// This will show you exactly what permissions are in your DB record
 		console.log('🔐 Auth Debug:', {
-			auth,
-			userRole,
+			pathname,
 			isGuest,
+			userRole,
 			hasPermission: FuseUtils.hasPermission(auth, userRole),
-			pathname
+			fullUserData: user // Inspect this object in the console!
 		});
 		// ────────────────────────────────────────────────────────────────────
 
@@ -74,7 +75,7 @@ function AuthGuardRedirect({ auth, children, loginRedirectUrl = '/' }: AuthGuard
 		}
 
 		handleRedirection();
-	}, [auth, userRole, isGuest, isLoading, pathname, handleRedirection]);
+	}, [auth, userRole, isGuest, isLoading, pathname, handleRedirection, user]);
 
 	return accessGranted ? children : <FuseLoading />;
 }
