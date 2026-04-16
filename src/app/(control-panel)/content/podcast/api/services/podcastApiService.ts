@@ -1,20 +1,49 @@
 /**
  * podcastApiService.ts
  *
- * Fixes applied:
- * 1. ✅ validate() — URL changed from `/podcast/validate/${podcastId}/`
- *                    to  `/podcast/validate/${accountId}/` + id in body
- *                    → was causing 500 (backend received wrong path param)
- * 2. ✅ publish()  — Authorization header was missing → caused 401
- *                    Now uses createClient(token) like every other method.
- * 3. ✅ retry: 0   — prevents triple-500 floods in the console
+ * Single source of truth for all podcast API calls.
+ * Types are imported from ../types — no duplicates here.
+ *
+ * Method names match exactly what every hook calls:
+ *   searchPodcasts, getPodcast, getPodcasts,
+ *   getPodcastCategories, getPodcastCategory,
+ *   createPodcastCategory, updatePodcastCategory, deletePodcastCategory,
+ *   getPodcastEmotions, getPodcastEmotion, setPodcastEmotion, deletePodcastEmotion,
+ *   getLanguages, create, update, delete, validate, publish
  */
 
-import ky, { HTTPError } from 'ky';
+import ky from 'ky';
+import type {
+	Podcast,
+	PodcastList,
+	PodcastCategory,
+	PodcastCategoryList,
+	PodcastEmotion,
+	PodcastEmotionList,
+	LanguageList,
+	SearchPodcasts,
+	CreatePodcastPayload,
+	UpdatePodcastPayload,
+	CreatePodcastCategoryPayload,
+	UpdatePodcastCategoryPayload,
+	SetPodcastEmotionPayload,
+} from '../types';
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
+// ─── Payload types for status mutations (not in types/index.ts) ───────────────
+
+export type ValidatePodcastPayload = {
+	id: number;
+	is_approved_content: boolean;
+};
+
+export type PublishPodcastPayload = {
+	id: number;
+	is_published: boolean;
+};
+
+// ─── Shared client factory ─────────────────────────────────────────────────────
 
 function createClient(token: string) {
 	return ky.create({
@@ -27,174 +56,188 @@ function createClient(token: string) {
 	});
 }
 
-// ─── Types (mirroring what the podcast API returns) ───────────────────────────
-
-export type PodcastLanguageItem = {
-	id: number;
-	name: string;
-	icon: string;
-	short_name: string;
-};
-
-export type PagedPodcastLanguages = {
-	items: PodcastLanguageItem[];
-	count: number;
-};
-
-export type CreatePodcastPayload = {
-	name: string;
-	slug: string;
-	description: string;
-	transcription: Record<string, unknown>;
-	language_id: number;
-	podcast_category_id: number;
-	tags: string[];
-};
-
-export type UpdatePodcastPayload = {
-	id?: number | null;
-	name: string;
-	slug: string;
-	description: string;
-	transcription: Record<string, unknown>;
-	language_id: number;
-	podcast_category_id: number;
-	add_tags: string[] | null;
-	remove_tags: string[] | null;
-};
-
-/** PATCH /podcast/validate/{accountId}/ */
-export type ValidatePodcastPayload = {
-	id?: number | null;
-	is_approved_content: boolean;
-};
-
-/** PATCH /podcast/publish/{accountId}/ */
-export type PublishPodcastPayload = {
-	id?: number | null;
-	is_published: boolean;
-};
-
-// ─── Service object ───────────────────────────────────────────────────────────
+// ─── Service ───────────────────────────────────────────────────────────────────
 
 export const podcastApi = {
-	// ── Language lookup (used in the admin view) ────────────────────────────
-	getLanguages: (
-		accountId: string | number,
-		token: string
-	): Promise<PagedPodcastLanguages> =>
+
+	// ── Languages ──────────────────────────────────────────────────────────────
+
+	getLanguages: (accountId: string | number, token: string): Promise<LanguageList> =>
 		createClient(token)
-			.get(`podcast/language/list/${accountId}/`)
-			.json<PagedPodcastLanguages>(),
+			.get(`setting/language/list/${accountId}/`)
+			.json<LanguageList>(),
 
-	// ── Podcast CRUD ────────────────────────────────────────────────────────
+	// ── Podcast list / search / detail ─────────────────────────────────────────
 
-	search: (
+	/** Used by usePodcasts — returns full list with no search filters */
+	getPodcasts: (accountId: string | number, token: string): Promise<PodcastList> =>
+		createClient(token)
+			.get(`podcast/search/${accountId}/`)
+			.json<PodcastList>(),
+
+	/** Used by useSearchPodcasts — paginated + filtered */
+	searchPodcasts: (
 		accountId: string | number,
 		token: string,
-		params: { limit?: number; offset?: number } = {}
-	) =>
+		params: SearchPodcasts
+	): Promise<PodcastList> =>
 		createClient(token)
-			.get(`podcast/search/${accountId}/`, { searchParams: params as Record<string, string | number> })
-			.json(),
+			.get(`podcast/search/${accountId}/`, {
+				searchParams: params as Record<string, string | number>,
+			})
+			.json<PodcastList>(),
+
+	/** Used by usePodcast — single podcast by id */
+	getPodcast: (
+		accountId: string | number,
+		podcastId: string | number,
+		token: string
+	): Promise<Podcast> =>
+		createClient(token)
+			.get(`podcast/detail/${accountId}/${podcastId}/`)
+			.json<Podcast>(),
+
+	// ── Podcast CRUD ───────────────────────────────────────────────────────────
 
 	create: (
 		accountId: string | number,
 		token: string,
 		payload: CreatePodcastPayload
-	) =>
+	): Promise<Podcast> =>
 		createClient(token)
 			.post(`podcast/create/${accountId}/`, { json: payload })
-			.json(),
+			.json<Podcast>(),
 
 	update: (
 		accountId: string | number,
 		token: string,
 		payload: UpdatePodcastPayload
-	) =>
+	): Promise<Podcast> =>
 		createClient(token)
 			.put(`podcast/update/${accountId}/`, { json: payload })
-			.json(),
+			.json<Podcast>(),
 
 	delete: (
 		accountId: string | number,
 		token: string,
 		podcastId: number
-	) =>
+	): Promise<void> =>
 		createClient(token)
 			.delete(`podcast/delete/${accountId}/${podcastId}/`)
-			.json(),
+			.json<void>(),
 
-	// ── Status / workflow ───────────────────────────────────────────────────
+	// ── Status / workflow ──────────────────────────────────────────────────────
 
 	/**
 	 * PATCH /podcast/validate/{accountId}/
 	 * Body: { id: podcastId, is_approved_content: true }
-	 *
-	 * ✅ FIX: previously used ${podcastId} in the URL path (server-side crash → 500).
-	 *         The correct pattern matches the lesson API: account_id in path,
-	 *         podcast_id in the request body.
+	 * accountId goes in the URL path; podcastId goes in the body.
 	 */
 	validate: (
 		accountId: string | number,
 		token: string,
 		payload: ValidatePodcastPayload
-	) =>
+	): Promise<Podcast> =>
 		createClient(token)
 			.patch(`podcast/validate/${accountId}/`, { json: payload })
-			.json(),
+			.json<Podcast>(),
 
 	/**
 	 * PATCH /podcast/publish/{accountId}/
 	 * Body: { id: podcastId, is_published: true }
-	 *
-	 * ✅ FIX: Authorization header was not being sent → caused 401.
-	 *         Now uses createClient(token) which always attaches the Bearer token.
 	 */
 	publish: (
 		accountId: string | number,
 		token: string,
 		payload: PublishPodcastPayload
-	) =>
+	): Promise<Podcast> =>
 		createClient(token)
 			.patch(`podcast/publish/${accountId}/`, { json: payload })
-			.json(),
+			.json<Podcast>(),
 
-	// ── Categories ──────────────────────────────────────────────────────────
+	// ── Categories ─────────────────────────────────────────────────────────────
 
-	getCategories: (
+	getPodcastCategories: (
 		accountId: string | number,
 		token: string,
 		params: { limit?: number; offset?: number } = {}
-	) =>
+	): Promise<PodcastCategoryList> =>
 		createClient(token)
-			.get(`podcast/category/list/${accountId}/`, { searchParams: params as Record<string, string | number> })
-			.json(),
+			.get(`podcast/category/list/${accountId}/`, {
+				searchParams: params as Record<string, string | number>,
+			})
+			.json<PodcastCategoryList>(),
 
-	createCategory: (
-		accountId: string | number,
-		token: string,
-		payload: { name: string; description: string }
-	) =>
-		createClient(token)
-			.post(`podcast/category/create/${accountId}/`, { json: payload })
-			.json(),
-
-	updateCategory: (
-		accountId: string | number,
-		token: string,
-		payload: { id: number; name: string; description: string }
-	) =>
-		createClient(token)
-			.put(`podcast/category/update/${accountId}/`, { json: payload })
-			.json(),
-
-	deleteCategory: (
+	getPodcastCategory: (
 		accountId: string | number,
 		token: string,
 		categoryId: number
-	) =>
+	): Promise<PodcastCategory> =>
+		createClient(token)
+			.get(`podcast/category/detail/${accountId}/${categoryId}/`)
+			.json<PodcastCategory>(),
+
+	createPodcastCategory: (
+		accountId: string | number,
+		token: string,
+		payload: CreatePodcastCategoryPayload
+	): Promise<PodcastCategory> =>
+		createClient(token)
+			.post(`podcast/category/create/${accountId}/`, { json: payload })
+			.json<PodcastCategory>(),
+
+	updatePodcastCategory: (
+		accountId: string | number,
+		token: string,
+		payload: UpdatePodcastCategoryPayload
+	): Promise<PodcastCategory> =>
+		createClient(token)
+			.put(`podcast/category/update/${accountId}/`, { json: payload })
+			.json<PodcastCategory>(),
+
+	deletePodcastCategory: (
+		accountId: string | number,
+		token: string,
+		categoryId: number
+	): Promise<void> =>
 		createClient(token)
 			.delete(`podcast/category/delete/${accountId}/${categoryId}/`)
-			.json(),
+			.json<void>(),
+
+	// ── Emotions ───────────────────────────────────────────────────────────────
+
+	getPodcastEmotions: (
+		accountId: string | number,
+		token: string
+	): Promise<PodcastEmotionList> =>
+		createClient(token)
+			.get(`podcast/emotion/list/${accountId}/`)
+			.json<PodcastEmotionList>(),
+
+	getPodcastEmotion: (
+		accountId: string | number,
+		token: string,
+		podcastId: number
+	): Promise<PodcastEmotion> =>
+		createClient(token)
+			.get(`podcast/emotion/detail/${accountId}/${podcastId}/`)
+			.json<PodcastEmotion>(),
+
+	setPodcastEmotion: (
+		accountId: string | number,
+		token: string,
+		payload: SetPodcastEmotionPayload
+	): Promise<PodcastEmotion> =>
+		createClient(token)
+			.post(`podcast/emotion/set/${accountId}/`, { json: payload })
+			.json<PodcastEmotion>(),
+
+	deletePodcastEmotion: (
+		accountId: string | number,
+		token: string,
+		podcastId: number
+	): Promise<void> =>
+		createClient(token)
+			.delete(`podcast/emotion/delete/${accountId}/${podcastId}/`)
+			.json<void>(),
 };
