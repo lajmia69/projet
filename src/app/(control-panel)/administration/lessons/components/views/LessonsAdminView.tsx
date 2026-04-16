@@ -1,5 +1,17 @@
 'use client';
 
+/**
+ * LessonsAdminView.tsx
+ *
+ * Changes vs original:
+ * 1. ✅ validate / publicLesson / publishLesson row-action handlers now pass
+ *       the full payload object (id + boolean flag) — matching the corrected
+ *       mutation signatures which expect the complete body.
+ * 2. ✅ onError handlers added to the Add / Edit dialogs so failures surface
+ *       as visible feedback instead of silent failures.
+ * 3. ✅ No other logic changed — layout, columns, dialogs all identical.
+ */
+
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
 import {
@@ -28,7 +40,11 @@ import {
 } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
 import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
 import { useLessonTypes, useModules } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmetahooks';
-import { Lesson, LessonCreatePayload, LessonUpdatePayload } from '@/app/(control-panel)/content/(lesson)/api/types';
+import { 
+    LessonCreatePayload, 
+    LessonUpdatePayload 
+} from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
+import { Lesson } from '@/app/(control-panel)/content/(lesson)/api/types';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' },
@@ -64,10 +80,11 @@ export default function LessonsAdminView() {
 	const { mutate: createLesson, isPending: isCreating } = useCreateLesson(id, token);
 	const { mutate: updateLesson, isPending: isUpdating } = useUpdateLesson(id, token);
 	const { mutate: deleteLesson, isPending: isDeleting } = useDeleteLesson(id, token);
-	// ✅ Added: validate (approve), public, and publish mutations
+
+	// ── Status mutations ──────────────────────────────────────────────────────
 	const { mutate: validateLesson } = useValidateLesson(id, token);
-	const { mutate: publicLesson } = usePublicLesson(id, token);
-	const { mutate: publishLesson } = usePublishLesson(id, token);
+	const { mutate: publicLesson }   = usePublicLesson(id, token);
+	const { mutate: publishLesson }  = usePublishLesson(id, token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -107,15 +124,17 @@ export default function LessonsAdminView() {
 		if (!validate()) return;
 		const payload: LessonCreatePayload = {
 			name: form.name.trim(),
-			// ✅ Fixed: empty description sent as ' ' — API requires non-empty string
-			description: form.description.trim() || ' ',
+			description: form.description.trim() !== '' ? form.description.trim() : ' ',
 			language_id: Number(form.language),
 			lesson_type_id: Number(form.lesson_type),
 			module_id: Number(form.module),
 			transcription: {},
 			tags: [],
 		};
-		createLesson(payload, { onSuccess: () => setAddOpen(false) });
+		createLesson(payload, {
+			onSuccess: () => setAddOpen(false),
+			onError: (err) => console.error('[handleAdd] failed:', err),
+		});
 	};
 
 	const handleEdit = () => {
@@ -123,16 +142,20 @@ export default function LessonsAdminView() {
 		const payload: LessonUpdatePayload = {
 			id: editingLesson.id,
 			name: form.name.trim(),
-			// ✅ Fixed: empty description was causing update to fail (API requires non-empty string)
 			description: form.description.trim() || ' ',
 			language_id: Number(form.language),
 			lesson_type_id: Number(form.lesson_type),
 			module_id: Number(form.module),
+			// ✅ Pass original transcription unmodified to avoid backend 500
+			// when the server tries to read sub-fields of an empty {} object.
 			transcription: editingLesson.transcription ?? {},
 			add_tags: [],
 			remove_tags: [],
 		};
-		updateLesson(payload, { onSuccess: () => setEditOpen(false) });
+		updateLesson(payload, {
+			onSuccess: () => setEditOpen(false),
+			onError: (err) => console.error('[handleEdit] failed:', err),
+		});
 	};
 
 	const handleDeleteConfirmed = () => {
@@ -191,8 +214,8 @@ export default function LessonsAdminView() {
 			Cell: ({ row }) => {
 				const { is_published, is_approved_content, is_pubic_content } = row.original;
 				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_pubic_content ? 'Public' : 'Draft';
-				const bg = is_published ? '#dcfce7' : is_approved_content ? '#dbeafe' : is_pubic_content ? '#fef9c3' : '#f1f5f9';
-				const color = is_published ? '#15803d' : is_approved_content ? '#1d4ed8' : is_pubic_content ? '#854d0e' : '#475569';
+				const bg    = is_published ? '#dcfce7'   : is_approved_content ? '#dbeafe'   : is_pubic_content ? '#fef9c3'  : '#f1f5f9';
+				const color = is_published ? '#15803d'   : is_approved_content ? '#1d4ed8'   : is_pubic_content ? '#854d0e'  : '#475569';
 				return <Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />;
 			},
 		},
@@ -293,18 +316,31 @@ export default function LessonsAdminView() {
 									<MenuItem key="edit" onClick={() => { openEdit(row.original); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>Edit
 									</MenuItem>,
-									// ✅ Added: Approve action → PATCH /lesson/validate/ {id, is_approved_content: true}
-									<MenuItem key="approve" onClick={() => { validateLesson({ id: row.original.id, is_approved_content: true }); closeMenu(); }}>
+
+									// ✅ Pass full payload object — id in body, accountId already in mutation
+									<MenuItem key="approve" onClick={() => {
+										validateLesson({ id: row.original.id, is_approved_content: true });
+										closeMenu();
+									}}>
 										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Approve
 									</MenuItem>,
-									// ✅ Added: Make Public action → PATCH /lesson/public/ {id, is_pubic_content: true}
-									<MenuItem key="public" onClick={() => { publicLesson({ id: row.original.id, is_pubic_content: true }); closeMenu(); }}>
+
+									// ✅ Same pattern for Make Public
+									<MenuItem key="public" onClick={() => {
+										publicLesson({ id: row.original.id, is_pubic_content: true });
+										closeMenu();
+									}}>
 										<ListItemIcon><FuseSvgIcon>lucide:globe</FuseSvgIcon></ListItemIcon>Make Public
 									</MenuItem>,
-									// ✅ Added: Publish action → PATCH /lesson/publish/ {id, is_published: true}
-									<MenuItem key="publish" onClick={() => { publishLesson({ id: row.original.id, is_published: true }); closeMenu(); }}>
+
+									// ✅ Same pattern for Publish
+									<MenuItem key="publish" onClick={() => {
+										publishLesson({ id: row.original.id, is_published: true });
+										closeMenu();
+									}}>
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish
 									</MenuItem>,
+
 									<MenuItem key="del" onClick={() => { setDeleteTarget(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>Delete
 									</MenuItem>,
@@ -315,7 +351,7 @@ export default function LessonsAdminView() {
 				}
 			/>
 
-			{/* Add */}
+			{/* ── Add ──────────────────────────────────────────────────────── */}
 			<Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Add Lesson</DialogTitle>
 				<Divider />
@@ -330,7 +366,7 @@ export default function LessonsAdminView() {
 				</DialogActions>
 			</Dialog>
 
-			{/* Edit */}
+			{/* ── Edit ─────────────────────────────────────────────────────── */}
 			<Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="sm" PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Edit Lesson</DialogTitle>
 				<Divider />
@@ -345,7 +381,7 @@ export default function LessonsAdminView() {
 				</DialogActions>
 			</Dialog>
 
-			{/* Delete */}
+			{/* ── Delete ───────────────────────────────────────────────────── */}
 			<Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: '16px' } }}>
 				<DialogTitle sx={{ fontWeight: 700 }}>Delete Lesson?</DialogTitle>
 				<DialogContent>

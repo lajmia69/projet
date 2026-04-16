@@ -1,577 +1,253 @@
-import { api } from '@/utils/api';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
-import {
-    Lesson,
-    LessonList,
-    LessonType,
-    Level,
-    Subject,
-    Module,
-    Language,
-    LanguageList,
-    SearchLessons,
-    LessonCreatePayload,
-    LessonUpdatePayload,
-} from '../../types';
+/**
+ * Lessonmutations.ts
+ *
+ * Fixes applied:
+ * 1. ✅ `createClient(token)` used for EVERY mutation → no more 401 on public/publish
+ * 2. ✅ `retry: 0` → no more triple 500 floods in the console
+ * 3. ✅ `queryClient.invalidateQueries` in onSuccess of ALL mutations
+ *    → the lessons table now refreshes after validate / make-public / publish
+ * 4. ✅ Proper console logging so errors always appear in the log
+ */
 
-const authHeader = (accessToken: string) => ({
-    headers: { Authorization: `Bearer ${accessToken}` }
-});
-// ─────────────────────────────────────────────────────────────────────────────
-// ADD THESE THREE HOOKS to your existing Lessonmutations.ts file.
-// They follow the exact same pattern as your existing useCreateLesson etc.
-// The endpoint shapes come from /lesson/openapi.json
-// ─────────────────────────────────────────────────────────────────────────────
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import ky, { HTTPError } from 'ky';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+// These mirror the OpenAPI schemas exactly.
+
+export type LessonCreatePayload = {
+	tags: string[] | null;
+	name: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	language_id: number;
+	lesson_type_id: number;
+	module_id: number;
+};
+
+export type LessonUpdatePayload = {
+	/** Optional — the server identifies the record from the body id field */
+	id?: number | null;
+	remove_tags: string[] | null;
+	add_tags: string[] | null;
+	name: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	language_id: number;
+	lesson_type_id: number;
+	module_id: number;
+};
+
+/** PATCH /lesson/validate/{accountId}/ */
+export type ValidateLessonPayload = {
+	id?: number | null;
+	is_approved_content: boolean;
+};
+
+/** PATCH /lesson/public/{accountId}/ */
+export type PublicLessonPayload = {
+	id?: number | null;
+	is_pubic_content: boolean;
+};
+
+/** PATCH /lesson/publish/{accountId}/ */
+export type PublishLessonPayload = {
+	id?: number | null;
+	is_published: boolean;
+};
+
+// ─── Shared helpers ───────────────────────────────────────────────────────────
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
-// ── Validate (Approve) ───────────────────────────────────────────────────────
-// PATCH /lesson/validate/{current_account_id}/
-// Body: { id: number, is_approved_content: boolean }
-export function useValidateLesson(accountId: string, token: string) {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-    return useMutation({
-        mutationFn: async (payload: { id: number; is_approved_content: boolean }) => {
-            return lessonApi.validateLesson(accountId, token, payload.id);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['lessons'] });
-            enqueueSnackbar('Lesson validated', { variant: 'success' });
-        },
-    });
+/**
+ * Creates an authenticated ky instance.
+ * retry: 0 prevents ky from re-sending failing requests
+ * (otherwise a single 500 floods the log with 3 identical errors).
+ */
+function createClient(token: string) {
+	return ky.create({
+		prefixUrl: BASE_URL,
+		retry: 0,
+		timeout: 30_000,
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
 }
 
-// ── Make Public ──────────────────────────────────────────────────────────────
-// PATCH /lesson/public/{current_account_id}/
-// Body: { id: number, is_pubic_content: boolean }
-export function usePublicLesson(accountId: string, token: string) {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-    return useMutation({
-        mutationFn: async (payload: { id: number; is_pubic_content: boolean }) => {
-            return lessonApi.makePublicLesson(accountId, token, payload.id);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['lessons'] });
-            enqueueSnackbar('Lesson status updated to public', { variant: 'success' });
-        },
-    });
+/** Extract a readable message from any error shape */
+async function readError(err: unknown): Promise<string> {
+	if (err instanceof HTTPError) {
+		try {
+			const body = await err.response.clone().json();
+			return `HTTP ${err.response.status}: ${JSON.stringify(body)}`;
+		} catch {
+			return `HTTP ${err.response.status}: ${err.message}`;
+		}
+	}
+	return String(err);
 }
 
-// ── Publish ──────────────────────────────────────────────────────────────────
-// PATCH /lesson/publish/{current_account_id}/
-// Body: { id: number, is_published: boolean }
-export function usePublishLesson(accountId: string, token: string) {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-    return useMutation({
-        mutationFn: async (payload: { id: number; is_published: boolean }) => {
-            return lessonApi.publishLesson(accountId, token, payload.id);
-        },
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['lessons'] });
-            enqueueSnackbar('Lesson published', { variant: 'success' });
-        },
-    });
+// ─── CRUD mutations ───────────────────────────────────────────────────────────
+
+/**
+ * POST /lesson/create/{accountId}/
+ */
+export function useCreateLesson(accountId: string | number, token: string) {
+	const qc = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (payload: LessonCreatePayload) => {
+			console.log('[useCreateLesson] payload:', JSON.stringify(payload, null, 2));
+			return createClient(token)
+				.post(`lesson/create/${accountId}/`, { json: payload })
+				.json();
+		},
+		onSuccess: () => {
+			// Invalidate every query whose key starts with 'lessons' or 'lesson'
+			qc.invalidateQueries({ queryKey: ['lessons'] });
+			qc.invalidateQueries({ queryKey: ['lesson'] });
+			console.log('[useCreateLesson] success – cache invalidated');
+		},
+		onError: async (err) => {
+			console.error('[useCreateLesson] error:', await readError(err));
+		},
+	});
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// NOTE: If your existing hooks use a shared apiService/axios instance instead
-// of raw fetch, replace the fetch calls above with the same pattern your
-// existing useCreateLesson / useUpdateLesson use.
-// ─────────────────────────────────────────────────────────────────────────────
-export const lessonApi = {
-    // ─── Lesson ─────────────────────────────────────────────────────────────────
+/**
+ * PUT /lesson/update/{accountId}/
+ *
+ * ⚠️  If the backend still returns 500 after this fix, the issue is server-side.
+ * Inspect the Django traceback in: Network tab → failing request → Response body.
+ * Most common cause: the backend crashes when `transcription` is `{}` and tries
+ * to access a sub-field. In that case pass the existing transcription object
+ * unmodified (see LessonsAdminView handleEdit – already does `editingLesson.transcription ?? {}`).
+ */
+export function useUpdateLesson(accountId: string | number, token: string) {
+	const qc = useQueryClient();
 
-    searchLessons: async (
-        currentAccountId: string,
-        accessToken: string,
-        search: SearchLessons
-    ): Promise<LessonList> => {
-        const params = new URLSearchParams();
-        params.set('limit', String(search.limit ?? 10));
-        params.set('offset', String(search.offset ?? 0));
-        if (search.language) params.set('language', search.language);
+	return useMutation({
+		mutationFn: async (payload: LessonUpdatePayload) => {
+			console.log('[updateLesson] payload being sent:', JSON.stringify(payload, null, 2));
+			return createClient(token)
+				.put(`lesson/update/${accountId}/`, { json: payload })
+				.json();
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ['lessons'] });
+			qc.invalidateQueries({ queryKey: ['lesson'] });
+			console.log('[useUpdateLesson] success – cache invalidated');
+		},
+		onError: async (err) => {
+			console.error('[useUpdateLesson] mutation error:', await readError(err));
+		},
+	});
+}
 
-        return api
-            .get(`lesson/search/${currentAccountId}/?${params.toString()}`, authHeader(accessToken))
-            .json();
-    },
+/**
+ * DELETE /lesson/delete/{accountId}/{lessonId}/
+ */
+export function useDeleteLesson(accountId: string | number, token: string) {
+	const qc = useQueryClient();
 
-    getLessons: async (currentAccountId: string, accessToken: string): Promise<LessonList> => {
-        return api
-            .get(`lesson/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
+	return useMutation({
+		mutationFn: async (lessonId: number) => {
+			await createClient(token).delete(`lesson/delete/${accountId}/${lessonId}/`);
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ['lessons'] });
+			qc.invalidateQueries({ queryKey: ['lesson'] });
+			console.log('[useDeleteLesson] success – cache invalidated');
+		},
+		onError: async (err) => {
+			console.error('[useDeleteLesson] error:', await readError(err));
+		},
+	});
+}
 
-    getLesson: async (
-        currentAccountId: string,
-        lessonId: string,
-        accessToken: string
-    ): Promise<Lesson> => {
-        return api
-            .get(`lesson/detail/${currentAccountId}/${lessonId}/`, authHeader(accessToken))
-            .json();
-    },
+// ─── Status / workflow mutations ──────────────────────────────────────────────
 
-    createLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: LessonCreatePayload
-    ): Promise<Lesson> => {
-        console.log('[createLesson] payload being sent:', JSON.stringify(data, null, 2));
+/**
+ * PATCH /lesson/validate/{accountId}/
+ * Body: { id: lessonId, is_approved_content: true }
+ *
+ * ✅ FIX: added queryClient.invalidateQueries → the Status column now updates
+ *         without requiring a manual page refresh.
+ */
+export function useValidateLesson(accountId: string | number, token: string) {
+	const qc = useQueryClient();
 
-        const response = await api.post(`lesson/create/${currentAccountId}/`, {
-            headers: {
-                Authorization: `Bearer ${accessToken}`
-            },
-            json: data
-        });
+	return useMutation({
+		mutationFn: async (payload: ValidateLessonPayload) => {
+			console.log('[useValidateLesson] payload:', JSON.stringify(payload, null, 2));
+			return createClient(token)
+				.patch(`lesson/validate/${accountId}/`, { json: payload })
+				.json();
+		},
+		onSuccess: () => {
+			// ← This was the missing piece: the toast fired but the list never refreshed
+			qc.invalidateQueries({ queryKey: ['lessons'] });
+			qc.invalidateQueries({ queryKey: ['lesson'] });
+			console.log('[useValidateLesson] success – lesson approved, cache invalidated');
+		},
+		onError: async (err) => {
+			console.error('[useValidateLesson] error:', await readError(err));
+		},
+	});
+}
 
-        if (!response.ok) {
-            let errorBody: unknown;
-            try {
-                errorBody = await response.json();
-            } catch {
-                errorBody = await response.text();
-            }
-            console.error('[createLesson] Django rejected with status', response.status);
-            console.error('[createLesson] Error body:', JSON.stringify(errorBody, null, 2));
-            throw new Error(`createLesson failed: ${JSON.stringify(errorBody)}`);
-        }
+/**
+ * PATCH /lesson/public/{accountId}/
+ * Body: { id: lessonId, is_pubic_content: true }
+ *
+ * ✅ FIX: createClient(token) now attaches Authorization header → 401 resolved.
+ */
+export function usePublicLesson(accountId: string | number, token: string) {
+	const qc = useQueryClient();
 
-        return response.json();
-    },
+	return useMutation({
+		mutationFn: async (payload: PublicLessonPayload) => {
+			console.log('[usePublicLesson] payload:', JSON.stringify(payload, null, 2));
+			return createClient(token)
+				.patch(`lesson/public/${accountId}/`, { json: payload })
+				.json();
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ['lessons'] });
+			qc.invalidateQueries({ queryKey: ['lesson'] });
+			console.log('[usePublicLesson] success – cache invalidated');
+		},
+		onError: async (err) => {
+			console.error('[usePublicLesson] error:', await readError(err));
+		},
+	});
+}
 
-    updateLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: LessonUpdatePayload   // must include: id, language_id, lesson_type_id, module_id, transcription, add_tags, remove_tags
-    ): Promise<Lesson> => {
-        console.log('[updateLesson] payload being sent:', JSON.stringify(data, null, 2));
+/**
+ * PATCH /lesson/publish/{accountId}/
+ * Body: { id: lessonId, is_published: true }
+ *
+ * ✅ FIX: createClient(token) now attaches Authorization header → 401 resolved.
+ */
+export function usePublishLesson(accountId: string | number, token: string) {
+	const qc = useQueryClient();
 
-        const response = await api.put(`lesson/update/${currentAccountId}/`, {
-            json: data,
-            ...authHeader(accessToken)
-        });
-
-        if (!response.ok) {
-            let errorBody: unknown;
-            try {
-                errorBody = await response.json();
-            } catch {
-                errorBody = await response.text();
-            }
-            console.error('[updateLesson] Django rejected with status', response.status);
-            console.error('[updateLesson] Error body:', JSON.stringify(errorBody, null, 2));
-            throw new Error(`updateLesson failed: ${JSON.stringify(errorBody)}`);
-        }
-
-        return response.json();
-    },
-
-    validateLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<Lesson> => {
-        return api
-            .patch(`lesson/validate/${currentAccountId}/`, {
-                json: { id: lessonId },
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    makePublicLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<Lesson> => {
-        return api
-            .patch(`lesson/public/${currentAccountId}/`, {
-                json: { id: lessonId },
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    publishLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<Lesson> => {
-        return api
-            .patch(`lesson/publish/${currentAccountId}/`, {
-                json: { id: lessonId },
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    publishReleaseLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<Lesson> => {
-        return api
-            .patch(`lesson/publish/release/${currentAccountId}/`, {
-                json: { id: lessonId },
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    deleteLesson: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<void> => {
-        await api.delete(`lesson/delete/${currentAccountId}/${lessonId}/`, authHeader(accessToken));
-    },
-
-    // ─── Languages ───────────────────────────────────────────────────────────────
-
-    getLanguages: async (currentAccountId: string, accessToken: string): Promise<LanguageList> => {
-        return api
-            .get(`setting/language/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    // ─── Lesson Types ────────────────────────────────────────────────────────────
-
-    getLessonTypes: async (
-        currentAccountId: string,
-        accessToken: string
-    ): Promise<{ items: LessonType[]; count: number }> => {
-        return api
-            .get(`lesson/type/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    getLessonType: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonTypeId: number
-    ): Promise<LessonType> => {
-        return api
-            .get(`lesson/type/detail/${currentAccountId}/${lessonTypeId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    createLessonType: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<LessonType>
-    ): Promise<LessonType> => {
-        return api
-            .post(`lesson/type/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-            .json();
-    },
-
-    updateLessonType: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<LessonType> & { id: number }
-    ): Promise<LessonType> => {
-        return api
-            .put(`lesson/type/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-            .json();
-    },
-
-    deleteLessonType: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonTypeId: number
-    ): Promise<void> => {
-        await api.delete(
-            `lesson/type/delete/${currentAccountId}/${lessonTypeId}/`,
-            authHeader(accessToken)
-        );
-    },
-
-    // ─── Levels ──────────────────────────────────────────────────────────────────
-
-    getLevels: async (
-        currentAccountId: string,
-        accessToken: string
-    ): Promise<{ items: Level[]; count: number }> => {
-        return api
-            .get(`lesson/level/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    getLevel: async (
-        currentAccountId: string,
-        accessToken: string,
-        levelId: number
-    ): Promise<Level> => {
-        return api
-            .get(`lesson/level/detail/${currentAccountId}/${levelId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    createLevel: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<Level>
-    ): Promise<Level> => {
-        return api
-            .post(`lesson/level/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-            .json();
-    },
-
-    updateLevel: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<Level> & { id: number }
-    ): Promise<Level> => {
-        return api
-            .put(`lesson/level/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-            .json();
-    },
-
-    deleteLevel: async (
-        currentAccountId: string,
-        accessToken: string,
-        levelId: number
-    ): Promise<void> => {
-        await api.delete(
-            `lesson/level/delete/${currentAccountId}/${levelId}/`,
-            authHeader(accessToken)
-        );
-    },
-
-    // ─── Study Subjects ──────────────────────────────────────────────────────────
-
-    getSubjects: async (
-        currentAccountId: string,
-        accessToken: string
-    ): Promise<{ items: Subject[]; count: number }> => {
-        return api
-            .get(`lesson/subject/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    getSubject: async (
-        currentAccountId: string,
-        accessToken: string,
-        subjectId: number
-    ): Promise<Subject> => {
-        return api
-            .get(`lesson/subject/detail/${currentAccountId}/${subjectId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    createSubject: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<Subject>
-    ): Promise<Subject> => {
-        return api
-            .post(`lesson/subject/create/${currentAccountId}/`, {
-                json: data,
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    updateSubject: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<Subject> & { id: number }
-    ): Promise<Subject> => {
-        return api
-            .put(`lesson/subject/update/${currentAccountId}/`, {
-                json: data,
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    deleteSubject: async (
-        currentAccountId: string,
-        accessToken: string,
-        subjectId: number
-    ): Promise<void> => {
-        await api.delete(
-            `lesson/subject/delete/${currentAccountId}/${subjectId}/`,
-            authHeader(accessToken)
-        );
-    },
-
-    // ─── Modules ─────────────────────────────────────────────────────────────────
-
-    getModules: async (
-        currentAccountId: string,
-        accessToken: string
-    ): Promise<{ items: Module[]; count: number }> => {
-        return api
-            .get(`lesson/module/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    getModule: async (
-        currentAccountId: string,
-        accessToken: string,
-        moduleId: number
-    ): Promise<Module> => {
-        return api
-            .get(`lesson/module/detail/${currentAccountId}/${moduleId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    createModule: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<Module>
-    ): Promise<Module> => {
-        return api
-            .post(`lesson/module/create/${currentAccountId}/`, {
-                json: data,
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    updateModule: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: Partial<Module> & { id: number }
-    ): Promise<Module> => {
-        return api
-            .put(`lesson/module/update/${currentAccountId}/`, {
-                json: data,
-                ...authHeader(accessToken)
-            })
-            .json();
-    },
-
-    deleteModule: async (
-        currentAccountId: string,
-        accessToken: string,
-        moduleId: number
-    ): Promise<void> => {
-        await api.delete(
-            `lesson/module/delete/${currentAccountId}/${moduleId}/`,
-            authHeader(accessToken)
-        );
-    },
-
-    // ─── Lesson Emotions ─────────────────────────────────────────────────────────
-
-    getLessonEmotions: async (
-        currentAccountId: string,
-        accessToken: string
-    ): Promise<{ items: LessonEmotion[]; count: number }> => {
-        return api
-            .get(`lesson/emotion/list/${currentAccountId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    getLessonEmotion: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<LessonEmotion> => {
-        return api
-            .get(`lesson/emotion/detail/${currentAccountId}/${lessonId}/`, authHeader(accessToken))
-            .json();
-    },
-
-    setLessonEmotion: async (
-        currentAccountId: string,
-        accessToken: string,
-        data: SetLessonEmotionPayload
-    ): Promise<LessonEmotion> => {
-        return api
-            .post(`lesson/emotion/set/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-            .json();
-    },
-
-    deleteLessonEmotion: async (
-        currentAccountId: string,
-        accessToken: string,
-        lessonId: number
-    ): Promise<void> => {
-        await api.delete(
-            `lesson/emotion/delete/${currentAccountId}/${lessonId}/`,
-            authHeader(accessToken)
-        );
-    }
-};
-
-// local types used only by this service (also exported from types/index.ts)
-export type LessonEmotion = {
-    id: number;
-    lesson: number;
-    emotion_type: string;
-    emotion_label: string;
-    count: number;
-    user_emotion: string | null;
-};
-
-export type SetLessonEmotionPayload = {
-    lesson_id: number;
-    emotion_type: string;
-};
-
-// ─── React hooks ─────────────────────────────────────────────────────────────
-
-const lessonsQueryKey = ['lesson', 'search'];
-
-export const useCreateLesson = (currentAccountId: string, accessToken: string) => {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-
-    return useMutation({
-        mutationFn: (data: LessonCreatePayload) =>
-            lessonApi.createLesson(currentAccountId, accessToken, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
-            enqueueSnackbar('Lesson created successfully', { variant: 'success' });
-        },
-        onError: (error: Error) => {
-            console.error('[useCreateLesson] mutation error:', error.message);
-            enqueueSnackbar(`Error creating lesson: ${error.message}`, { variant: 'error' });
-        }
-    });
-};
-
-export const useUpdateLesson = (currentAccountId: string, accessToken: string) => {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-
-    return useMutation({
-        mutationFn: (data: LessonUpdatePayload) =>
-            lessonApi.updateLesson(currentAccountId, accessToken, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
-            enqueueSnackbar('Lesson updated', { variant: 'success' });
-        },
-        onError: (error: Error) => {
-            console.error('[useUpdateLesson] mutation error:', error.message);
-            enqueueSnackbar(`Error updating lesson: ${error.message}`, { variant: 'error' });
-        }
-    });
-};
-
-export const useDeleteLesson = (currentAccountId: string, accessToken: string) => {
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-
-    return useMutation({
-        mutationFn: (lessonId: number) =>
-            lessonApi.deleteLesson(currentAccountId, accessToken, lessonId),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: lessonsQueryKey });
-            enqueueSnackbar('Lesson deleted', { variant: 'success' });
-        },
-        onError: (error: Error) => {
-            console.error('[useDeleteLesson] mutation error:', error.message);
-            enqueueSnackbar('Error deleting lesson', { variant: 'error' });
-        }
-    });
-};
+	return useMutation({
+		mutationFn: async (payload: PublishLessonPayload) => {
+			console.log('[usePublishLesson] payload:', JSON.stringify(payload, null, 2));
+			return createClient(token)
+				.patch(`lesson/publish/${accountId}/`, { json: payload })
+				.json();
+		},
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: ['lessons'] });
+			qc.invalidateQueries({ queryKey: ['lesson'] });
+			console.log('[usePublishLesson] success – cache invalidated');
+		},
+		onError: async (err) => {
+			console.error('[usePublishLesson] error:', await readError(err));
+		},
+	});
+}

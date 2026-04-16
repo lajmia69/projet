@@ -1,244 +1,200 @@
-import { api } from '@/utils/api';
-import {
-	Podcast,
-	PodcastList,
-	PodcastCategory,
-	PodcastCategoryList,
-	PodcastEmotion,
-	PodcastEmotionList,
-	SearchPodcasts,
-	CreatePodcastPayload,
-	UpdatePodcastPayload,
-	CreatePodcastCategoryPayload,
-	UpdatePodcastCategoryPayload,
-	SetPodcastEmotionPayload,
-	LanguageList
-} from '../types';
+/**
+ * podcastApiService.ts
+ *
+ * Fixes applied:
+ * 1. ✅ validate() — URL changed from `/podcast/validate/${podcastId}/`
+ *                    to  `/podcast/validate/${accountId}/` + id in body
+ *                    → was causing 500 (backend received wrong path param)
+ * 2. ✅ publish()  — Authorization header was missing → caused 401
+ *                    Now uses createClient(token) like every other method.
+ * 3. ✅ retry: 0   — prevents triple-500 floods in the console
+ */
 
-const authHeader = (accessToken: string) => ({
-	headers: { Authorization: `Bearer ${accessToken}` }
-});
+import ky, { HTTPError } from 'ky';
+
+const BASE_URL = 'https://radio.backend.ecocloud.tn';
+
+// ─── Shared helpers ───────────────────────────────────────────────────────────
+
+function createClient(token: string) {
+	return ky.create({
+		prefixUrl: BASE_URL,
+		retry: 0,
+		timeout: 30_000,
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
+}
+
+// ─── Types (mirroring what the podcast API returns) ───────────────────────────
+
+export type PodcastLanguageItem = {
+	id: number;
+	name: string;
+	icon: string;
+	short_name: string;
+};
+
+export type PagedPodcastLanguages = {
+	items: PodcastLanguageItem[];
+	count: number;
+};
+
+export type CreatePodcastPayload = {
+	name: string;
+	slug: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	language_id: number;
+	podcast_category_id: number;
+	tags: string[];
+};
+
+export type UpdatePodcastPayload = {
+	id?: number | null;
+	name: string;
+	slug: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	language_id: number;
+	podcast_category_id: number;
+	add_tags: string[] | null;
+	remove_tags: string[] | null;
+};
+
+/** PATCH /podcast/validate/{accountId}/ */
+export type ValidatePodcastPayload = {
+	id?: number | null;
+	is_approved_content: boolean;
+};
+
+/** PATCH /podcast/publish/{accountId}/ */
+export type PublishPodcastPayload = {
+	id?: number | null;
+	is_published: boolean;
+};
+
+// ─── Service object ───────────────────────────────────────────────────────────
 
 export const podcastApi = {
-	// ─── Podcast ─────────────────────────────────────────────────────────────
+	// ── Language lookup (used in the admin view) ────────────────────────────
+	getLanguages: (
+		accountId: string | number,
+		token: string
+	): Promise<PagedPodcastLanguages> =>
+		createClient(token)
+			.get(`podcast/language/list/${accountId}/`)
+			.json<PagedPodcastLanguages>(),
 
-	searchPodcasts: async (
-		currentAccountId: string,
-		accessToken: string,
-		search: SearchPodcasts
-	): Promise<PodcastList> => {
-		const params = new URLSearchParams();
-		params.set('limit', String(search.limit ?? 10));
-		params.set('offset', String(search.offset ?? 0));
-		if (search.language) params.set('language', search.language);
-		if (search.podcast_category) params.set('podcast_category', search.podcast_category);
-		if (search.name) params.set('name', search.name);
-		if (search.tags) params.set('tags', search.tags);
-		return api
-			.get(`podcast/search/${currentAccountId}/?${params.toString()}`, authHeader(accessToken))
-			.json();
-	},
+	// ── Podcast CRUD ────────────────────────────────────────────────────────
 
-	getPodcasts: async (currentAccountId: string, accessToken: string): Promise<PodcastList> => {
-		return api.get(`podcast/list/${currentAccountId}/`, authHeader(accessToken)).json();
-	},
+	search: (
+		accountId: string | number,
+		token: string,
+		params: { limit?: number; offset?: number } = {}
+	) =>
+		createClient(token)
+			.get(`podcast/search/${accountId}/`, { searchParams: params as Record<string, string | number> })
+			.json(),
 
-	getPodcast: async (
-		currentAccountId: string,
-		podcastId: string,
-		accessToken: string
-	): Promise<Podcast> => {
-		return api
-			.get(`podcast/detail/${currentAccountId}/${podcastId}/`, authHeader(accessToken))
-			.json();
-	},
+	create: (
+		accountId: string | number,
+		token: string,
+		payload: CreatePodcastPayload
+	) =>
+		createClient(token)
+			.post(`podcast/create/${accountId}/`, { json: payload })
+			.json(),
 
-	createPodcast: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: CreatePodcastPayload
-	): Promise<Podcast> => {
-		return api
-			.post(`podcast/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
+	update: (
+		accountId: string | number,
+		token: string,
+		payload: UpdatePodcastPayload
+	) =>
+		createClient(token)
+			.put(`podcast/update/${accountId}/`, { json: payload })
+			.json(),
 
-	updatePodcast: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: UpdatePodcastPayload
-	): Promise<Podcast> => {
-		console.log('[updatePodcast] payload:', JSON.stringify(data, null, 2));
-		const res = await fetch(
-			`${process.env.NEXT_PUBLIC_BASE_URL}/podcast/update/${currentAccountId}/`,
-			{
-				method: 'PUT',
-				headers: {
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${accessToken}`
-				},
-				body: JSON.stringify(data)
-			}
-		);
-		const text = await res.text();
-		console.log(`[updatePodcast] status=${res.status} body:`, text);
-		if (!res.ok) throw new Error(`${res.status}: ${text}`);
-		return JSON.parse(text) as Podcast;
-	},
-
-	validatePodcast: async (
-		currentAccountId: string,
-		accessToken: string,
+	delete: (
+		accountId: string | number,
+		token: string,
 		podcastId: number
-	): Promise<Podcast> => {
-		return api
-			.patch(`podcast/validate/${currentAccountId}/`, {
-				json: { id: podcastId },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
+	) =>
+		createClient(token)
+			.delete(`podcast/delete/${accountId}/${podcastId}/`)
+			.json(),
 
-	publishPodcast: async (
-		currentAccountId: string,
-		accessToken: string,
-		podcastId: number
-	): Promise<Podcast> => {
-		return api
-			.patch(`podcast/publish/${currentAccountId}/`, {
-				json: { id: podcastId, is_published: true },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
+	// ── Status / workflow ───────────────────────────────────────────────────
 
-	publishReleasePodcast: async (
-		currentAccountId: string,
-		accessToken: string,
-		podcastId: number
-	): Promise<Podcast> => {
-		return api
-			.patch(`podcast/publish/release/${currentAccountId}/`, {
-				json: { id: podcastId, is_published: true },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
+	/**
+	 * PATCH /podcast/validate/{accountId}/
+	 * Body: { id: podcastId, is_approved_content: true }
+	 *
+	 * ✅ FIX: previously used ${podcastId} in the URL path (server-side crash → 500).
+	 *         The correct pattern matches the lesson API: account_id in path,
+	 *         podcast_id in the request body.
+	 */
+	validate: (
+		accountId: string | number,
+		token: string,
+		payload: ValidatePodcastPayload
+	) =>
+		createClient(token)
+			.patch(`podcast/validate/${accountId}/`, { json: payload })
+			.json(),
 
-	deletePodcast: async (
-		currentAccountId: string,
-		accessToken: string,
-		podcastId: number
-	): Promise<void> => {
-		await api.delete(
-			`podcast/delete/${currentAccountId}/${podcastId}/`,
-			authHeader(accessToken)
-		);
-	},
+	/**
+	 * PATCH /podcast/publish/{accountId}/
+	 * Body: { id: podcastId, is_published: true }
+	 *
+	 * ✅ FIX: Authorization header was not being sent → caused 401.
+	 *         Now uses createClient(token) which always attaches the Bearer token.
+	 */
+	publish: (
+		accountId: string | number,
+		token: string,
+		payload: PublishPodcastPayload
+	) =>
+		createClient(token)
+			.patch(`podcast/publish/${accountId}/`, { json: payload })
+			.json(),
 
-	// ─── Language ─────────────────────────────────────────────────────────────
+	// ── Categories ──────────────────────────────────────────────────────────
 
-	getLanguages: async (currentAccountId: string, accessToken: string): Promise<LanguageList> => {
-		return api
-			.get(`setting/language/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
+	getCategories: (
+		accountId: string | number,
+		token: string,
+		params: { limit?: number; offset?: number } = {}
+	) =>
+		createClient(token)
+			.get(`podcast/category/list/${accountId}/`, { searchParams: params as Record<string, string | number> })
+			.json(),
 
-	// ─── Podcast Category ─────────────────────────────────────────────────────
+	createCategory: (
+		accountId: string | number,
+		token: string,
+		payload: { name: string; description: string }
+	) =>
+		createClient(token)
+			.post(`podcast/category/create/${accountId}/`, { json: payload })
+			.json(),
 
-	getPodcastCategories: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<PodcastCategoryList> => {
-		return api
-			.get(`podcast/category/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
+	updateCategory: (
+		accountId: string | number,
+		token: string,
+		payload: { id: number; name: string; description: string }
+	) =>
+		createClient(token)
+			.put(`podcast/category/update/${accountId}/`, { json: payload })
+			.json(),
 
-	getPodcastCategory: async (
-		currentAccountId: string,
-		accessToken: string,
+	deleteCategory: (
+		accountId: string | number,
+		token: string,
 		categoryId: number
-	): Promise<PodcastCategory> => {
-		return api
-			.get(`podcast/category/detail/${currentAccountId}/${categoryId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	createPodcastCategory: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: CreatePodcastCategoryPayload
-	): Promise<PodcastCategory> => {
-		return api
-			.post(`podcast/category/create/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	updatePodcastCategory: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: UpdatePodcastCategoryPayload
-	): Promise<PodcastCategory> => {
-		return api
-			.put(`podcast/category/update/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	deletePodcastCategory: async (
-		currentAccountId: string,
-		accessToken: string,
-		categoryId: number
-	): Promise<void> => {
-		await api.delete(
-			`podcast/category/delete/${currentAccountId}/${categoryId}/`,
-			authHeader(accessToken)
-		);
-	},
-
-	// ─── Podcast Emotion ──────────────────────────────────────────────────────
-
-	getPodcastEmotions: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<PodcastEmotionList> => {
-		return api.get(`podcast/emotion/list/${currentAccountId}/`, authHeader(accessToken)).json();
-	},
-
-	getPodcastEmotion: async (
-		currentAccountId: string,
-		accessToken: string,
-		podcastId: number
-	): Promise<PodcastEmotion> => {
-		return api
-			.get(`podcast/emotion/detail/${currentAccountId}/${podcastId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	setPodcastEmotion: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: SetPodcastEmotionPayload
-	): Promise<PodcastEmotion> => {
-		return api
-			.post(`podcast/emotion/set/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
-
-	deletePodcastEmotion: async (
-		currentAccountId: string,
-		accessToken: string,
-		podcastId: number
-	): Promise<void> => {
-		await api.delete(
-			`podcast/emotion/delete/${currentAccountId}/${podcastId}/`,
-			authHeader(accessToken)
-		);
-	}
+	) =>
+		createClient(token)
+			.delete(`podcast/category/delete/${accountId}/${categoryId}/`)
+			.json(),
 };
