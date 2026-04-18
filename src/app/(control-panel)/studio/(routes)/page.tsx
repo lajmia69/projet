@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
+import BoardsView from '../components/views/BoardsView';
 
-function StudioApp() {
-	redirect('/studio/boards');
+function LessonApp() {
+    redirect(`/studio/boards`);
+    return null;
 }
 
-export default StudioApp;
+export default BoardsView;
