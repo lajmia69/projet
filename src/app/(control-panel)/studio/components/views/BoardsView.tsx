@@ -6,20 +6,16 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import BoardItem from '../ui/boards/BoardItem';
 import NewBoardItem from '../ui/boards/NewBoardItem';
-import { useGetScrumboardBoards } from '../../api/hooks/boards/useGetScrumboardBoards';
+import { useGetStudioBoards } from '../../api/hooks/boards/useGetStudioBoards';
 
 /**
- * The Scrumboard boards component.
+ * The Studio boards view — lists all production projects.
  */
 function BoardsView() {
-	const { data: boards, isLoading } = useGetScrumboardBoards();
+	const { data: boards, isLoading } = useGetStudioBoards();
 
 	const container = {
-		show: {
-			transition: {
-				staggerChildren: 0.04
-			}
-		}
+		show: { transition: { staggerChildren: 0.04 } }
 	};
 
 	const item = {
@@ -40,7 +36,7 @@ function BoardsView() {
 				<div className="flex flex-col">
 					<PageBreadcrumb className="mb-4 justify-center" />
 					<Typography className="text-center text-3xl leading-none font-extrabold tracking-tight">
-						Scrumboard Boards
+						Studio Boards
 					</Typography>
 				</div>
 			</motion.div>
@@ -57,10 +53,7 @@ function BoardsView() {
 						className="min-h-80 min-w-full sm:min-w-56 md:min-h-90"
 						key={board.id}
 					>
-						<BoardItem
-							board={board}
-							key={board.id}
-						/>
+						<BoardItem board={board} key={board.id} />
 					</motion.div>
 				))}
 
