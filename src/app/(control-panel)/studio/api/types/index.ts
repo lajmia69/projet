@@ -1,4 +1,133 @@
-import { DropResult } from '@hello-pangea/dnd';
+// ─── Studio Backend Types (from openapi.json) ────────────────────────────────
+
+export type TaskStatus = {
+	id: number | null;
+	name: string;
+};
+
+export type ProjectStatus = {
+	id: number | null;
+	name: string;
+};
+
+export type ProjectType = {
+	id: number | null;
+	name: string;
+	project_class: string;
+};
+
+export type TaskType = {
+	id: number | null;
+	name: string;
+};
+
+export type TaskResource = {
+	id: number | null;
+	name: string;
+	description: string;
+};
+
+export type UserSchema = {
+	id: number | null;
+	username: string;
+	first_name: string | null;
+	last_name: string | null;
+	email: string | null;
+	date_joined: string;
+};
+
+export type AccountLevel = {
+	id: number | null;
+	name: string;
+};
+
+export type SimplifyAccount = {
+	id: number | null;
+	user: UserSchema;
+	full_name: string;
+	level: AccountLevel | null;
+	avatar: string;
+	is_active: boolean;
+	phone: string;
+	address: string | null;
+	biography: string | null;
+};
+
+export type ProductionProject = {
+	id: number | null;
+	name: string;
+	description: string;
+	start_date: string;
+	end_date: string;
+	note: string | null;
+	status: ProjectStatus;
+	project_type: ProjectType;
+	studio_leader: SimplifyAccount;
+	created_by: SimplifyAccount;
+};
+
+export type CreateProductionProject = {
+	name: string;
+	description: string;
+	start_date: string;
+	end_date: string;
+	note?: string | null;
+	project_type_id: number;
+};
+
+export type UpdateProductionProject = {
+	id?: number | null;
+	name: string;
+	description: string;
+	start_date: string;
+	end_date: string;
+	note?: string | null;
+	status_id: number;
+};
+
+export type ProductionTask = {
+	id: number | null;
+	name: string;
+	description: string;
+	start_date: string;
+	end_date: string;
+	note: string | null;
+	status: TaskStatus;
+	task_type: TaskType;
+	resources: TaskResource[];
+	production_project: ProductionProject;
+	staff_leader: SimplifyAccount;
+	guests: SimplifyAccount[];
+	staffs: SimplifyAccount[];
+	created_by: SimplifyAccount;
+};
+
+export type CreateProductionTask = {
+	name: string;
+	description: string;
+	start_date: string;
+	end_date: string;
+	note?: string | null;
+	task_type_id: number;
+	status_id: number;
+	production_project_id: number;
+	staff_leader_id: number;
+	resources: { id: number | null }[];
+	guests: { id: number | null }[];
+	staffs: { id: number | null }[];
+};
+
+export type UpdateProductionTask = CreateProductionTask & {
+	id?: number | null;
+};
+
+export type PagedResponse<T> = {
+	items: T[];
+	count: number;
+};
+
+// ─── UI-compatible types (scrumboard-style) ──────────────────────────────────
+// These are used by the board components (same shape as before, just backed by real data)
 
 export type ScrumboardMember = {
 	id: string;
@@ -93,6 +222,6 @@ export type ScrumboardComment = {
 };
 
 export type OrderResult = {
-	source: DropResult['source'];
-	destination: DropResult['destination'];
+	source: { droppableId: string; index: number };
+	destination: { droppableId: string; index: number } | null | undefined;
 };

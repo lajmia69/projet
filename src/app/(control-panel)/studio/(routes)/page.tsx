@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation';
 
-function ScrumboardApp() {
-	redirect(`/apps/scrumboard/boards`);
-	return null;
+function StudioApp() {
+	redirect('/studio/boards');
 }
 
-export default ScrumboardApp;
+export default StudioApp;
