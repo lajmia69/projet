@@ -16,47 +16,78 @@ import {
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
 // ─── Token injection ──────────────────────────────────────────────────────────
-// Call studioApiService.setToken(token) from your auth provider after login,
-// or configure TOKEN_STORAGE_KEY to match your app's localStorage key.
 let _injectedToken: string | null = null;
 
+// Fuse React stores JWT as 'jwt_access_token' by default.
+// Additional common keys are kept as fallback.
 const TOKEN_STORAGE_KEYS = [
-	'access_token', 'accessToken', 'token', 'authToken', 'jwt',
-	'auth_token', 'id_token', 'bearer'
+	'jwt_access_token',   // ← Fuse React default (most important)
+	'access_token',
+	'accessToken',
+	'token',
+	'authToken',
+	'jwt',
+	'auth_token',
+	'id_token',
+	'bearer'
 ];
 
 function getToken(): string {
-	// 1. Use injected token (highest priority)
+	// 1. Highest priority: explicitly injected token
 	if (_injectedToken) return _injectedToken;
 
 	if (typeof window === 'undefined') return '';
 
-	// 2. Try all common localStorage keys
+	// 2. localStorage — try all keys
 	for (const key of TOKEN_STORAGE_KEYS) {
 		const val = localStorage.getItem(key);
-		if (val && val.length > 10) return val;
+		if (!val || val.length < 10) continue;
+
+		// Raw JWT (three dot-separated base64 segments)
+		if (val.split('.').length === 3) return val;
+
+		// JSON object containing a token field
+		if (val.startsWith('{')) {
+			try {
+				const obj = JSON.parse(val);
+				const t = obj.access_token ?? obj.accessToken ?? obj.token ?? obj.jwt;
+				if (t && typeof t === 'string' && t.length > 10) return t;
+			} catch { /* not valid JSON */ }
+		}
+
+		// Plain non-JWT string (some setups store opaque tokens)
+		if (val.length > 10) return val;
 	}
 
-	// 3. Try sessionStorage
+	// 3. sessionStorage — same patterns
 	for (const key of TOKEN_STORAGE_KEYS) {
 		const val = sessionStorage.getItem(key);
-		if (val && val.length > 10) return val;
+		if (!val || val.length < 10) continue;
+		if (val.split('.').length === 3) return val;
+		if (val.startsWith('{')) {
+			try {
+				const obj = JSON.parse(val);
+				const t = obj.access_token ?? obj.accessToken ?? obj.token ?? obj.jwt;
+				if (t && typeof t === 'string' && t.length > 10) return t;
+			} catch { /* not valid JSON */ }
+		}
+		if (val.length > 10) return val;
 	}
 
-	// 4. Try Redux store if exposed
+	// 4. Redux store if exposed on window
 	const store = (window as any).__REDUX_STORE__;
 	if (store) {
 		const state = store.getState();
 		const token =
 			state?.auth?.token ??
 			state?.user?.token ??
-			state?.session?.token;
+			state?.session?.token ??
+			state?.auth?.user?.token;
 		if (token) return token;
 	}
 
 	return '';
 }
-
 
 async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const token = getToken();
@@ -71,30 +102,28 @@ async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<
 	if (!res.ok) {
 		throw new Error(`Studio API error ${res.status}: ${res.statusText}`);
 	}
-	// DELETE endpoints return 200 with no body; guard against empty responses
 	const text = await res.text();
 	if (!text) return undefined as T;
 	return JSON.parse(text);
 }
 
-// ─── Default task statuses (seeded on first load) ────────────────────────────
 export const DEFAULT_TASK_STATUSES = ['To Do', 'In Progress', 'Completed', 'Failed'];
 
 export const studioApiService = {
 	/**
-	 * Call this from your auth provider after login to inject the bearer token.
-	 * Example: studioApiService.setToken(session.access_token)
+	 * Call this from your auth provider after login.
+	 * Example (in your Fuse auth component):
+	 *   studioApiService.setToken(session.access_token)
 	 */
 	setToken(token: string) {
 		_injectedToken = token;
 	},
 
-	/** Clear the injected token (call on logout) */
 	clearToken() {
 		_injectedToken = null;
 	},
 
-	// ── Task Statuses (kanban columns) ──────────────────────────────────────
+	// ── Task Statuses ───────────────────────────────────────────────────────
 	getTaskStatuses: (accountId: number): Promise<PagedResponse<TaskStatus>> =>
 		studioFetch(`/studio/task_status/list/${accountId}/`),
 
@@ -118,7 +147,6 @@ export const studioApiService = {
 			method: 'DELETE'
 		}),
 
-	/** Seed the four default statuses if none exist yet */
 	seedDefaultStatuses: async (accountId: number): Promise<TaskStatus[]> => {
 		const { items } = await studioApiService.getTaskStatuses(accountId);
 		if (items.length > 0) return items;
@@ -174,7 +202,7 @@ export const studioApiService = {
 	deleteProjectType: (accountId: number, typeId: number): Promise<void> =>
 		studioFetch(`/studio/project_type/delete/${accountId}/${typeId}/`, { method: 'DELETE' }),
 
-	// ── Task Types (used as labels) ─────────────────────────────────────────
+	// ── Task Types ──────────────────────────────────────────────────────────
 	getTaskTypes: (accountId: number): Promise<PagedResponse<TaskType>> =>
 		studioFetch(`/studio/task_type/list/${accountId}/`),
 
@@ -218,7 +246,7 @@ export const studioApiService = {
 	deleteTaskResource: (accountId: number, resourceId: number): Promise<void> =>
 		studioFetch(`/studio/task_resource/delete/${accountId}/${resourceId}/`, { method: 'DELETE' }),
 
-	// ── Production Projects (boards) ────────────────────────────────────────
+	// ── Production Projects ─────────────────────────────────────────────────
 	getProjects: (accountId: number): Promise<PagedResponse<ProductionProject>> =>
 		studioFetch(`/studio/production_project/list/${accountId}/`),
 
@@ -242,7 +270,7 @@ export const studioApiService = {
 			method: 'DELETE'
 		}),
 
-	// ── Production Tasks (cards) ────────────────────────────────────────────
+	// ── Production Tasks ────────────────────────────────────────────────────
 	getTasks: (accountId: number): Promise<PagedResponse<ProductionTask>> =>
 		studioFetch(`/studio/production_task/list/${accountId}/`),
 
@@ -266,7 +294,7 @@ export const studioApiService = {
 			method: 'DELETE'
 		}),
 
-	// ── Adapters: convert studio data → ScrumboardBoard shape ───────────────
+	// ── Adapters ────────────────────────────────────────────────────────────
 	adaptProjectToBoard(
 		project: ProductionProject,
 		taskStatuses: TaskStatus[],
