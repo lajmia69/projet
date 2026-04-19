@@ -15,13 +15,48 @@ import {
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
+// ─── Token injection ──────────────────────────────────────────────────────────
+// Call studioApiService.setToken(token) from your auth provider after login,
+// or configure TOKEN_STORAGE_KEY to match your app's localStorage key.
+let _injectedToken: string | null = null;
+
+const TOKEN_STORAGE_KEYS = [
+	'access_token', 'accessToken', 'token', 'authToken', 'jwt',
+	'auth_token', 'id_token', 'bearer'
+];
+
 function getToken(): string {
-	// Adapt this to wherever your JWT is stored (localStorage, cookie, Redux store, etc.)
-	if (typeof window !== 'undefined') {
-		return localStorage.getItem('access_token') || localStorage.getItem('token') || '';
+	// 1. Use injected token (highest priority)
+	if (_injectedToken) return _injectedToken;
+
+	if (typeof window === 'undefined') return '';
+
+	// 2. Try all common localStorage keys
+	for (const key of TOKEN_STORAGE_KEYS) {
+		const val = localStorage.getItem(key);
+		if (val && val.length > 10) return val;
 	}
+
+	// 3. Try sessionStorage
+	for (const key of TOKEN_STORAGE_KEYS) {
+		const val = sessionStorage.getItem(key);
+		if (val && val.length > 10) return val;
+	}
+
+	// 4. Try Redux store if exposed
+	const store = (window as any).__REDUX_STORE__;
+	if (store) {
+		const state = store.getState();
+		const token =
+			state?.auth?.token ??
+			state?.user?.token ??
+			state?.session?.token;
+		if (token) return token;
+	}
+
 	return '';
 }
+
 
 async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const token = getToken();
@@ -36,17 +71,29 @@ async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<
 	if (!res.ok) {
 		throw new Error(`Studio API error ${res.status}: ${res.statusText}`);
 	}
-	// DELETE returns empty body
-	if (res.status === 204 || res.headers.get('content-length') === '0') {
-		return undefined as T;
-	}
-	return res.json();
+	// DELETE endpoints return 200 with no body; guard against empty responses
+	const text = await res.text();
+	if (!text) return undefined as T;
+	return JSON.parse(text);
 }
 
 // ─── Default task statuses (seeded on first load) ────────────────────────────
 export const DEFAULT_TASK_STATUSES = ['To Do', 'In Progress', 'Completed', 'Failed'];
 
 export const studioApiService = {
+	/**
+	 * Call this from your auth provider after login to inject the bearer token.
+	 * Example: studioApiService.setToken(session.access_token)
+	 */
+	setToken(token: string) {
+		_injectedToken = token;
+	},
+
+	/** Clear the injected token (call on logout) */
+	clearToken() {
+		_injectedToken = null;
+	},
+
 	// ── Task Statuses (kanban columns) ──────────────────────────────────────
 	getTaskStatuses: (accountId: number): Promise<PagedResponse<TaskStatus>> =>
 		studioFetch(`/studio/task_status/list/${accountId}/`),
@@ -85,10 +132,19 @@ export const studioApiService = {
 	getProjectStatuses: (accountId: number): Promise<PagedResponse<ProjectStatus>> =>
 		studioFetch(`/studio/project_status/list/${accountId}/`),
 
+	getProjectStatus: (accountId: number, statusId: number): Promise<ProjectStatus> =>
+		studioFetch(`/studio/project_status/detail/${accountId}/${statusId}/`),
+
 	createProjectStatus: (accountId: number, name: string): Promise<ProjectStatus> =>
 		studioFetch(`/studio/project_status/create/${accountId}/`, {
 			method: 'POST',
 			body: JSON.stringify({ name })
+		}),
+
+	updateProjectStatus: (accountId: number, status: ProjectStatus): Promise<ProjectStatus> =>
+		studioFetch(`/studio/project_status/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(status)
 		}),
 
 	deleteProjectStatus: (accountId: number, statusId: number): Promise<void> =>
@@ -100,20 +156,41 @@ export const studioApiService = {
 	getProjectTypes: (accountId: number): Promise<PagedResponse<ProjectType>> =>
 		studioFetch(`/studio/project_type/list/${accountId}/`),
 
+	getProjectType: (accountId: number, typeId: number): Promise<ProjectType> =>
+		studioFetch(`/studio/project_type/detail/${accountId}/${typeId}/`),
+
 	createProjectType: (accountId: number, data: { name: string; project_class: string }): Promise<ProjectType> =>
 		studioFetch(`/studio/project_type/create/${accountId}/`, {
 			method: 'POST',
 			body: JSON.stringify(data)
 		}),
 
+	updateProjectType: (accountId: number, data: ProjectType): Promise<ProjectType> =>
+		studioFetch(`/studio/project_type/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		}),
+
+	deleteProjectType: (accountId: number, typeId: number): Promise<void> =>
+		studioFetch(`/studio/project_type/delete/${accountId}/${typeId}/`, { method: 'DELETE' }),
+
 	// ── Task Types (used as labels) ─────────────────────────────────────────
 	getTaskTypes: (accountId: number): Promise<PagedResponse<TaskType>> =>
 		studioFetch(`/studio/task_type/list/${accountId}/`),
+
+	getTaskType: (accountId: number, typeId: number): Promise<TaskType> =>
+		studioFetch(`/studio/task_type/detail/${accountId}/${typeId}/`),
 
 	createTaskType: (accountId: number, name: string): Promise<TaskType> =>
 		studioFetch(`/studio/task_type/create/${accountId}/`, {
 			method: 'POST',
 			body: JSON.stringify({ name })
+		}),
+
+	updateTaskType: (accountId: number, data: TaskType): Promise<TaskType> =>
+		studioFetch(`/studio/task_type/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
 		}),
 
 	deleteTaskType: (accountId: number, typeId: number): Promise<void> =>
@@ -122,6 +199,24 @@ export const studioApiService = {
 	// ── Task Resources ──────────────────────────────────────────────────────
 	getTaskResources: (accountId: number): Promise<PagedResponse<TaskResource>> =>
 		studioFetch(`/studio/task_resource/list/${accountId}/`),
+
+	getTaskResource: (accountId: number, resourceId: number): Promise<TaskResource> =>
+		studioFetch(`/studio/task_resource/detail/${accountId}/${resourceId}/`),
+
+	createTaskResource: (accountId: number, data: { name: string; description: string }): Promise<TaskResource> =>
+		studioFetch(`/studio/task_resource/create/${accountId}/`, {
+			method: 'POST',
+			body: JSON.stringify(data)
+		}),
+
+	updateTaskResource: (accountId: number, data: TaskResource): Promise<TaskResource> =>
+		studioFetch(`/studio/task_resource/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		}),
+
+	deleteTaskResource: (accountId: number, resourceId: number): Promise<void> =>
+		studioFetch(`/studio/task_resource/delete/${accountId}/${resourceId}/`, { method: 'DELETE' }),
 
 	// ── Production Projects (boards) ────────────────────────────────────────
 	getProjects: (accountId: number): Promise<PagedResponse<ProductionProject>> =>
@@ -172,10 +267,6 @@ export const studioApiService = {
 		}),
 
 	// ── Adapters: convert studio data → ScrumboardBoard shape ───────────────
-	/**
-	 * Build a ScrumboardBoard from a ProductionProject + task statuses + tasks.
-	 * Each column = one TaskStatus; cards = tasks whose status matches.
-	 */
 	adaptProjectToBoard(
 		project: ProductionProject,
 		taskStatuses: TaskStatus[],
@@ -210,6 +301,7 @@ export const studioApiService = {
 			dueDate: task.end_date ? new Date(task.end_date).getTime() / 1000 : null,
 			attachmentCoverId: '',
 			memberIds: task.staffs?.map((s) => String(s.id)) ?? [],
+			resources: task.resources ?? [],
 			attachments: [],
 			subscribed: false,
 			checklists: [],

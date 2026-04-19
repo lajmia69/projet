@@ -45,6 +45,7 @@ export type SimplifyAccount = {
 	id: number | null;
 	user: UserSchema;
 	full_name: string;
+	/** Required field — null value is valid (anyOf [AccountLevelSchema, null]) */
 	level: AccountLevel | null;
 	avatar: string;
 	is_active: boolean;
@@ -82,7 +83,18 @@ export type UpdateProductionProject = {
 	start_date: string;
 	end_date: string;
 	note?: string | null;
+	/** Required for update — the new project status id */
 	status_id: number;
+};
+
+/** Reference shape for nested account ids in task create/update */
+export type AddAccountSchema = {
+	id: number | null;
+};
+
+/** Reference shape for nested resource ids in task create/update */
+export type AddTaskResourceSchema = {
+	id: number | null;
 };
 
 export type ProductionTask = {
@@ -112,13 +124,31 @@ export type CreateProductionTask = {
 	status_id: number;
 	production_project_id: number;
 	staff_leader_id: number;
-	resources: { id: number | null }[];
-	guests: { id: number | null }[];
-	staffs: { id: number | null }[];
+	/** Nullable array per OpenAPI (anyOf: [array, null]) */
+	resources: AddTaskResourceSchema[] | null;
+	/** Nullable array per OpenAPI (anyOf: [array, null]) */
+	guests: AddAccountSchema[] | null;
+	/** Nullable array per OpenAPI (anyOf: [array, null]) */
+	staffs: AddAccountSchema[] | null;
 };
 
-export type UpdateProductionTask = CreateProductionTask & {
+export type UpdateProductionTask = {
 	id?: number | null;
+	name: string;
+	description: string;
+	start_date: string;
+	end_date: string;
+	note?: string | null;
+	task_type_id: number;
+	status_id: number;
+	production_project_id: number;
+	staff_leader_id: number;
+	/** Nullable array per OpenAPI (anyOf: [array, null]) */
+	resources: AddTaskResourceSchema[] | null;
+	/** Nullable array per OpenAPI (anyOf: [array, null]) */
+	guests: AddAccountSchema[] | null;
+	/** Nullable array per OpenAPI (anyOf: [array, null]) */
+	staffs: AddAccountSchema[] | null;
 };
 
 export type PagedResponse<T> = {
@@ -127,7 +157,6 @@ export type PagedResponse<T> = {
 };
 
 // ─── UI-compatible types (scrumboard-style) ──────────────────────────────────
-// These are used by the board components (same shape as before, just backed by real data)
 
 export type ScrumboardMember = {
 	id: string;
@@ -184,6 +213,7 @@ export type ScrumboardCard = {
 	dueDate?: number | null;
 	attachmentCoverId: string;
 	memberIds: string[];
+	resources: TaskResource[];
 	attachments: ScrumboardAttachment[];
 	subscribed: boolean;
 	checklists: ScrumboardChecklist[];

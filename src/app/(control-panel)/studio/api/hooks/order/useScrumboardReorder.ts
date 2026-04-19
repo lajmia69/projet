@@ -72,9 +72,9 @@ export function useScrumboardReorder(boardId: string) {
 			status_id: destStatusId,
 			production_project_id: task.production_project?.id ?? numericProjectId,
 			staff_leader_id: task.staff_leader?.id ?? 0,
-			resources: (task.resources ?? []).map((r) => ({ id: r.id })),
-			guests: (task.guests ?? []).map((g) => ({ id: g.id })),
-			staffs: (task.staffs ?? []).map((s) => ({ id: s.id }))
+			resources: task.resources?.map((r) => ({ id: r.id })) ?? null,
+			guests: task.guests?.map((g) => ({ id: g.id })) ?? null,
+			staffs: task.staffs?.map((s) => ({ id: s.id })) ?? null
 		});
 	}
 

@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useCurrentAccountId } from '../../../../api/useCurrentAccountId';
 import { useCreateStudioBoardCard } from '../../../../api/hooks/cards/useStudioCardMutations';
+import { useGetTaskResources } from '../../../../api/hooks/resources/useGetTaskResources';
 
 type BoardAddCardProps = {
 	boardId: string;
@@ -15,8 +19,11 @@ type BoardAddCardProps = {
 function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
 	const [open, setOpen] = useState(false);
 	const [title, setTitle] = useState('');
+	const [description, setDescription] = useState('');
+	const [selectedResourceIds, setSelectedResourceIds] = useState<number[]>([]);
 	const accountId = useCurrentAccountId();
 	const { mutateAsync: createCard, isPending } = useCreateStudioBoardCard();
+	const { data: availableResources = [] } = useGetTaskResources();
 
 	async function handleSubmit() {
 		const trimmed = title.trim();
@@ -24,19 +31,21 @@ function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
 
 		await createCard({
 			name: trimmed,
-			description: '',
+			description: description.trim(),
 			start_date: new Date().toISOString().split('T')[0],
 			end_date: new Date().toISOString().split('T')[0],
 			task_type_id: 1,
 			status_id: statusId,
 			production_project_id: Number(boardId),
 			staff_leader_id: accountId,
-			resources: [],
+			resources: selectedResourceIds.map((id) => ({ id })),
 			guests: [],
 			staffs: []
 		});
 
 		setTitle('');
+		setDescription('');
+		setSelectedResourceIds([]);
 		setOpen(false);
 		onCardAdded?.();
 	}
@@ -69,6 +78,48 @@ function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
 						if (e.key === 'Escape') setOpen(false);
 					}}
 				/>
+				<TextField
+					size="small"
+					fullWidth
+					multiline
+					rows={2}
+					placeholder="Description (optional)"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+				/>
+				{availableResources.length > 0 && (
+					<TextField
+						select
+						size="small"
+						fullWidth
+						label="Resources"
+						value={selectedResourceIds}
+						onChange={(e) => {
+							const val = e.target.value;
+							setSelectedResourceIds(typeof val === 'string' ? val.split(',').map(Number) : (val as number[]));
+						}}
+						SelectProps={{
+							multiple: true,
+							renderValue: (selected) => {
+								const ids = selected as number[];
+								return availableResources
+									.filter((r) => r.id !== null && ids.includes(r.id as number))
+									.map((r) => r.name)
+									.join(', ');
+							}
+						}}
+					>
+						{availableResources.map((resource) => (
+							<MenuItem key={resource.id} value={resource.id ?? 0}>
+								<Checkbox checked={resource.id !== null && selectedResourceIds.includes(resource.id as number)} />
+								<ListItemText
+									primary={resource.name}
+									secondary={resource.description || undefined}
+								/>
+							</MenuItem>
+						))}
+					</TextField>
+				)}
 				<div className="flex gap-2">
 					<Button
 						size="small"

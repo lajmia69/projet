@@ -7,6 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { format, fromUnixTime } from 'date-fns';
 import clsx from 'clsx';
@@ -20,6 +21,8 @@ function BoardCardDialog() {
 
 	const isOverdue =
 		openCard.dueDate && Math.floor(Date.now() / 1000) > openCard.dueDate;
+
+	const resources = openCard.resources ?? [];
 
 	return (
 		<Dialog open={open} onClose={closeCardDialog} maxWidth="sm" fullWidth scroll="body">
@@ -56,12 +59,42 @@ function BoardCardDialog() {
 				)}
 
 				{openCard.memberIds.length > 0 && (
-					<div className="flex items-center gap-2">
+					<div className="mb-3 flex items-center gap-2">
 						<FuseSvgIcon size={16} color="action">lucide:users</FuseSvgIcon>
 						<Typography className="text-sm" color="text.secondary">
 							{openCard.memberIds.length} member{openCard.memberIds.length !== 1 ? 's' : ''}
 						</Typography>
 					</div>
+				)}
+
+				{resources.length > 0 && (
+					<>
+						<Divider className="my-3" />
+						<div className="flex items-center gap-2 mb-2">
+							<FuseSvgIcon size={16} color="action">lucide:package</FuseSvgIcon>
+							<Typography className="text-sm font-semibold">
+								Resources ({resources.length})
+							</Typography>
+						</div>
+						<div className="flex flex-col gap-2">
+							{resources.map((resource) => (
+								<div
+									key={resource.id}
+									className="rounded-md border px-3 py-2"
+									style={{ borderColor: 'rgba(0,0,0,0.12)' }}
+								>
+									<Typography className="text-sm font-medium">
+										{resource.name}
+									</Typography>
+									{resource.description && (
+										<Typography className="text-xs mt-0.5" color="text.secondary">
+											{resource.description}
+										</Typography>
+									)}
+								</div>
+							))}
+						</div>
+					</>
 				)}
 			</DialogContent>
 
