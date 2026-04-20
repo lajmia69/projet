@@ -257,11 +257,15 @@ const navigationConfig: FuseNavItemType[] = [
 				// ✅ FIXED: was 'administration-audio' — wrong prefix, breaks active-link highlighting
 				id: 'studio-audio',
 				title: 'Audio',
-				type: 'item',
+				type: 'collapse',
 				auth: authRoles.studioStaff,
 				icon: 'heroicons-outline:microphone',
 				translate: 'AUDIO',
-				url: '/studio/audio'
+				children: [
+					// ✅ FIXED: missing auth on both children
+					{ id: 'studio-audio-list',    title: 'Audios',  auth: authRoles.studioStaff, type: 'item', url: '/studio/audios' },
+					{ id: 'studio-audio-formats', title: 'Formats', auth: authRoles.studioStaff, type: 'item', url: '/studio/formats' }
+				]
 			}
 		]
 	}
