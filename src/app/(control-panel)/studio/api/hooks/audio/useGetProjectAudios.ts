@@ -2,25 +2,32 @@ import { useQuery } from '@tanstack/react-query';
 import { studioApiService } from '../../services/studioApiService';
 import { useCurrentAccountId } from '../../useCurrentAccountId';
 
-export const projectAudiosQueryKey = (accountId: number, projectId: number | string) => [
+/**
+ * Query key for the full account audio list.
+ * NOTE: The backend AudioSchema does not include a project or task reference
+ * in the response, so we cannot filter by project on the client side.
+ * This hook returns ALL audio files for the account.
+ */
+export const projectAudiosQueryKey = (accountId: number) => [
 	'studio',
 	'audio',
-	accountId,
-	String(projectId)
+	accountId
 ];
 
-export function useGetProjectAudios(projectId: number | string) {
+/**
+ * @deprecated projectId parameter is kept for API compatibility but is no longer
+ * used for filtering because the backend does not expose a project/task reference
+ * on the audio list response.
+ */
+export function useGetProjectAudios(_projectId?: number | string) {
 	const accountId = useCurrentAccountId();
-	const numericProjectId = Number(projectId);
 
 	return useQuery({
-		queryKey: projectAudiosQueryKey(accountId, projectId),
+		queryKey: projectAudiosQueryKey(accountId),
 		queryFn: async () => {
 			const { items } = await studioApiService.getAudioFiles(accountId);
-			// Filter by project — if the API supports a query param this filter is redundant
-			// but it works as a safe fallback either way
-			return items.filter((a) => a.production_project?.id === numericProjectId);
+			return items;
 		},
-		enabled: !!accountId && !!numericProjectId && !isNaN(numericProjectId)
+		enabled: !!accountId
 	});
 }

@@ -6,6 +6,7 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
 import LinearProgress from '@mui/material/LinearProgress';
 import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
@@ -16,31 +17,35 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Slider from '@mui/material/Slider';
+import Alert from '@mui/material/Alert';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import clsx from 'clsx';
-import { formatDistanceToNow, format } from 'date-fns';
 import { useGetProjectAudios } from '../../../../api/hooks/audio/useGetProjectAudios';
-import { useUploadProjectAudio, useUpdateAudioFile, useDeleteAudioFile } from '../../../../api/hooks/audio/useAudioMutations';
-import { AudioFile } from '../../../../api/types';
+import {
+	useUploadProjectAudio,
+	useUpdateAudioFile,
+	useDeleteAudioFile
+} from '../../../../api/hooks/audio/useAudioMutations';
+import { useGetAudioFormats } from '../../../../api/hooks/audio/Usegetaudioformats';
+import { AudioFile, AudioFormat, CreateAudioFile, UpdateAudioFile } from '../../../../api/types';
+import {
+	isoDurationToSeconds,
+	secondsToIsoDuration,
+	formatIsoDuration
+} from '../../../../api/services/studioApiService';
+import { useCurrentAccountId } from '../../../../api/useCurrentAccountId';
 import { studioApiService } from '../../../../api/services/studioApiService';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Audio type options (backend integer enum — 1 = default) ────────────────
+const AUDIO_TYPES = [
+	{ value: 1, label: 'Music' },
+	{ value: 2, label: 'Jingle' },
+	{ value: 3, label: 'Voice Over' },
+	{ value: 4, label: 'SFX' },
+	{ value: 5, label: 'Interview' },
+];
 
-function formatBytes(bytes: number | null): string {
-	if (!bytes) return '—';
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function formatDuration(seconds: number | null): string {
-	if (!seconds) return '—';
-	const m = Math.floor(seconds / 60);
-	const s = Math.floor(seconds % 60);
-	return `${m}:${s.toString().padStart(2, '0')}`;
-}
-
-const ACCEPTED_AUDIO_TYPES = 'audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.opus,.wma';
+const ACCEPTED_AUDIO = 'audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.opus,.wma';
 
 // ─── Mini Audio Player ────────────────────────────────────────────────────────
 
@@ -53,11 +58,8 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 
 	function togglePlay() {
 		if (!audioRef.current) return;
-		if (playing) {
-			audioRef.current.pause();
-		} else {
-			audioRef.current.play();
-		}
+		if (playing) audioRef.current.pause();
+		else audioRef.current.play();
 		setPlaying(!playing);
 	}
 
@@ -79,17 +81,11 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 
 	function handleSeek(_: Event, value: number | number[]) {
 		if (!audioRef.current || typeof value !== 'number') return;
-		const time = (value / 100) * (audioRef.current.duration || 0);
-		audioRef.current.currentTime = time;
+		audioRef.current.currentTime = (value / 100) * (audioRef.current.duration || 0);
 		setProgress(value);
 	}
 
-	// Cleanup on unmount
-	useEffect(() => {
-		return () => {
-			audioRef.current?.pause();
-		};
-	}, []);
+	useEffect(() => () => { audioRef.current?.pause(); }, []);
 
 	return (
 		<div className="flex flex-col gap-1 w-full">
@@ -102,16 +98,9 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 				preload="metadata"
 			/>
 			<div className="flex items-center gap-2">
-				<IconButton
-					size="small"
-					onClick={togglePlay}
-					sx={{ color: 'secondary.main' }}
-				>
-					<FuseSvgIcon size={20}>
-						{playing ? 'lucide:pause' : 'lucide:play'}
-					</FuseSvgIcon>
+				<IconButton size="small" onClick={togglePlay} sx={{ color: 'secondary.main' }}>
+					<FuseSvgIcon size={20}>{playing ? 'lucide:pause' : 'lucide:play'}</FuseSvgIcon>
 				</IconButton>
-
 				<Slider
 					size="small"
 					value={progress}
@@ -124,9 +113,9 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 						'& .MuiSlider-rail': { height: 3 }
 					}}
 				/>
-
 				<Typography variant="caption" color="text.secondary" className="shrink-0 tabular-nums">
-					{formatDuration(currentTime)} / {formatDuration(duration || null)}
+					{formatIsoDuration(secondsToIsoDuration(currentTime))} /{' '}
+					{formatIsoDuration(secondsToIsoDuration(duration))}
 				</Typography>
 			</div>
 		</div>
@@ -137,35 +126,44 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 
 function AudioRow({
 	audio,
-	projectId,
 	onDelete
 }: {
 	audio: AudioFile;
-	projectId: string | number;
 	onDelete: (audio: AudioFile) => void;
 }) {
 	const [expanded, setExpanded] = useState(false);
 	const [editing, setEditing] = useState(false);
-	const [editTitle, setEditTitle] = useState(audio.title);
+	const [editName, setEditName] = useState(audio.name);
 	const [editDesc, setEditDesc] = useState(audio.description ?? '');
-	const { mutateAsync: update, isPending: isSaving } = useUpdateAudioFile(projectId);
-
-	const src = studioApiService.getAudioUrl(audio.file);
+	const { mutateAsync: update, isPending: isSaving } = useUpdateAudioFile();
 
 	async function handleSave() {
 		if (!audio.id) return;
-		await update({ id: audio.id, title: editTitle.trim() || audio.title, description: editDesc.trim() || null });
+		const updatePayload: UpdateAudioFile = {
+			id: audio.id,
+			name: editName.trim() || audio.name,
+			description: editDesc.trim(),
+			duration: audio.duration,
+			timestamp: Date.now() / 1000,
+			format_id: audio.format?.id ?? 0,
+			type: audio.type ?? 1
+		};
+		await update(updatePayload);
 		setEditing(false);
 	}
 
+	// Use `src` directly — it's the full URL returned by the backend
+	const src = audio.src;
+
 	return (
-		<div className="rounded-xl border transition-all duration-150"
+		<div
+			className="rounded-xl border transition-all duration-150"
 			style={{ borderColor: 'var(--mui-palette-divider)' }}
 		>
 			{/* Header row */}
 			<div className="flex items-center gap-2 px-3 py-2">
-				{/* Waveform icon */}
-				<div className="flex shrink-0 items-center justify-center w-8 h-8 rounded-lg"
+				<div
+					className="flex shrink-0 items-center justify-center w-8 h-8 rounded-lg"
 					style={{ backgroundColor: 'rgba(var(--mui-palette-secondary-mainChannel) / 0.12)' }}
 				>
 					<FuseSvgIcon size={16} style={{ color: 'var(--mui-palette-secondary-main)' }}>
@@ -177,11 +175,11 @@ function AudioRow({
 					<div className="flex flex-1 flex-col gap-1">
 						<TextField
 							size="small"
-							value={editTitle}
-							onChange={(e) => setEditTitle(e.target.value)}
+							value={editName}
+							onChange={(e) => setEditName(e.target.value)}
 							autoFocus
 							fullWidth
-							label="Title"
+							label="Name"
 						/>
 						<TextField
 							size="small"
@@ -207,14 +205,25 @@ function AudioRow({
 					</div>
 				) : (
 					<div className="flex flex-1 min-w-0 flex-col">
-						<Typography className="text-sm font-semibold truncate">{audio.title}</Typography>
+						<Typography className="text-sm font-semibold truncate">{audio.name}</Typography>
 						<div className="flex items-center gap-2 flex-wrap">
-							{audio.format && (
-								<Chip label={audio.format.toUpperCase()} size="small"
-									sx={{ height: 18, fontSize: '0.65rem' }} />
+							{audio.format?.extension && (
+								<Chip
+									label={audio.format.extension.toUpperCase()}
+									size="small"
+									sx={{ height: 18, fontSize: '0.65rem' }}
+								/>
+							)}
+							{audio.type_label && (
+								<Chip
+									label={audio.type_label}
+									size="small"
+									variant="outlined"
+									sx={{ height: 18, fontSize: '0.65rem' }}
+								/>
 							)}
 							<Typography variant="caption" color="text.secondary">
-								{formatDuration(audio.duration)} · {formatBytes(audio.size)}
+								{formatIsoDuration(audio.duration)}
 							</Typography>
 						</div>
 					</div>
@@ -234,11 +243,19 @@ function AudioRow({
 								<FuseSvgIcon size={16}>lucide:pencil</FuseSvgIcon>
 							</IconButton>
 						</Tooltip>
-						<Tooltip title="Download">
-							<IconButton size="small" component="a" href={src} download={audio.title} target="_blank">
-								<FuseSvgIcon size={16}>lucide:download</FuseSvgIcon>
-							</IconButton>
-						</Tooltip>
+						{src && (
+							<Tooltip title="Download">
+								<IconButton
+									size="small"
+									component="a"
+									href={src}
+									download={audio.name}
+									target="_blank"
+								>
+									<FuseSvgIcon size={16}>lucide:download</FuseSvgIcon>
+								</IconButton>
+							</Tooltip>
+						)}
 						<Tooltip title="Delete">
 							<IconButton size="small" color="error" onClick={() => onDelete(audio)}>
 								<FuseSvgIcon size={16}>lucide:trash-2</FuseSvgIcon>
@@ -256,11 +273,14 @@ function AudioRow({
 							{audio.description}
 						</Typography>
 					)}
-					<AudioPlayer src={src} title={audio.title} />
-					{audio.created_at && (
-						<Typography variant="caption" color="text.disabled" className="mt-1 block">
-							Uploaded {formatDistanceToNow(new Date(audio.created_at), { addSuffix: true })}
-							{audio.created_by?.full_name ? ` by ${audio.created_by.full_name}` : ''}
+					{src ? (
+						<AudioPlayer src={src} title={audio.name} />
+					) : (
+						<Typography variant="caption" color="error">No playback URL available</Typography>
+					)}
+					{audio.format && (
+						<Typography variant="caption" color="text.disabled" className="mt-2 block">
+							{audio.format.name} · {audio.format.bit_rates} kbps · {audio.format.frequency} kHz
 						</Typography>
 					)}
 				</div>
@@ -271,26 +291,54 @@ function AudioRow({
 
 // ─── Upload Zone ──────────────────────────────────────────────────────────────
 
-function UploadZone({
-	projectId,
-	onUploaded
-}: {
+type UploadZoneProps = {
 	projectId: string | number;
+	/** Tasks belonging to this project so the user can pick production_task_id */
+	tasks: Array<{ id: number; name: string }>;
+	formats: AudioFormat[];
 	onUploaded: () => void;
-}) {
+};
+
+function UploadZone({ projectId, tasks, formats, onUploaded }: UploadZoneProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const detectAudioRef = useRef<HTMLAudioElement>(null);
+
 	const [dragging, setDragging] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
-	const [title, setTitle] = useState('');
+	const [detectedDuration, setDetectedDuration] = useState<number>(0); // seconds
+
+	// Form fields
+	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
+	const [taskId, setTaskId] = useState<number>(0);
+	const [formatId, setFormatId] = useState<number>(formats[0]?.id ?? 0);
+	const [audioType, setAudioType] = useState<number>(1);
+
 	const { mutateAsync: upload, isPending } = useUploadProjectAudio(projectId);
+
+	// Pre-fill formatId when formats load
+	useEffect(() => {
+		if (formats.length > 0 && !formatId) setFormatId(formats[0]?.id ?? 0);
+	}, [formats]);
+
+	function loadFileMeta(file: File) {
+		setSelectedFile(file);
+		setName(file.name.replace(/\.[^/.]+$/, ''));
+		setDetectedDuration(0);
+
+		// Detect duration via a hidden <audio> element
+		const url = URL.createObjectURL(file);
+		const audio = new Audio(url);
+		audio.addEventListener('loadedmetadata', () => {
+			setDetectedDuration(audio.duration || 0);
+			URL.revokeObjectURL(url);
+		});
+		audio.addEventListener('error', () => URL.revokeObjectURL(url));
+	}
 
 	function handleFileChange(files: FileList | null) {
 		if (!files || files.length === 0) return;
-		const file = files[0];
-		setSelectedFile(file);
-		// Pre-fill title from filename (strip extension)
-		setTitle(file.name.replace(/\.[^/.]+$/, ''));
+		loadFileMeta(files[0]);
 	}
 
 	const handleDrop = useCallback((e: React.DragEvent) => {
@@ -300,30 +348,72 @@ function UploadZone({
 	}, []);
 
 	async function handleSubmit() {
-		if (!selectedFile || !title.trim()) return;
-		await upload({
-			title: title.trim(),
-			description: description.trim() || null,
-			production_project_id: Number(projectId),
-			file: selectedFile
-		});
+		if (!selectedFile || !name.trim()) return;
+		if (!taskId) return;
+		if (!formatId) return;
+
+		const duration = secondsToIsoDuration(detectedDuration || 0);
+		const timestamp = selectedFile.lastModified
+			? selectedFile.lastModified / 1000
+			: Date.now() / 1000;
+
+		const payload: CreateAudioFile = {
+			name: name.trim(),
+			description: description.trim(),
+			duration,
+			timestamp,
+			format_id: formatId,
+			type: audioType,
+			production_task_id: taskId
+		};
+
+		await upload({ payload, file: selectedFile });
+
+		// Reset
 		setSelectedFile(null);
-		setTitle('');
+		setName('');
 		setDescription('');
+		setTaskId(0);
+		setDetectedDuration(0);
 		onUploaded();
 	}
 
+	function reset() {
+		setSelectedFile(null);
+		setName('');
+		setDescription('');
+		setTaskId(0);
+		setDetectedDuration(0);
+	}
+
+	const noTasks = tasks.length === 0;
+	const noFormats = formats.length === 0;
+
 	return (
 		<div className="flex flex-col gap-3">
+			{noFormats && (
+				<Alert severity="warning" className="text-xs">
+					No audio formats configured. Please add a format in Studio › Formats before uploading.
+				</Alert>
+			)}
+			{noTasks && (
+				<Alert severity="info" className="text-xs">
+					This project has no tasks yet. Create a task first — audio files must be linked to a task.
+				</Alert>
+			)}
+
 			{/* Drop zone */}
 			<div
 				className={clsx(
 					'flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 cursor-pointer transition-colors duration-150',
-					dragging ? 'border-secondary-main bg-secondary-main/10' : 'border-divider'
 				)}
 				style={{
-					borderColor: dragging ? 'var(--mui-palette-secondary-main)' : undefined,
-					backgroundColor: dragging ? 'rgba(var(--mui-palette-secondary-mainChannel) / 0.08)' : undefined
+					borderColor: dragging
+						? 'var(--mui-palette-secondary-main)'
+						: 'var(--mui-palette-divider)',
+					backgroundColor: dragging
+						? 'rgba(var(--mui-palette-secondary-mainChannel) / 0.08)'
+						: undefined
 				}}
 				onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
 				onDragLeave={() => setDragging(false)}
@@ -334,15 +424,15 @@ function UploadZone({
 				<Typography className="mt-2 text-sm font-medium" color="text.secondary">
 					{selectedFile ? selectedFile.name : 'Drop audio file here or click to browse'}
 				</Typography>
-				{selectedFile && (
+				{selectedFile && detectedDuration > 0 && (
 					<Typography variant="caption" color="text.disabled">
-						{formatBytes(selectedFile.size)}
+						Duration detected: {formatIsoDuration(secondsToIsoDuration(detectedDuration))}
 					</Typography>
 				)}
 				<input
 					ref={fileInputRef}
 					type="file"
-					accept={ACCEPTED_AUDIO_TYPES}
+					accept={ACCEPTED_AUDIO}
 					className="hidden"
 					onChange={(e) => handleFileChange(e.target.files)}
 				/>
@@ -353,19 +443,69 @@ function UploadZone({
 					<TextField
 						size="small"
 						fullWidth
-						label="Title *"
-						value={title}
-						onChange={(e) => setTitle(e.target.value)}
+						label="Name *"
+						value={name}
+						onChange={(e) => setName(e.target.value)}
 					/>
+
 					<TextField
 						size="small"
 						fullWidth
-						label="Description (optional)"
+						label="Description"
 						value={description}
 						onChange={(e) => setDescription(e.target.value)}
 						multiline
 						rows={2}
 					/>
+
+					{/* Task selector (required — links audio to a production task) */}
+					<TextField
+						select
+						size="small"
+						fullWidth
+						label="Linked Task *"
+						value={taskId || ''}
+						onChange={(e) => setTaskId(Number(e.target.value))}
+						disabled={noTasks}
+						helperText="Audio must be linked to a production task"
+					>
+						{tasks.map((t) => (
+							<MenuItem key={t.id} value={t.id}>
+								{t.name}
+							</MenuItem>
+						))}
+					</TextField>
+
+					{/* Format selector */}
+					<TextField
+						select
+						size="small"
+						fullWidth
+						label="Audio Format *"
+						value={formatId || ''}
+						onChange={(e) => setFormatId(Number(e.target.value))}
+						disabled={noFormats}
+					>
+						{formats.map((f) => (
+							<MenuItem key={f.id} value={f.id ?? 0}>
+								{f.name} ({f.extension.toUpperCase()}, {f.bit_rates} kbps)
+							</MenuItem>
+						))}
+					</TextField>
+
+					{/* Audio type */}
+					<TextField
+						select
+						size="small"
+						fullWidth
+						label="Type"
+						value={audioType}
+						onChange={(e) => setAudioType(Number(e.target.value))}
+					>
+						{AUDIO_TYPES.map((t) => (
+							<MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+						))}
+					</TextField>
 
 					{isPending && <LinearProgress color="secondary" />}
 
@@ -373,18 +513,17 @@ function UploadZone({
 						<Button
 							variant="contained"
 							color="secondary"
-							disabled={!title.trim() || isPending}
+							disabled={!name.trim() || !taskId || !formatId || isPending}
 							onClick={handleSubmit}
-							startIcon={isPending
-								? <CircularProgress size={14} color="inherit" />
-								: <FuseSvgIcon size={16}>lucide:upload</FuseSvgIcon>
+							startIcon={
+								isPending
+									? <CircularProgress size={14} color="inherit" />
+									: <FuseSvgIcon size={16}>lucide:upload</FuseSvgIcon>
 							}
 						>
 							{isPending ? 'Uploading…' : 'Upload'}
 						</Button>
-						<Button onClick={() => { setSelectedFile(null); setTitle(''); setDescription(''); }}>
-							Cancel
-						</Button>
+						<Button onClick={reset}>Cancel</Button>
 					</div>
 				</>
 			)}
@@ -410,7 +549,7 @@ function DeleteConfirmDialog({
 			<DialogTitle>Delete audio file?</DialogTitle>
 			<DialogContent>
 				<Typography>
-					Are you sure you want to delete <strong>{audio?.title}</strong>? This cannot be undone.
+					Are you sure you want to delete <strong>{audio?.name}</strong>? This cannot be undone.
 				</Typography>
 			</DialogContent>
 			<DialogActions>
@@ -430,18 +569,21 @@ type AudioPanelProps = {
 	onClose: () => void;
 	projectId: string | number;
 	projectName?: string;
+	/** Tasks for this project, needed to satisfy production_task_id on upload */
+	tasks?: Array<{ id: number; name: string }>;
 };
 
-export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanelProps) {
+export function AudioPanel({ open, onClose, projectId, projectName, tasks = [] }: AudioPanelProps) {
 	const [showUpload, setShowUpload] = useState(false);
 	const [audioToDelete, setAudioToDelete] = useState<AudioFile | null>(null);
 	const [searchQuery, setSearchQuery] = useState('');
 
 	const { data: audios = [], isLoading } = useGetProjectAudios(projectId);
+	const { data: formats = [] } = useGetAudioFormats();
 	const { mutateAsync: deleteAudio, isPending: isDeleting } = useDeleteAudioFile(projectId);
 
 	const filtered = audios.filter((a) =>
-		a.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+		a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
 		(a.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())
 	);
 
@@ -451,8 +593,11 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 		setAudioToDelete(null);
 	}
 
-	const totalDuration = audios.reduce((acc, a) => acc + (a.duration ?? 0), 0);
-	const totalSize = audios.reduce((acc, a) => acc + (a.size ?? 0), 0);
+	// Total duration in seconds
+	const totalDurationSec = audios.reduce(
+		(acc, a) => acc + isoDurationToSeconds(a.duration),
+		0
+	);
 
 	return (
 		<>
@@ -460,14 +605,16 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 				anchor="right"
 				open={open}
 				onClose={onClose}
-				PaperProps={{ sx: { width: { xs: '100vw', sm: 440 } } }}
+				PaperProps={{ sx: { width: { xs: '100vw', sm: 460 } } }}
 			>
 				{/* Header */}
-				<div className="flex items-center justify-between px-4 py-3 border-b"
+				<div
+					className="flex items-center justify-between px-4 py-3 border-b"
 					style={{ borderColor: 'var(--mui-palette-divider)' }}
 				>
 					<div className="flex items-center gap-2">
-						<div className="flex items-center justify-center w-8 h-8 rounded-lg"
+						<div
+							className="flex items-center justify-center w-8 h-8 rounded-lg"
 							style={{ backgroundColor: 'rgba(var(--mui-palette-secondary-mainChannel) / 0.12)' }}
 						>
 							<FuseSvgIcon size={18} style={{ color: 'var(--mui-palette-secondary-main)' }}>
@@ -490,7 +637,8 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 
 				{/* Stats bar */}
 				{audios.length > 0 && (
-					<div className="flex items-center gap-4 px-4 py-2 border-b"
+					<div
+						className="flex items-center gap-4 px-4 py-2 border-b"
 						style={{
 							borderColor: 'var(--mui-palette-divider)',
 							backgroundColor: 'rgba(var(--mui-palette-secondary-mainChannel) / 0.04)'
@@ -505,13 +653,7 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 						<div className="flex items-center gap-1">
 							<FuseSvgIcon size={14} color="disabled">lucide:clock</FuseSvgIcon>
 							<Typography variant="caption" color="text.secondary">
-								{formatDuration(totalDuration)}
-							</Typography>
-						</div>
-						<div className="flex items-center gap-1">
-							<FuseSvgIcon size={14} color="disabled">lucide:hard-drive</FuseSvgIcon>
-							<Typography variant="caption" color="text.secondary">
-								{formatBytes(totalSize)}
+								{formatIsoDuration(secondsToIsoDuration(totalDurationSec))}
 							</Typography>
 						</div>
 					</div>
@@ -554,9 +696,11 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 
 					{/* Upload zone */}
 					{showUpload && (
-						<div className="px-4 pb-3">
+						<div className="px-4 pb-3 overflow-y-auto max-h-[60vh]">
 							<UploadZone
 								projectId={projectId}
+								tasks={tasks}
+								formats={formats}
 								onUploaded={() => setShowUpload(false)}
 							/>
 							<Divider className="mt-3" />
@@ -571,7 +715,8 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 							</div>
 						) : filtered.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-16 gap-3">
-								<div className="flex items-center justify-center w-16 h-16 rounded-full"
+								<div
+									className="flex items-center justify-center w-16 h-16 rounded-full"
 									style={{ backgroundColor: 'var(--mui-palette-action-hover)' }}
 								>
 									<FuseSvgIcon size={32} color="disabled">lucide:music-off</FuseSvgIcon>
@@ -579,8 +724,7 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 								<Typography color="text.secondary" className="text-sm text-center">
 									{searchQuery
 										? 'No audio files match your search'
-										: 'No audio files yet.\nUpload your first file above.'
-									}
+										: 'No audio files yet.\nUpload your first file above.'}
 								</Typography>
 								{!searchQuery && !showUpload && (
 									<Button
@@ -600,7 +744,6 @@ export function AudioPanel({ open, onClose, projectId, projectName }: AudioPanel
 									<AudioRow
 										key={audio.id}
 										audio={audio}
-										projectId={projectId}
 										onDelete={setAudioToDelete}
 									/>
 								))}

@@ -141,33 +141,74 @@ export type UpdateProductionTask = {
 	staffs: AddAccountSchema[] | null;
 };
 
-// ─── Audio ───────────────────────────────────────────────────────────────────
+// ─── Audio Format (GET /audio/format/list/{accountId}/) ─────────────────────
+
+export type AudioFormat = {
+	id: number | null;
+	name: string;
+	extension: string;
+	bit_rates: string;
+	flow_rates: string;
+	frequency: string;
+	channel: number;
+	channel_label: string;
+};
+
+export type CreateAudioFormat = {
+	name: string;
+	extension: string;
+	bit_rates: string;
+	flow_rates: string;
+	frequency: string;
+	channel: number;
+};
+
+// ─── Audio File (GET /audio/list/{accountId}/ → AudioSchema) ────────────────
 
 export type AudioFile = {
 	id: number | null;
-	title: string;
-	description: string | null;
-	/** Relative path — prefix with BASE_URL to get a playable URL */
+	/** Relative storage path */
 	file: string;
-	duration: number | null; // seconds
-	format: string | null;
-	size: number | null; // bytes
-	production_project: ProductionProject | null;
-	created_by: SimplifyAccount;
-	created_at: string;
-	updated_at: string | null;
+	/** Full playable URL from backend */
+	src: string;
+	name: string;
+	description: string;
+	/** ISO 8601 duration string – e.g. "PT01H30M00S" */
+	duration: string;
+	type: number;
+	type_label: string;
+	/** UUID */
+	reference?: string;
+	format: AudioFormat;
 };
+
+// ─── Create Audio (POST /audio/create/{accountId}/) ─────────────────────────
+// Multipart: field "file" = binary, field "payload" = JSON string of CreateAudioFile
 
 export type CreateAudioFile = {
-	title: string;
-	description?: string | null;
-	production_project_id: number;
+	name: string;
+	description: string;
+	/** ISO 8601 duration string */
+	duration: string;
+	/** Unix timestamp in seconds */
+	timestamp: number;
+	format_id: number;
+	/** Audio type integer – 1 = default */
+	type: number;
+	production_task_id: number;
 };
 
+// ─── Update Audio Metadata (PUT /audio/update/{accountId}/) ─────────────────
+
 export type UpdateAudioFile = {
-	id: number;
-	title: string;
-	description?: string | null;
+	id?: number | null;
+	name: string;
+	description: string;
+	/** ISO 8601 duration string */
+	duration: string;
+	timestamp: number;
+	format_id: number;
+	type: number;
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import Button from '@mui/material/Button';
 import Badge from '@mui/material/Badge';
@@ -10,14 +12,37 @@ import useParams from '@fuse/hooks/useParams';
 import { AudioPanel } from './audio/AudioPanel';
 import { useGetStudioBoard } from '../../../api/hooks/boards/useGetStudioBoard';
 import { useGetProjectAudios } from '../../../api/hooks/audio/useGetProjectAudios';
+import { useGetStudioBoardCards } from '../../../api/hooks/cards/useGetStudioBoardCards';
+import { useCurrentAccountId } from '../../../api/useCurrentAccountId';
+import { studioApiService } from '../../../api/services/studioApiService';
+import { useQuery } from '@tanstack/react-query';
+import { studioTasksQueryKey } from '../../../api/hooks/cards/useGetStudioBoardCards';
+import { useQueryClient } from '@tanstack/react-query';
+import { ProductionTask } from '../../../api/types';
 
 function BoardHeader() {
 	const [audioOpen, setAudioOpen] = useState(false);
 	const routeParams = useParams<{ boardId: string }>();
 	const { boardId } = routeParams;
+	const accountId = useCurrentAccountId();
+	const queryClient = useQueryClient();
 
 	const { data: project } = useGetStudioBoard(boardId);
 	const { data: audios = [] } = useGetProjectAudios(boardId);
+
+	// Fetch raw tasks for this project so AudioPanel can show the task selector
+	const { data: rawTasks } = useQuery({
+		queryKey: ['studio', 'tasks-raw', accountId, boardId],
+		queryFn: async () => {
+			const { items } = await studioApiService.getTasks(accountId);
+			return items.filter((t) => t.production_project?.id === Number(boardId));
+		},
+		enabled: !!accountId && !!boardId
+	});
+
+	const tasks = (rawTasks ?? [])
+		.filter((t) => t.id !== null)
+		.map((t) => ({ id: t.id as number, name: t.name }));
 
 	return (
 		<>
@@ -65,6 +90,7 @@ function BoardHeader() {
 				onClose={() => setAudioOpen(false)}
 				projectId={boardId}
 				projectName={project?.name}
+				tasks={tasks}
 			/>
 		</>
 	);

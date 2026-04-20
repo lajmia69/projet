@@ -263,7 +263,7 @@ const navigationConfig: FuseNavItemType[] = [
 				translate: 'AUDIO',
 				children: [
 					// ✅ FIXED: missing auth on both children
-					{ id: 'studio-audio-list',    title: 'Audios',  auth: authRoles.studioStaff, type: 'item', url: '/studio/audios' },
+					{ id: 'studio-audio-list',    title: 'Audios',  auth: authRoles.studioStaff, type: 'item', url: '/studio/audio' },
 					{ id: 'studio-audio-formats', title: 'Formats', auth: authRoles.studioStaff, type: 'item', url: '/studio/formats' }
 				]
 			}
