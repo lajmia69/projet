@@ -10,6 +10,9 @@ import {
 	UpdateProductionProject,
 	CreateProductionTask,
 	UpdateProductionTask,
+	AudioFile,
+	CreateAudioFile,
+	UpdateAudioFile,
 	PagedResponse
 } from '../types';
 
@@ -18,10 +21,8 @@ const BASE_URL = 'https://radio.backend.ecocloud.tn';
 // ─── Token injection ──────────────────────────────────────────────────────────
 let _injectedToken: string | null = null;
 
-// Fuse React stores JWT as 'jwt_access_token' by default.
-// Additional common keys are kept as fallback.
 const TOKEN_STORAGE_KEYS = [
-	'jwt_access_token',   // ← Fuse React default (most important)
+	'jwt_access_token',
 	'access_token',
 	'accessToken',
 	'token',
@@ -33,20 +34,14 @@ const TOKEN_STORAGE_KEYS = [
 ];
 
 function getToken(): string {
-	// 1. Highest priority: explicitly injected token
 	if (_injectedToken) return _injectedToken;
 
 	if (typeof window === 'undefined') return '';
 
-	// 2. localStorage — try all keys
 	for (const key of TOKEN_STORAGE_KEYS) {
 		const val = localStorage.getItem(key);
 		if (!val || val.length < 10) continue;
-
-		// Raw JWT (three dot-separated base64 segments)
 		if (val.split('.').length === 3) return val;
-
-		// JSON object containing a token field
 		if (val.startsWith('{')) {
 			try {
 				const obj = JSON.parse(val);
@@ -54,12 +49,9 @@ function getToken(): string {
 				if (t && typeof t === 'string' && t.length > 10) return t;
 			} catch { /* not valid JSON */ }
 		}
-
-		// Plain non-JWT string (some setups store opaque tokens)
 		if (val.length > 10) return val;
 	}
 
-	// 3. sessionStorage — same patterns
 	for (const key of TOKEN_STORAGE_KEYS) {
 		const val = sessionStorage.getItem(key);
 		if (!val || val.length < 10) continue;
@@ -74,7 +66,6 @@ function getToken(): string {
 		if (val.length > 10) return val;
 	}
 
-	// 4. Redux store if exposed on window
 	const store = (window as any).__REDUX_STORE__;
 	if (store) {
 		const state = store.getState();
@@ -107,14 +98,28 @@ async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<
 	return JSON.parse(text);
 }
 
+/** For multipart/form-data requests (file uploads) — no Content-Type header so the browser sets it with boundary */
+async function studioFetchMultipart<T>(path: string, formData: FormData, method = 'POST'): Promise<T> {
+	const token = getToken();
+	const res = await fetch(`${BASE_URL}${path}`, {
+		method,
+		headers: {
+			...(token ? { Authorization: `Bearer ${token}` } : {})
+			// Do NOT set Content-Type — browser sets it automatically with boundary
+		},
+		body: formData
+	});
+	if (!res.ok) {
+		throw new Error(`Studio API error ${res.status}: ${res.statusText}`);
+	}
+	const text = await res.text();
+	if (!text) return undefined as T;
+	return JSON.parse(text);
+}
+
 export const DEFAULT_TASK_STATUSES = ['To Do', 'In Progress', 'Completed', 'Failed'];
 
 export const studioApiService = {
-	/**
-	 * Call this from your auth provider after login.
-	 * Example (in your Fuse auth component):
-	 *   studioApiService.setToken(session.access_token)
-	 */
 	setToken(token: string) {
 		_injectedToken = token;
 	},
@@ -293,6 +298,52 @@ export const studioApiService = {
 		studioFetch(`/studio/production_task/delete/${accountId}/${taskId}/`, {
 			method: 'DELETE'
 		}),
+
+	// ── Audio Files ─────────────────────────────────────────────────────────
+	/**
+	 * List all audio files for an account.
+	 * Filter by project on the client side using .filter() or pass project_id as query param if the API supports it.
+	 */
+	getAudioFiles: (accountId: number): Promise<PagedResponse<AudioFile>> =>
+		studioFetch(`/studio/audio/list/${accountId}/`),
+
+	getAudioFile: (accountId: number, audioId: number): Promise<AudioFile> =>
+		studioFetch(`/studio/audio/detail/${accountId}/${audioId}/`),
+
+	/**
+	 * Upload an audio file using multipart/form-data.
+	 * The `file` field holds the File object; metadata is sent as additional FormData fields.
+	 */
+	createAudioFile: (
+		accountId: number,
+		data: CreateAudioFile,
+		file: File
+	): Promise<AudioFile> => {
+		const formData = new FormData();
+		formData.append('title', data.title);
+		formData.append('production_project_id', String(data.production_project_id));
+		if (data.description) formData.append('description', data.description);
+		formData.append('file', file);
+		return studioFetchMultipart(`/studio/audio/create/${accountId}/`, formData);
+	},
+
+	updateAudioFile: (accountId: number, data: UpdateAudioFile): Promise<AudioFile> =>
+		studioFetch(`/studio/audio/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(data)
+		}),
+
+	deleteAudioFile: (accountId: number, audioId: number): Promise<void> =>
+		studioFetch(`/studio/audio/delete/${accountId}/${audioId}/`, {
+			method: 'DELETE'
+		}),
+
+	/** Returns the fully-qualified URL for playing an audio file */
+	getAudioUrl: (relativePath: string): string => {
+		if (!relativePath) return '';
+		if (relativePath.startsWith('http')) return relativePath;
+		return `${BASE_URL}/${relativePath.replace(/^\//, '')}`;
+	},
 
 	// ── Adapters ────────────────────────────────────────────────────────────
 	adaptProjectToBoard(

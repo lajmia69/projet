@@ -45,7 +45,6 @@ export type SimplifyAccount = {
 	id: number | null;
 	user: UserSchema;
 	full_name: string;
-	/** Required field — null value is valid (anyOf [AccountLevelSchema, null]) */
 	level: AccountLevel | null;
 	avatar: string;
 	is_active: boolean;
@@ -83,16 +82,13 @@ export type UpdateProductionProject = {
 	start_date: string;
 	end_date: string;
 	note?: string | null;
-	/** Required for update — the new project status id */
 	status_id: number;
 };
 
-/** Reference shape for nested account ids in task create/update */
 export type AddAccountSchema = {
 	id: number | null;
 };
 
-/** Reference shape for nested resource ids in task create/update */
 export type AddTaskResourceSchema = {
 	id: number | null;
 };
@@ -124,11 +120,8 @@ export type CreateProductionTask = {
 	status_id: number;
 	production_project_id: number;
 	staff_leader_id: number;
-	/** Nullable array per OpenAPI (anyOf: [array, null]) */
 	resources: AddTaskResourceSchema[] | null;
-	/** Nullable array per OpenAPI (anyOf: [array, null]) */
 	guests: AddAccountSchema[] | null;
-	/** Nullable array per OpenAPI (anyOf: [array, null]) */
 	staffs: AddAccountSchema[] | null;
 };
 
@@ -143,13 +136,41 @@ export type UpdateProductionTask = {
 	status_id: number;
 	production_project_id: number;
 	staff_leader_id: number;
-	/** Nullable array per OpenAPI (anyOf: [array, null]) */
 	resources: AddTaskResourceSchema[] | null;
-	/** Nullable array per OpenAPI (anyOf: [array, null]) */
 	guests: AddAccountSchema[] | null;
-	/** Nullable array per OpenAPI (anyOf: [array, null]) */
 	staffs: AddAccountSchema[] | null;
 };
+
+// ─── Audio ───────────────────────────────────────────────────────────────────
+
+export type AudioFile = {
+	id: number | null;
+	title: string;
+	description: string | null;
+	/** Relative path — prefix with BASE_URL to get a playable URL */
+	file: string;
+	duration: number | null; // seconds
+	format: string | null;
+	size: number | null; // bytes
+	production_project: ProductionProject | null;
+	created_by: SimplifyAccount;
+	created_at: string;
+	updated_at: string | null;
+};
+
+export type CreateAudioFile = {
+	title: string;
+	description?: string | null;
+	production_project_id: number;
+};
+
+export type UpdateAudioFile = {
+	id: number;
+	title: string;
+	description?: string | null;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 export type PagedResponse<T> = {
 	items: T[];
