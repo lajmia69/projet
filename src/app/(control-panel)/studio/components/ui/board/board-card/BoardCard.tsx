@@ -1,114 +1,188 @@
-import _ from 'lodash';
-import { styled } from '@mui/material/styles';
-import Card from '@mui/material/Card';
-import Typography from '@mui/material/Typography';
-import clsx from 'clsx';
-import { Draggable } from '@hello-pangea/dnd';
+// src/app/(control-panel)/studio/components/ui/board/board-card/BoardAddCard.tsx
+import { useState } from 'react';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
+import ListItemText from '@mui/material/ListItemText';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import Chip from '@mui/material/Chip';
-import { MouseEvent } from 'react';
-import FuseLoading from '@fuse/core/FuseLoading';
-import { getUnixTime } from 'date-fns/getUnixTime';
-import { format } from 'date-fns/format';
-import { fromUnixTime } from 'date-fns/fromUnixTime';
-import { useScrumboardAppContext } from '../../../../contexts/ScrumboardAppContext/useScrumboardAppContext';
-import { useGetStudioBoardCards } from '../../../../api/hooks/cards/useGetStudioBoardCards';
-import { ScrumboardCard } from '../../../../api/types';
+import { useCurrentAccountId } from '../../../../api/useCurrentAccountId';
+import { useCreateStudioBoardCard } from '../../../../api/hooks/cards/useStudioCardMutations';
+import { useGetTaskResources } from '../../../../api/hooks/resources/useGetTaskResources';
+import { useGetTaskTypes } from '../../../../api/hooks/cards/useGetTaskTypes';
 
-const StyledCard = styled(Card)(({ theme }) => ({
-	'& ': {
-		transitionProperty: 'box-shadow',
-		transitionDuration: theme.transitions.duration.short,
-		transitionTimingFunction: theme.transitions.easing.easeInOut
-	}
-}));
-
-type BoardCardProps = {
-	cardId: string;
-	index: number;
+type BoardAddCardProps = {
 	boardId: string;
+	statusId: number;
+	onCardAdded?: () => void;
 };
 
-function BoardCard(props: BoardCardProps) {
-	const { cardId, index, boardId } = props;
-	const { openCardDialog } = useScrumboardAppContext();
+function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
+	const [open, setOpen] = useState(false);
+	const [title, setTitle] = useState('');
+	const [description, setDescription] = useState('');
+	const [selectedResourceIds, setSelectedResourceIds] = useState<number[]>([]);
+	const [error, setError] = useState<string | null>(null);
 
-	const { data: cards = [], isLoading } = useGetStudioBoardCards(boardId);
-	const card = cards.find((c) => c.id === cardId);
+	const accountId = useCurrentAccountId();
+	const { mutateAsync: createCard, isPending } = useCreateStudioBoardCard();
+	const { data: availableResources = [] } = useGetTaskResources();
+	const { data: taskTypes = [], isLoading: taskTypesLoading } = useGetTaskTypes();
 
-	function handleCardClick(ev: MouseEvent<HTMLDivElement>, _card: ScrumboardCard) {
-		ev.preventDefault();
-		openCardDialog(_card);
+	const firstTaskTypeId = taskTypes[0]?.id ?? null;
+	const noTaskTypes = !taskTypesLoading && taskTypes.length === 0;
+
+	async function handleSubmit() {
+		const trimmed = title.trim();
+		if (!trimmed) return;
+		if (!firstTaskTypeId) {
+			setError('No task types configured. Ask an admin to add one in Studio settings.');
+			return;
+		}
+
+		setError(null);
+
+		try {
+			await createCard({
+				name: trimmed,
+				description: description.trim(),
+				start_date: new Date().toISOString().split('T')[0],
+				end_date: new Date().toISOString().split('T')[0],
+				task_type_id: firstTaskTypeId,
+				status_id: statusId,
+				production_project_id: Number(boardId),
+				staff_leader_id: accountId,
+				// Backend expects null, not [] for empty relations
+				resources: selectedResourceIds.length > 0
+					? selectedResourceIds.map((id) => ({ id }))
+					: null,
+				guests: null,
+				staffs: null,
+			});
+
+			setTitle('');
+			setDescription('');
+			setSelectedResourceIds([]);
+			setError(null);
+			setOpen(false);
+			onCardAdded?.();
+		} catch (err) {
+			setError(err instanceof Error ? err.message : 'Failed to create card. Please try again.');
+		}
 	}
 
-	if (isLoading) return <FuseLoading />;
-	if (!card) return null;
-
-	const isOverdue = card.dueDate && getUnixTime(new Date()) > card.dueDate;
+	if (!open) {
+		return (
+			<Button
+				className="w-full justify-start px-1 py-2 text-sm"
+				size="small"
+				startIcon={<FuseSvgIcon size={16}>lucide:plus</FuseSvgIcon>}
+				onClick={() => setOpen(true)}
+			>
+				Add card
+			</Button>
+		);
+	}
 
 	return (
-		<Draggable draggableId={cardId} index={index}>
-			{(provided, snapshot) => (
-				<div
-					ref={provided.innerRef}
-					{...provided.draggableProps}
-					{...provided.dragHandleProps}
-				>
-					<StyledCard
-						className={clsx(
-							snapshot.isDragging ? 'shadow-lg' : 'shadow-sm',
-							'w-full cursor-pointer rounded-lg border-1'
-						)}
-						onClick={(ev) => handleCardClick(ev, card)}
+		<ClickAwayListener onClickAway={() => { setOpen(false); setError(null); }}>
+			<div className="flex flex-col gap-2 pt-1">
+				{error && (
+					<Alert severity="error" className="text-xs py-1">
+						{error}
+					</Alert>
+				)}
+
+				{noTaskTypes && (
+					<Alert severity="warning" className="text-xs py-1">
+						No task types exist yet. An admin must create at least one before cards can be added.
+					</Alert>
+				)}
+
+				<TextField
+					autoFocus
+					size="small"
+					fullWidth
+					placeholder="Card title…"
+					value={title}
+					onChange={(e) => setTitle(e.target.value)}
+					onKeyDown={(e) => {
+						if (e.key === 'Enter') handleSubmit();
+						if (e.key === 'Escape') { setOpen(false); setError(null); }
+					}}
+				/>
+				<TextField
+					size="small"
+					fullWidth
+					multiline
+					rows={2}
+					placeholder="Description (optional)"
+					value={description}
+					onChange={(e) => setDescription(e.target.value)}
+				/>
+
+				{availableResources.length > 0 && (
+					<TextField
+						select
+						size="small"
+						fullWidth
+						label="Resources"
+						value={selectedResourceIds}
+						onChange={(e) => {
+							const val = e.target.value;
+							setSelectedResourceIds(
+								typeof val === 'string' ? val.split(',').map(Number) : (val as number[])
+							);
+						}}
+						SelectProps={{
+							multiple: true,
+							renderValue: (selected) => {
+								const ids = selected as number[];
+								return availableResources
+									.filter((r) => r.id !== null && ids.includes(r.id as number))
+									.map((r) => r.name)
+									.join(', ');
+							}
+						}}
 					>
-						<div className="p-4 pb-0">
-							<Typography className="mb-3 font-medium">{card.title}</Typography>
+						{availableResources.map((resource) => (
+							<MenuItem key={resource.id} value={resource.id ?? 0}>
+								<Checkbox
+									checked={
+										resource.id !== null &&
+										selectedResourceIds.includes(resource.id as number)
+									}
+								/>
+								<ListItemText
+									primary={resource.name}
+									secondary={resource.description || undefined}
+								/>
+							</MenuItem>
+						))}
+					</TextField>
+				)}
 
-							{card.description && (
-								<Typography
-									className="mb-2 text-sm line-clamp-2"
-									color="text.secondary"
-								>
-									{card.description}
-								</Typography>
-							)}
-
-							{card.dueDate && (
-								<div className="mb-3">
-									<Chip
-										size="small"
-										className={clsx(
-											'text-xs font-semibold',
-											isOverdue ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-										)}
-										sx={{ '& .MuiChip-icon': { color: 'inherit' } }}
-										icon={<FuseSvgIcon size={14} color="inherit">lucide:clock</FuseSvgIcon>}
-										label={format(fromUnixTime(card.dueDate), 'MMM do yy')}
-									/>
-								</div>
-							)}
-						</div>
-
-						<div className="flex h-10 items-center justify-between px-4">
-							<div className="flex items-center gap-1.5">
-								{card.description && (
-									<FuseSvgIcon size={16} color="action">lucide:file-text</FuseSvgIcon>
-								)}
-								{card.memberIds.length > 0 && (
-									<span className="flex items-center gap-0.5">
-										<FuseSvgIcon size={16} color="action">lucide:users</FuseSvgIcon>
-										<Typography color="text.secondary" className="text-xs">
-											{card.memberIds.length}
-										</Typography>
-									</span>
-								)}
-							</div>
-						</div>
-					</StyledCard>
+				<div className="flex gap-2 items-center">
+					<Button
+						size="small"
+						variant="contained"
+						color="secondary"
+						disabled={!title.trim() || isPending || noTaskTypes || taskTypesLoading}
+						onClick={handleSubmit}
+						startIcon={isPending ? <CircularProgress size={12} color="inherit" /> : undefined}
+					>
+						{isPending ? 'Adding…' : 'Add'}
+					</Button>
+					<Button size="small" onClick={() => { setOpen(false); setError(null); }}>
+						Cancel
+					</Button>
 				</div>
-			)}
-		</Draggable>
+			</div>
+		</ClickAwayListener>
 	);
 }
 
-export default BoardCard;
+export default BoardAddCard;
