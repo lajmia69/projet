@@ -22,19 +22,22 @@ import { formatDistance } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { useGetStudioBoards } from '../../api/hooks/boards/useGetStudioBoards';
 import { useCreateStudioBoard } from '../../api/hooks/boards/useCreateStudioBoard';
+import { useUpdateStudioBoard } from '../../api/hooks/boards/useUpdateStudioBoard';
 import { useGetProjectTypes } from '../../api/hooks/boards/useGetProjectTypes';
+import { useGetProjectStatuses } from '../../api/hooks/boards/useGetProjectStatuses';
 import { useStudioAuth } from '../../api/hooks/useStudioauth';
 import { CreateProductionProject, ProductionProject } from '../../api/types';
 
 // ─── Status column definitions ────────────────────────────────────────────────
 const STATUS_COLUMNS = [
-	{ names: ['En Atteente', 'En Attente'], label: 'En Attente',  color: '#6366f1', bg: 'rgba(99,102,241,0.10)',  icon: 'lucide:clock'        },
-	{ names: ['En cours'],                  label: 'En cours',    color: '#0ea5e9', bg: 'rgba(14,165,233,0.10)',  icon: 'lucide:loader'        },
-	{ names: ['En pause'],                  label: 'En pause',    color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', icon: 'lucide:pause-circle'  },
-	{ names: ['Terminer', 'Terminé'],       label: 'Terminé',     color: '#22c55e', bg: 'rgba(34,197,94,0.10)',  icon: 'lucide:check-circle'  },
-	{ names: ['Annulée', 'Annulé'],         label: 'Annulée',     color: '#ef4444', bg: 'rgba(239,68,68,0.10)',  icon: 'lucide:x-circle'      },
+	{ names: ['En Atteente', 'En Attente'], label: 'En Attente', color: '#6366f1', bg: 'rgba(99,102,241,0.10)',  icon: 'lucide:clock'       },
+	{ names: ['En cours'],                  label: 'En cours',   color: '#0ea5e9', bg: 'rgba(14,165,233,0.10)',  icon: 'lucide:loader'      },
+	{ names: ['En pause'],                  label: 'En pause',   color: '#f59e0b', bg: 'rgba(245,158,11,0.10)', icon: 'lucide:pause-circle' },
+	{ names: ['Terminer', 'Terminé'],       label: 'Terminé',    color: '#22c55e', bg: 'rgba(34,197,94,0.10)',  icon: 'lucide:check-circle' },
+	{ names: ['Annulée', 'Annulé'],         label: 'Annulée',    color: '#ef4444', bg: 'rgba(239,68,68,0.10)',  icon: 'lucide:x-circle'    },
 ];
 
 const TYPE_COLORS: Record<string, string> = {
@@ -64,12 +67,8 @@ function NewProjectDialog({ open, onClose }: { open: boolean; onClose: () => voi
 	});
 
 	function onSubmit(data: FormType) {
-    // Cast 'data' to 'CreateProductionProject' to bridge the inference gap
-    createBoard(data as CreateProductionProject).then(() => { 
-        reset(); 
-        onClose(); 
-    });
-}
+		createBoard(data as CreateProductionProject).then(() => { reset(); onClose(); });
+	}
 
 	return (
 		<Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -98,10 +97,8 @@ function NewProjectDialog({ open, onClose }: { open: boolean; onClose: () => voi
 							{projectTypes.map((pt) => (
 								<MenuItem key={pt.id} value={pt.id ?? 0}>
 									<span className="flex items-center gap-2">
-										<span
-											className="inline-block w-2 h-2 rounded-full"
-											style={{ backgroundColor: TYPE_COLORS[pt.project_class] ?? '#64748b' }}
-										/>
+										<span className="inline-block w-2 h-2 rounded-full"
+											style={{ backgroundColor: TYPE_COLORS[pt.project_class] ?? '#64748b' }} />
 										{pt.name}
 									</span>
 								</MenuItem>
@@ -131,64 +128,75 @@ function NewProjectDialog({ open, onClose }: { open: boolean; onClose: () => voi
 }
 
 // ─── Project card ─────────────────────────────────────────────────────────────
-function ProjectCard({ board }: { board: ProductionProject }) {
+function ProjectCard({ board, index }: { board: ProductionProject; index: number }) {
 	const typeColor = TYPE_COLORS[board.project_type?.project_class ?? ''] ?? '#64748b';
 	const isOverdue = board.end_date && new Date(board.end_date) < new Date();
 
 	return (
-		<Card
-			component={NavLinkAdapter}
-			to={`/studio/boards/${board.id}`}
-			className="block rounded-xl shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer mb-3 border-0"
-			elevation={1}
-		>
-			<CardContent className="p-3 !pb-3">
-				{/* Type badge */}
-				<div className="mb-2">
-					<span
-						className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold text-white"
-						style={{ backgroundColor: typeColor }}
-					>
-						{board.project_type?.name ?? '—'}
-					</span>
-				</div>
+		<Draggable draggableId={String(board.id)} index={index}>
+			{(provided, snapshot) => (
+				<div
+					ref={provided.innerRef}
+					{...provided.draggableProps}
+					{...provided.dragHandleProps}
+					style={provided.draggableProps.style}
+				>
+				<Card
+    component={NavLinkAdapter as React.ElementType} // <-- Add type assertion here
+    to={`/studio/boards/${board.id}`}
+    className="block rounded-xl shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer mb-3 border-0"
+    elevation={snapshot.isDragging ? 6 : 1}
+    onClick={(e: React.MouseEvent<HTMLElement>) => {
+        // Prevent navigation while dragging
+        if (snapshot.isDragging) e.preventDefault();
+    }}
+>
+						<CardContent className="p-3 !pb-3">
+							<div className="mb-2">
+								<span
+									className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold text-white"
+									style={{ backgroundColor: typeColor }}
+								>
+									{board.project_type?.name ?? '—'}
+								</span>
+							</div>
 
-				{/* Title */}
-				<Typography className="font-semibold text-sm leading-snug mb-1 line-clamp-2">
-					{board.name}
-				</Typography>
-
-				{/* Description */}
-				{board.description && (
-					<Typography className="text-xs line-clamp-2 mb-2" color="text.secondary">
-						{board.description}
-					</Typography>
-				)}
-
-				<Divider className="my-2" />
-
-				{/* Footer */}
-				<div className="flex items-center justify-between gap-1">
-					<Tooltip title={board.studio_leader?.full_name ?? ''}>
-						<div className="flex items-center gap-1 min-w-0">
-							<FuseSvgIcon size={13} color="action">lucide:user</FuseSvgIcon>
-							<Typography className="text-xs truncate" color="text.secondary">
-								{board.studio_leader?.full_name ?? '—'}
+							<Typography className="font-semibold text-sm leading-snug mb-1 line-clamp-2">
+								{board.name}
 							</Typography>
-						</div>
-					</Tooltip>
 
-					{board.end_date && (
-						<Chip
-							size="small"
-							label={formatDistance(new Date(board.end_date), new Date(), { addSuffix: true })}
-							className="text-xs h-5"
-							color={isOverdue ? 'error' : 'default'}
-						/>
-					)}
+							{board.description && (
+								<Typography className="text-xs line-clamp-2 mb-2" color="text.secondary">
+									{board.description}
+								</Typography>
+							)}
+
+							<Divider className="my-2" />
+
+							<div className="flex items-center justify-between gap-1">
+								<Tooltip title={board.studio_leader?.full_name ?? ''}>
+									<div className="flex items-center gap-1 min-w-0">
+										<FuseSvgIcon size={13} color="action">lucide:user</FuseSvgIcon>
+										<Typography className="text-xs truncate" color="text.secondary">
+											{board.studio_leader?.full_name ?? '—'}
+										</Typography>
+									</div>
+								</Tooltip>
+
+								{board.end_date && (
+									<Chip
+										size="small"
+										label={formatDistance(new Date(board.end_date), new Date(), { addSuffix: true })}
+										className="text-xs h-5"
+										color={isOverdue ? 'error' : 'default'}
+									/>
+								)}
+							</div>
+						</CardContent>
+					</Card>
 				</div>
-			</CardContent>
-		</Card>
+			)}
+		</Draggable>
 	);
 }
 
@@ -197,9 +205,12 @@ function StatusColumn({
 	config,
 	projects,
 }: {
-	config: (typeof STATUS_COLUMNS)[number];
+	config: (typeof STATUS_COLUMNS)[number] & { names: string[] };
 	projects: ProductionProject[];
 }) {
+	// Use first name as the stable droppableId
+	const droppableId = config.names[0];
+
 	return (
 		<motion.div
 			initial={{ opacity: 0, y: 16 }}
@@ -209,7 +220,7 @@ function StatusColumn({
 		>
 			{/* Header */}
 			<div
-				className="flex items-center justify-between rounded-xl px-3 py-2.5 mb-3 sticky top-0"
+				className="flex items-center justify-between rounded-xl px-3 py-2.5 mb-3 sticky top-0 z-10"
 				style={{ backgroundColor: config.bg }}
 			>
 				<div className="flex items-center gap-2">
@@ -227,26 +238,44 @@ function StatusColumn({
 			</div>
 
 			{/* Cards */}
-			<div className="flex-1 overflow-y-auto">
-				{projects.length === 0 ? (
-					<div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 opacity-40">
-						<FuseSvgIcon size={28} color="disabled">lucide:inbox</FuseSvgIcon>
-						<Typography className="text-xs mt-2" color="text.secondary">Aucun projet</Typography>
+			<Droppable droppableId={droppableId} type="project">
+				{(provided, snapshot) => (
+					<div
+						ref={provided.innerRef}
+						{...provided.droppableProps}
+						className="flex-1 overflow-y-auto rounded-xl transition-colors duration-150 min-h-20 p-1"
+						style={{
+							backgroundColor: snapshot.isDraggingOver
+								? config.bg.replace('0.10)', '0.22)')
+								: 'transparent'
+						}}
+					>
+						{projects.length === 0 && !snapshot.isDraggingOver ? (
+							<div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-10 opacity-40">
+								<FuseSvgIcon size={28} color="disabled">lucide:inbox</FuseSvgIcon>
+								<Typography className="text-xs mt-2" color="text.secondary">Aucun projet</Typography>
+							</div>
+						) : (
+							projects.map((p, index) => (
+								<ProjectCard key={p.id} board={p} index={index} />
+							))
+						)}
+						{provided.placeholder}
 					</div>
-				) : (
-					projects.map((p) => <ProjectCard key={p.id} board={p} />)
 				)}
-			</div>
+			</Droppable>
 		</motion.div>
 	);
 }
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 function BoardsView() {
-	useStudioAuth(); // inject token into studioApiService
+	useStudioAuth();
 
 	const [dialogOpen, setDialogOpen] = useState(false);
 	const { data: boards = [], isLoading } = useGetStudioBoards();
+	const { data: projectStatuses = [] } = useGetProjectStatuses();
+	const { mutateAsync: updateProject } = useUpdateStudioBoard();
 
 	const allKnownNames = new Set(STATUS_COLUMNS.flatMap((c) => c.names));
 
@@ -256,6 +285,40 @@ function BoardsView() {
 	}));
 
 	const unknownProjects = boards.filter((b) => !allKnownNames.has(b.status?.name ?? ''));
+
+	async function onDragEnd(result: DropResult) {
+		const { source, destination, draggableId } = result;
+		if (!destination) return;
+		if (source.droppableId === destination.droppableId) return;
+
+		// Find the project being dragged
+		const project = boards.find((b) => String(b.id) === draggableId);
+		if (!project) return;
+
+		// Find the target column config by matching droppableId to names[0]
+		const targetColumn =
+			STATUS_COLUMNS.find((col) => col.names[0] === destination.droppableId) ??
+			null;
+
+		if (!targetColumn) return;
+
+		// Find the real status ID from the API by matching any of the column's names
+		const matchedStatus = projectStatuses.find((s) =>
+			targetColumn.names.includes(s.name)
+		);
+
+		if (!matchedStatus?.id) return;
+
+		await updateProject({
+			id: project.id,
+			name: project.name,
+			description: project.description,
+			start_date: project.start_date,
+			end_date: project.end_date,
+			note: project.note,
+			status_id: Number(matchedStatus.id),
+		});
+	}
 
 	return (
 		<div className="flex flex-col h-full">
@@ -288,28 +351,29 @@ function BoardsView() {
 			{isLoading ? (
 				<FuseLoading />
 			) : (
-				<div className="flex-1 overflow-x-auto overflow-y-hidden">
-					<div className="flex gap-4 px-6 py-5 h-full min-w-max items-start">
-						{columns.map(({ config, projects }) => (
-							<StatusColumn key={config.label} config={config} projects={projects} />
-						))}
-						{unknownProjects.length > 0 && (
-							<StatusColumn
-								config={{
-									names: ['__other__'],
-									label: 'Autre',
-									color: '#94a3b8',
-									bg: 'rgba(148,163,184,0.10)',
-									icon: 'lucide:help-circle',
-								}}
-								projects={unknownProjects}
-							/>
-						)}
+				<DragDropContext onDragEnd={onDragEnd}>
+					<div className="flex-1 overflow-x-auto overflow-y-hidden">
+						<div className="flex gap-4 px-6 py-5 h-full min-w-max items-start">
+							{columns.map(({ config, projects }) => (
+								<StatusColumn key={config.label} config={config} projects={projects} />
+							))}
+							{unknownProjects.length > 0 && (
+								<StatusColumn
+									config={{
+										names: ['__other__'],
+										label: 'Autre',
+										color: '#94a3b8',
+										bg: 'rgba(148,163,184,0.10)',
+										icon: 'lucide:help-circle',
+									}}
+									projects={unknownProjects}
+								/>
+							)}
+						</div>
 					</div>
-				</div>
+				</DragDropContext>
 			)}
 
-			{/* New project dialog */}
 			<NewProjectDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
 		</div>
 	);
