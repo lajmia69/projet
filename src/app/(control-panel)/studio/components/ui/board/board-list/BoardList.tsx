@@ -39,6 +39,8 @@ function BoardList(props: BoardListProps) {
 
 	if (!status) return null;
 
+	const numericStatusId = Number(status.id);
+
 	return (
 		<Draggable draggableId={listId} index={index}>
 			{(provided, snapshot) => (
@@ -57,7 +59,7 @@ function BoardList(props: BoardListProps) {
 						square
 					>
 						<BoardListHeader
-							statusId={Number(status.id)}
+							statusId={numericStatusId}
 							statusName={status.name}
 							cardCount={cardIds.length}
 							boardId={boardId}
@@ -92,7 +94,7 @@ function BoardList(props: BoardListProps) {
 						<div className="px-3 pb-3">
 							<BoardAddCard
 								boardId={boardId}
-								statusId={Number(status.id)}
+								statusId={numericStatusId}
 								onCardAdded={handleCardAdded}
 							/>
 						</div>

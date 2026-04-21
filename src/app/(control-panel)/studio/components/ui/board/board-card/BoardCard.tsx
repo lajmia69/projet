@@ -1,4 +1,3 @@
-// src/app/(control-panel)/studio/components/ui/board/board-card/BoardAddCard.tsx
 import { useState } from 'react';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -36,26 +35,34 @@ function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
 	const noTaskTypes = !taskTypesLoading && taskTypes.length === 0;
 
 	async function handleSubmit() {
+		 console.log('[BoardCard] statusId prop value:', statusId); // ADD THIS
 		const trimmed = title.trim();
 		if (!trimmed) return;
+
+		if (!accountId) {
+			setError('User account not ready yet. Please wait a moment and try again.');
+			return;
+		}
+
 		if (!firstTaskTypeId) {
 			setError('No task types configured. Ask an admin to add one in Studio settings.');
 			return;
 		}
 
+	
 		setError(null);
 
 		try {
 			await createCard({
 				name: trimmed,
 				description: description.trim(),
+				note: '',
 				start_date: new Date().toISOString().split('T')[0],
 				end_date: new Date().toISOString().split('T')[0],
 				task_type_id: firstTaskTypeId,
 				status_id: statusId,
 				production_project_id: Number(boardId),
 				staff_leader_id: accountId,
-				// Backend expects null, not [] for empty relations
 				resources: selectedResourceIds.length > 0
 					? selectedResourceIds.map((id) => ({ id }))
 					: null,
@@ -170,7 +177,7 @@ function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
 						size="small"
 						variant="contained"
 						color="secondary"
-						disabled={!title.trim() || isPending || noTaskTypes || taskTypesLoading}
+						disabled={!title.trim() || isPending || noTaskTypes || taskTypesLoading || !accountId}
 						onClick={handleSubmit}
 						startIcon={isPending ? <CircularProgress size={12} color="inherit" /> : undefined}
 					>

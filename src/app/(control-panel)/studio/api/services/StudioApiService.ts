@@ -76,7 +76,16 @@ async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<
 			...(options.headers ?? {})
 		}
 	});
-	if (!res.ok) throw new Error(`Studio API error ${res.status}: ${res.statusText}`);
+
+	if (!res.ok) {
+		let body = '';
+		try { body = await res.text(); } catch { /* ignore */ }
+		console.error(`[StudioAPI] ${res.status} on ${options.method ?? 'GET'} ${BASE_URL}${path}`);
+		console.error(`[StudioAPI] Response body:`, body);
+		console.error(`[StudioAPI] Request body:`, options.body ?? '(none)');
+		throw new Error(`Studio API error ${res.status} on ${path}: ${body || res.statusText}`);
+	}
+
 	const text = await res.text();
 	if (!text) return undefined as T;
 	return JSON.parse(text);
@@ -195,9 +204,15 @@ export const studioApiService = {
 	getProject: (accountId: number, projectId: number): Promise<ProductionProject> =>
 		studioFetch(`/studio/production_project/detail/${accountId}/${projectId}/`),
 	createProject: (accountId: number, data: CreateProductionProject): Promise<ProductionProject> =>
-		studioFetch(`/studio/production_project/create/${accountId}/`, { method: 'POST', body: JSON.stringify(data) }),
+    studioFetch(`/studio/production_project/create/${accountId}/`, {
+        method: 'POST',
+        body: JSON.stringify({ ...data, note: data.note ?? '' })
+    }),
 	updateProject: (accountId: number, data: UpdateProductionProject): Promise<ProductionProject> =>
-		studioFetch(`/studio/production_project/update/${accountId}/`, { method: 'PUT', body: JSON.stringify(data) }),
+    studioFetch(`/studio/production_project/update/${accountId}/`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...data, note: data.note ?? '' })
+    }),
 	deleteProject: (accountId: number, projectId: number): Promise<void> =>
 		studioFetch(`/studio/production_project/delete/${accountId}/${projectId}/`, { method: 'DELETE' }),
 
@@ -206,9 +221,15 @@ export const studioApiService = {
 	getTask: (accountId: number, taskId: number): Promise<ProductionTask> =>
 		studioFetch(`/studio/production_task/detail/${accountId}/${taskId}/`),
 	createTask: (accountId: number, data: CreateProductionTask): Promise<ProductionTask> =>
-		studioFetch(`/studio/production_task/create/${accountId}/`, { method: 'POST', body: JSON.stringify(data) }),
-	updateTask: (accountId: number, data: UpdateProductionTask): Promise<ProductionTask> =>
-		studioFetch(`/studio/production_task/update/${accountId}/`, { method: 'PUT', body: JSON.stringify(data) }),
+    studioFetch(`/studio/production_task/create/${accountId}/`, {
+        method: 'POST',
+        body: JSON.stringify({ ...data, note: data.note ?? '' })
+    }),
+updateTask: (accountId: number, data: UpdateProductionTask): Promise<ProductionTask> =>
+    studioFetch(`/studio/production_task/update/${accountId}/`, {
+        method: 'PUT',
+        body: JSON.stringify({ ...data, note: data.note ?? '' })
+    }),
 	deleteTask: (accountId: number, taskId: number): Promise<void> =>
 		studioFetch(`/studio/production_task/delete/${accountId}/${taskId}/`, { method: 'DELETE' }),
 
