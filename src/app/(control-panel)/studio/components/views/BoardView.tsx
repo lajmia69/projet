@@ -30,7 +30,10 @@ function BoardView() {
 
 	const { reorderList, reorderCard, board } = useScrumboardReorder(boardId);
 
-	function onDragEnd(result: DropResult) {
+	// ✅ FIX: onDragEnd is now async so we can await reorderCard.
+	// Previously the snackbar fired immediately (even if the API call was skipped
+	// or failed) because reorderCard was not awaited.
+	async function onDragEnd(result: DropResult) {
 		const { source, destination } = result;
 
 		// dropped nowhere
@@ -46,17 +49,19 @@ function BoardView() {
 		// reordering list
 		if (result.type === 'list') {
 			reorderList(result);
-			enqueueSnackbar('List Order Saved', {
-				variant: 'success'
-			});
+			enqueueSnackbar('List Order Saved', { variant: 'success' });
 		}
 
-		// reordering card
+		// reordering card — await so the snackbar only fires after the API call succeeds
 		if (result.type === 'card') {
-			reorderCard(result);
-			enqueueSnackbar('Card Order Saved', {
-				variant: 'success'
-			});
+			try {
+				await reorderCard(result);
+				enqueueSnackbar('Card moved', { variant: 'success' });
+			} catch (err) {
+				const message =
+					err instanceof Error ? err.message : 'Failed to move card. Please try again.';
+				enqueueSnackbar(message, { variant: 'error' });
+			}
 		}
 	}
 

@@ -17,6 +17,7 @@ import clsx from 'clsx';
 import { DraggableProvidedDragHandleProps } from '@hello-pangea/dnd';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSnackbar } from 'notistack';
 import { useUpdateTaskStatus, useDeleteTaskStatus } from '../../../../api/hooks/lists/useTaskStatusMutations';
 
 const schema = z.object({
@@ -40,6 +41,7 @@ function BoardListHeader(props: BoardListHeaderProps) {
 	const [anchorEl, setAnchorEl] = useState<null | HTMLButtonElement>(null);
 	const [formOpen, setFormOpen] = useState(false);
 
+	const { enqueueSnackbar } = useSnackbar();
 	const { mutateAsync: updateStatus } = useUpdateTaskStatus();
 	const { mutateAsync: deleteStatus } = useDeleteTaskStatus();
 
@@ -72,6 +74,26 @@ function BoardListHeader(props: BoardListHeaderProps) {
 	function onSubmit(data: FormType) {
 		updateStatus({ id: statusId, name: data.title });
 		handleCloseForm();
+	}
+
+	// ✅ FIX: Catch the 403 "already used" error from the backend and show it
+	// in a snackbar instead of letting it crash silently.
+	async function handleDeleteColumn() {
+		handleMenuClose();
+		try {
+			await deleteStatus(statusId);
+		} catch (err) {
+			// Extract the human-readable detail from the API error message if available.
+			// The error message is in the form: "Studio API error 403 on /...: {"detail": "..."}"
+			let userMessage = 'Could not delete column.';
+			if (err instanceof Error) {
+				const detailMatch = err.message.match(/"detail"\s*:\s*"([^"]+)"/);
+				if (detailMatch) {
+					userMessage = detailMatch[1];
+				}
+			}
+			enqueueSnackbar(userMessage, { variant: 'error' });
+		}
 	}
 
 	return (
@@ -141,11 +163,7 @@ function BoardListHeader(props: BoardListHeaderProps) {
 						open={Boolean(anchorEl)}
 						onClose={handleMenuClose}
 					>
-						<MenuItem
-							onClick={() => {
-								deleteStatus(statusId).then(() => handleMenuClose());
-							}}
-						>
+						<MenuItem onClick={handleDeleteColumn}>
 							<ListItemIcon className="min-w-9">
 								<FuseSvgIcon>lucide:trash</FuseSvgIcon>
 							</ListItemIcon>

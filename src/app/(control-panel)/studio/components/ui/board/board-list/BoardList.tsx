@@ -41,7 +41,6 @@ function BoardList(props: BoardListProps) {
 
 	const numericStatusId = Number(status.id);
 
-	// Guard: never render the Add card button with an invalid status ID
 	if (!Number.isInteger(numericStatusId) || numericStatusId <= 0) return null;
 
 	return (
@@ -70,15 +69,33 @@ function BoardList(props: BoardListProps) {
 							handleProps={provided.dragHandleProps}
 						/>
 
+						{/*
+						 * ✅ FIX: overflow-auto has been removed from CardContent and moved
+						 * onto the Droppable's inner div (via ref + style below).
+						 *
+						 * @hello-pangea/dnd requires that a Droppable has exactly ONE scroll
+						 * parent. When CardContent had overflow-auto it became a scroll
+						 * container that sat between the board's outer scroll container and
+						 * the Droppable, causing the "unsupported nested scroll container"
+						 * warning and breaking drag-and-drop entirely.
+						 *
+						 * The fix: CardContent is now overflow-hidden (not scrollable), and
+						 * the droppable inner div is the sole scrollable element for cards.
+						 */}
 						<CardContent
-							className="flex h-full min-h-0 w-full flex-auto flex-col overflow-auto p-0"
-							ref={contentScrollEl}
+							className="flex h-full min-h-0 w-full flex-auto flex-col overflow-hidden p-0"
 						>
 							<Droppable droppableId={listId} direction="vertical" type="card">
 								{(_provided) => (
 									<div
-										ref={_provided.innerRef}
-										className="flex h-full min-h-0.25 w-full flex-col gap-3 p-3"
+										ref={(el) => {
+											// Forward ref to both @hello-pangea/dnd and our scroll helper
+											(_provided.innerRef as React.RefCallback<HTMLDivElement>)(el);
+											(contentScrollEl as React.MutableRefObject<HTMLDivElement | null>).current = el;
+										}}
+										// This div is now the ONLY scroll container for cards.
+										className="flex min-h-0.25 w-full flex-col gap-3 p-3 overflow-y-auto"
+										style={{ maxHeight: '100%' }}
 									>
 										{cardIds.map((cardId, idx) => (
 											<BoardCard

@@ -21,6 +21,11 @@ import {
 
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
+// ✅ All multipart audio uploads go through this Next.js proxy route (same
+// origin as the app) so the browser never makes a cross-origin multipart
+// request, which the backend rejects with no Access-Control-Allow-Origin.
+const AUDIO_UPLOAD_PROXY = '/api/studio/audio/create';
+
 let _injectedToken: string | null = null;
 
 const TOKEN_STORAGE_KEYS = [
@@ -66,10 +71,6 @@ function getToken(): string {
 	return '';
 }
 
-/**
- * Strips undefined and NaN values so they never silently become null/missing
- * in the JSON body and cause a 422 from the backend.
- */
 function sanitizeBody(data: Record<string, unknown>): Record<string, unknown> {
 	return Object.fromEntries(
 		Object.entries(data).filter(
@@ -103,6 +104,8 @@ async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<
 	return JSON.parse(text);
 }
 
+// Sends a multipart/form-data POST to `path` (which may be the local proxy or the backend).
+// Never sets Content-Type — the browser fills in the boundary automatically.
 async function studioFetchMultipart<T>(
 	path: string,
 	formData: FormData,
@@ -111,30 +114,24 @@ async function studioFetchMultipart<T>(
 	const token = getToken();
 
 	if (!token) {
-		console.error('[StudioAPI] studioFetchMultipart called with no auth token — request will likely fail with 401/403');
+		console.error('[StudioAPI] studioFetchMultipart called with no auth token');
 	}
 
-	const res = await fetch(`${BASE_URL}${path}`, {
+	const res = await fetch(path, {
 		method,
-		credentials: 'include', // send session cookies alongside Bearer token (required by some Django setups)
 		headers: {
+			// Forward the bearer token so the proxy (or backend) can authenticate.
+			// Do NOT set Content-Type — let the browser set it with the boundary.
 			...(token ? { Authorization: `Bearer ${token}` } : {})
-			// ⚠️ Do NOT set Content-Type here — the browser must set it automatically
-			// so it includes the multipart boundary string.
 		},
 		body: formData
 	});
 
 	if (!res.ok) {
 		let body = '';
-		try {
-			body = await res.text();
-		} catch {
-			/* ignore */
-		}
-		console.error(`[StudioAPI] ${res.status} on ${method} ${BASE_URL}${path}`);
+		try { body = await res.text(); } catch { /* ignore */ }
+		console.error(`[StudioAPI] ${res.status} on ${method} ${path}`);
 		console.error(`[StudioAPI] Response body:`, body);
-		console.error(`[StudioAPI] Auth token present:`, !!token);
 		throw new Error(`Studio API error ${res.status} on ${path}: ${body || res.statusText}`);
 	}
 
@@ -272,18 +269,19 @@ export const studioApiService = {
 	deleteTask: (accountId: number, taskId: number): Promise<void> =>
 		studioFetch(`/studio/production_task/delete/${accountId}/${taskId}/`, { method: 'DELETE' }),
 
-	// ── Audio Files — base path: /audio/... (NOT /studio/audio/...) ──────────
+	// ── Audio Files ───────────────────────────────────────────────────────────
 
 	getAudioFiles: (accountId: number): Promise<PagedResponse<AudioFile>> =>
 		studioFetch(`/audio/list/${accountId}/`),
 	getAudioFile: (accountId: number, audioId: number): Promise<AudioFile> =>
 		studioFetch(`/audio/detail/${accountId}/${audioId}/`),
 
+	// ✅ Routes through the local Next.js proxy to avoid the CORS restriction
 	createAudioFile: (accountId: number, data: CreateAudioFile, file: File): Promise<AudioFile> => {
 		const fd = new FormData();
 		fd.append('file', file);
 		fd.append('payload', JSON.stringify(data));
-		return studioFetchMultipart(`/audio/create/${accountId}/`, fd, 'POST');
+		return studioFetchMultipart(`${AUDIO_UPLOAD_PROXY}/${accountId}/`, fd, 'POST');
 	},
 
 	updateAudioFile: (accountId: number, data: UpdateAudioFile): Promise<AudioFile> =>
@@ -293,7 +291,7 @@ export const studioApiService = {
 		const fd = new FormData();
 		fd.append('file', file);
 		fd.append('payload', JSON.stringify({ duration, timestamp }));
-		return studioFetchMultipart(`/audio/update/file/${accountId}/${audioId}/`, fd, 'POST');
+		return studioFetchMultipart(`/api/studio/audio/update-file/${accountId}/${audioId}/`, fd, 'POST');
 	},
 
 	deleteAudioFile: (accountId: number, audioId: number): Promise<void> =>
