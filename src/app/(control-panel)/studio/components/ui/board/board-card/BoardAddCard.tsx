@@ -48,6 +48,11 @@ function BoardAddCard({ boardId, statusId, onCardAdded }: BoardAddCardProps) {
 			return;
 		}
 
+		if (!statusId || !Number.isInteger(statusId) || statusId <= 0) {
+			setError('Invalid column status. Please refresh the page and try again.');
+			return;
+		}
+
 		setError(null);
 
 		try {

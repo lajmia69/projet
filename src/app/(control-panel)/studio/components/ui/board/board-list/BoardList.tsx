@@ -41,6 +41,9 @@ function BoardList(props: BoardListProps) {
 
 	const numericStatusId = Number(status.id);
 
+	// Guard: never render the Add card button with an invalid status ID
+	if (!Number.isInteger(numericStatusId) || numericStatusId <= 0) return null;
+
 	return (
 		<Draggable draggableId={listId} index={index}>
 			{(provided, snapshot) => (

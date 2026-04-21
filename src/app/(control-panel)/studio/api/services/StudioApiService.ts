@@ -66,6 +66,18 @@ function getToken(): string {
 	return '';
 }
 
+/**
+ * Strips undefined and NaN values so they never silently become null/missing
+ * in the JSON body and cause a 422 from the backend.
+ */
+function sanitizeBody(data: Record<string, unknown>): Record<string, unknown> {
+	return Object.fromEntries(
+		Object.entries(data).filter(
+			([, v]) => v !== undefined && !(typeof v === 'number' && isNaN(v))
+		)
+	);
+}
+
 async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
 	const token = getToken();
 	const res = await fetch(`${BASE_URL}${path}`, {
@@ -204,15 +216,15 @@ export const studioApiService = {
 	getProject: (accountId: number, projectId: number): Promise<ProductionProject> =>
 		studioFetch(`/studio/production_project/detail/${accountId}/${projectId}/`),
 	createProject: (accountId: number, data: CreateProductionProject): Promise<ProductionProject> =>
-    studioFetch(`/studio/production_project/create/${accountId}/`, {
-        method: 'POST',
-        body: JSON.stringify({ ...data, note: data.note ?? '' })
-    }),
+		studioFetch(`/studio/production_project/create/${accountId}/`, {
+			method: 'POST',
+			body: JSON.stringify(sanitizeBody({ ...data, note: data.note ?? '' }))
+		}),
 	updateProject: (accountId: number, data: UpdateProductionProject): Promise<ProductionProject> =>
-    studioFetch(`/studio/production_project/update/${accountId}/`, {
-        method: 'PUT',
-        body: JSON.stringify({ ...data, note: data.note ?? '' })
-    }),
+		studioFetch(`/studio/production_project/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(sanitizeBody({ ...data, note: data.note ?? '' }))
+		}),
 	deleteProject: (accountId: number, projectId: number): Promise<void> =>
 		studioFetch(`/studio/production_project/delete/${accountId}/${projectId}/`, { method: 'DELETE' }),
 
@@ -221,15 +233,15 @@ export const studioApiService = {
 	getTask: (accountId: number, taskId: number): Promise<ProductionTask> =>
 		studioFetch(`/studio/production_task/detail/${accountId}/${taskId}/`),
 	createTask: (accountId: number, data: CreateProductionTask): Promise<ProductionTask> =>
-    studioFetch(`/studio/production_task/create/${accountId}/`, {
-        method: 'POST',
-        body: JSON.stringify({ ...data, note: data.note ?? '' })
-    }),
-updateTask: (accountId: number, data: UpdateProductionTask): Promise<ProductionTask> =>
-    studioFetch(`/studio/production_task/update/${accountId}/`, {
-        method: 'PUT',
-        body: JSON.stringify({ ...data, note: data.note ?? '' })
-    }),
+		studioFetch(`/studio/production_task/create/${accountId}/`, {
+			method: 'POST',
+			body: JSON.stringify(sanitizeBody({ ...data, note: data.note ?? '' }))
+		}),
+	updateTask: (accountId: number, data: UpdateProductionTask): Promise<ProductionTask> =>
+		studioFetch(`/studio/production_task/update/${accountId}/`, {
+			method: 'PUT',
+			body: JSON.stringify(sanitizeBody({ ...data, note: data.note ?? '' }))
+		}),
 	deleteTask: (accountId: number, taskId: number): Promise<void> =>
 		studioFetch(`/studio/production_task/delete/${accountId}/${taskId}/`, { method: 'DELETE' }),
 
