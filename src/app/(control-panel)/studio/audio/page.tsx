@@ -28,7 +28,6 @@ import { useStudioAuth } from '../api/hooks/useStudioauth';
 import { studioApiService, formatIsoDuration, isoDurationToSeconds, secondsToIsoDuration } from '../api/services/studioApiService';
 import { AudioFile, CreateAudioFile, AudioFormat } from '../api/types';
 
-// ─── Audio type options ───────────────────────────────────────────────────────
 const AUDIO_TYPES = [
 	{ value: 1, label: 'Music' },
 	{ value: 2, label: 'Jingle' },
@@ -38,8 +37,7 @@ const AUDIO_TYPES = [
 ];
 
 const ACCEPTED_AUDIO = 'audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.opus,.wma';
-
-// ─── Upload Panel ─────────────────────────────────────────────────────────────
+const MAX_NAME_LENGTH = 50;
 
 type UploadPanelProps = {
 	onUploaded: () => void;
@@ -56,8 +54,8 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 	const [dragging, setDragging] = useState(false);
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 	const [detectedDuration, setDetectedDuration] = useState(0);
+	const [uploadError, setUploadError] = useState<string | null>(null);
 
-	// Form state
 	const [name, setName] = useState('');
 	const [description, setDescription] = useState('');
 	const [projectId, setProjectId] = useState<number>(0);
@@ -65,8 +63,6 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 	const [formatId, setFormatId] = useState<number>(0);
 	const [audioType, setAudioType] = useState<number>(1);
 
-	// Load tasks for the selected project.
-	// Number() coercion on both sides guards against API returning id as a string.
 	const {
 		data: tasks = [],
 		isLoading: tasksLoading,
@@ -85,18 +81,18 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 
 	const { mutateAsync: upload, isPending } = useUploadProjectAudio(projectId);
 
-	// Pre-fill format
 	useEffect(() => {
 		if (formats.length > 0 && !formatId) setFormatId(formats[0]?.id ?? 0);
 	}, [formats]);
 
-	// Reset task when project changes
 	useEffect(() => { setTaskId(0); }, [projectId]);
 
 	function loadFileMeta(file: File) {
 		setSelectedFile(file);
-		setName(file.name.replace(/\.[^/.]+$/, ''));
+		const rawName = file.name.replace(/\.[^/.]+$/, '');
+		setName(rawName.slice(0, MAX_NAME_LENGTH));
 		setDetectedDuration(0);
+		setUploadError(null);
 		const url = URL.createObjectURL(file);
 		const audio = new Audio(url);
 		audio.addEventListener('loadedmetadata', () => {
@@ -124,36 +120,58 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 		setProjectId(0);
 		setTaskId(0);
 		setDetectedDuration(0);
+		setUploadError(null);
 	}
 
 	async function handleSubmit() {
-		if (!selectedFile || !name.trim() || !taskId || !formatId) return;
+	if (!selectedFile || !name.trim() || !taskId || !formatId) return;
+	setUploadError(null);
 
-		const duration = secondsToIsoDuration(detectedDuration || 0);
-		const timestamp = selectedFile.lastModified
-			? selectedFile.lastModified / 1000
-			: Date.now() / 1000;
+	const duration = secondsToIsoDuration(detectedDuration || 0);
+	const timestamp = selectedFile.lastModified
+		? selectedFile.lastModified / 1000
+		: Date.now() / 1000;
 
-		const payload: CreateAudioFile = {
-			name: name.trim(),
-			description: description.trim(),
-			duration,
-			timestamp,
-			format_id: formatId,
-			type: audioType,
-			production_task_id: taskId,
-		};
+	const payload: CreateAudioFile = {
+		name: name.trim().slice(0, MAX_NAME_LENGTH),
+		description: description.trim(),
+		duration,
+		timestamp,
+		format_id: formatId,
+		type: audioType,
+		production_task_id: taskId,
+	};
 
+	try {
 		await upload({ payload, file: selectedFile });
 		resetForm();
 		onUploaded();
-	}
+	} catch (err) {
+		const msg = err instanceof Error ? err.message : '';
 
-	const canSubmit = !!selectedFile && !!name.trim() && !!projectId && !!taskId && !!formatId && !isPending;
+		// Backend uploads the file successfully but returns 404 when serializing
+		// the response because it can't resolve a related object (e.g. "No Lesson
+		// matches the given query"). The file IS created — treat this as success.
+		if (msg.includes('404') && msg.includes('No Lesson matches')) {
+			resetForm();
+			onUploaded();
+			return;
+		}
+
+		if (msg.includes('UniqueViolation') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
+			setUploadError('This task already has an audio file linked to it. Please select a different task, or delete the existing audio file for this task first.');
+		} else if (msg.includes('string_too_long') || msg.includes('max_length')) {
+			setUploadError('The name is too long. Please shorten it to 50 characters or less.');
+		} else {
+			setUploadError('Upload failed. Please try again.');
+		}
+	}
+}
+
+	const canSubmit = !!selectedFile && !!name.trim() && name.length <= MAX_NAME_LENGTH && !!projectId && !!taskId && !!formatId && !isPending;
 
 	return (
 		<div className="flex flex-col gap-4">
-			{/* Drop zone */}
 			<div
 				className={clsx(
 					'flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 cursor-pointer transition-all duration-150',
@@ -204,16 +222,25 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 				/>
 			</div>
 
-			{/* Form fields — shown once a file is chosen */}
 			<Collapse in={!!selectedFile}>
 				<div className="flex flex-col gap-3">
+
+					{uploadError && (
+						<Alert severity="error" onClose={() => setUploadError(null)}>
+							{uploadError}
+						</Alert>
+					)}
+
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 						<TextField
 							size="small"
 							fullWidth
 							label="Name *"
 							value={name}
-							onChange={(e) => setName(e.target.value)}
+							onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
+							inputProps={{ maxLength: MAX_NAME_LENGTH }}
+							helperText={`${name.length}/${MAX_NAME_LENGTH}`}
+							error={name.length >= MAX_NAME_LENGTH}
 						/>
 						<TextField
 							select
@@ -243,7 +270,6 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 						<Typography variant="caption" color="text.disabled">Link to project</Typography>
 					</Divider>
 
-					{/* Project selector */}
 					<TextField
 						select
 						size="small"
@@ -266,14 +292,13 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 						))}
 					</TextField>
 
-					{/* Task selector */}
 					<TextField
 						select
 						size="small"
 						fullWidth
 						label="Task *"
 						value={taskId || ''}
-						onChange={(e) => setTaskId(Number(e.target.value))}
+						onChange={(e) => { setTaskId(Number(e.target.value)); setUploadError(null); }}
 						disabled={!projectId || tasksLoading || tasksError}
 						helperText={
 							!projectId
@@ -283,8 +308,8 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 								: tasksError
 								? 'Failed to load tasks — check console'
 								: tasks.length === 0
-								? 'No tasks in this project yet — create one on the board first'
-								: 'Audio must be linked to a production task'
+								? 'No tasks in this project yet'
+								: 'Each task can only have one audio file'
 						}
 						error={tasksError}
 					>
@@ -295,7 +320,6 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 						))}
 					</TextField>
 
-					{/* When no tasks exist, offer a direct link to the board */}
 					{projectId > 0 && !tasksLoading && !tasksError && tasks.length === 0 && (
 						<Alert
 							severity="info"
@@ -329,7 +353,6 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 						</Alert>
 					)}
 
-					{/* Format selector */}
 					<TextField
 						select
 						size="small"
@@ -375,8 +398,6 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 		</div>
 	);
 }
-
-// ─── Audio list row ───────────────────────────────────────────────────────────
 
 function AudioListRow({ audio, onDelete }: { audio: AudioFile; onDelete: (a: AudioFile) => void }) {
 	return (
@@ -452,8 +473,6 @@ function AudioListRow({ audio, onDelete }: { audio: AudioFile; onDelete: (a: Aud
 	);
 }
 
-// ─── Main page ────────────────────────────────────────────────────────────────
-
 export default function AudioPage() {
 	useStudioAuth();
 
@@ -464,7 +483,6 @@ export default function AudioPage() {
 	const { data: audios = [], isLoading } = useGetProjectAudios();
 	const { mutateAsync: deleteAudio, isPending: isDeleting } = useDeleteAudioFile();
 
-	// Fetched at page level — token is guaranteed set by useStudioAuth before these fire
 	const { data: projects = [], isLoading: projectsLoading } = useGetStudioBoards();
 	const { data: formats = [], isLoading: formatsLoading } = useGetAudioFormats();
 
@@ -484,7 +502,6 @@ export default function AudioPage() {
 
 	return (
 		<div className="flex flex-col h-full">
-			{/* Header */}
 			<div className="px-6 pt-6 pb-4 shrink-0">
 				<PageBreadcrumb className="mb-3" />
 				<div className="flex items-center justify-between flex-wrap gap-3">
@@ -514,7 +531,6 @@ export default function AudioPage() {
 
 			<Divider />
 
-			{/* Upload panel — unmountOnExit prevents queries firing before auth token is ready */}
 			<Collapse in={showUpload} unmountOnExit>
 				<div className="px-6 py-5 border-b" style={{ borderColor: 'var(--mui-palette-divider)', backgroundColor: 'rgba(var(--mui-palette-secondary-mainChannel) / 0.03)' }}>
 					<Typography className="text-base font-bold mb-4">Upload New Audio File</Typography>
@@ -528,7 +544,6 @@ export default function AudioPage() {
 				</div>
 			</Collapse>
 
-			{/* Search */}
 			<div className="px-6 py-4 shrink-0">
 				<TextField
 					size="small"
@@ -548,7 +563,6 @@ export default function AudioPage() {
 				/>
 			</div>
 
-			{/* List */}
 			<div className="flex-1 overflow-y-auto px-6 pb-8">
 				{isLoading ? (
 					<div className="flex items-center justify-center py-20">
@@ -581,7 +595,6 @@ export default function AudioPage() {
 				)}
 			</div>
 
-			{/* Delete confirm */}
 			<Dialog open={Boolean(deleteTarget)} onClose={() => setDeleteTarget(null)} maxWidth="xs" fullWidth>
 				<DialogTitle>Delete audio file?</DialogTitle>
 				<DialogContent>
