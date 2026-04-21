@@ -103,14 +103,41 @@ async function studioFetch<T>(path: string, options: RequestInit = {}): Promise<
 	return JSON.parse(text);
 }
 
-async function studioFetchMultipart<T>(path: string, formData: FormData, method = 'POST'): Promise<T> {
+async function studioFetchMultipart<T>(
+	path: string,
+	formData: FormData,
+	method = 'POST'
+): Promise<T> {
 	const token = getToken();
+
+	if (!token) {
+		console.error('[StudioAPI] studioFetchMultipart called with no auth token — request will likely fail with 401/403');
+	}
+
 	const res = await fetch(`${BASE_URL}${path}`, {
 		method,
-		headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+		credentials: 'include', // send session cookies alongside Bearer token (required by some Django setups)
+		headers: {
+			...(token ? { Authorization: `Bearer ${token}` } : {})
+			// ⚠️ Do NOT set Content-Type here — the browser must set it automatically
+			// so it includes the multipart boundary string.
+		},
 		body: formData
 	});
-	if (!res.ok) throw new Error(`Studio API error ${res.status}: ${res.statusText}`);
+
+	if (!res.ok) {
+		let body = '';
+		try {
+			body = await res.text();
+		} catch {
+			/* ignore */
+		}
+		console.error(`[StudioAPI] ${res.status} on ${method} ${BASE_URL}${path}`);
+		console.error(`[StudioAPI] Response body:`, body);
+		console.error(`[StudioAPI] Auth token present:`, !!token);
+		throw new Error(`Studio API error ${res.status} on ${path}: ${body || res.statusText}`);
+	}
+
 	const text = await res.text();
 	if (!text) return undefined as T;
 	return JSON.parse(text);
