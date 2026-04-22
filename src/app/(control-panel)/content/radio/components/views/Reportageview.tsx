@@ -69,27 +69,7 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 			>
 				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #6d28d9, #8b5cf6, #c4b5fd)' }} />
 
-				{/* Delete button */}
-				<div style={{ position: 'absolute', top: 10, right: 10, zIndex: 2 }}>
-					<Tooltip title="Delete reportage" placement="top">
-						<IconButton
-							size="small"
-							onClick={() => setConfirmOpen(true)}
-							sx={(theme) => ({
-								color: theme.palette.mode === 'dark' ? 'rgba(248,113,113,0.7)' : 'rgba(220,38,38,0.6)',
-								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(239,68,68,0.08)' : 'rgba(239,68,68,0.06)',
-								border: theme.palette.mode === 'dark' ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(239,68,68,0.15)',
-								width: 28, height: 28,
-								'&:hover': {
-									backgroundColor: theme.palette.mode === 'dark' ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.12)',
-									color: theme.palette.mode === 'dark' ? '#f87171' : '#dc2626',
-								},
-							})}
-						>
-							<FuseSvgIcon size={14}>lucide:trash-2</FuseSvgIcon>
-						</IconButton>
-					</Tooltip>
-				</div>
+				
 
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
 					{/* Chips */}
