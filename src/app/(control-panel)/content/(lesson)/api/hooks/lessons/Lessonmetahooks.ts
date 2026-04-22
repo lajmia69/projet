@@ -7,38 +7,35 @@ import { useSnackbar } from 'notistack';
 // LESSON TYPES
 // ════════════════════════════════════════════════════════════════════════════
 
-export const lessonTypesQueryKey = (currentAccountId: string) => [
-	'lesson',
-	'types',
-	currentAccountId
+export const lessonTypesQueryKey = (currentAccountId: string | number) => [
+	'lesson', 'types', String(currentAccountId)
 ];
-export const lessonTypeQueryKey = (currentAccountId: string, lessonTypeId: number) => [
-	'lesson',
-	'type',
-	currentAccountId,
-	lessonTypeId
+export const lessonTypeQueryKey = (currentAccountId: string | number, lessonTypeId: number) => [
+	'lesson', 'type', String(currentAccountId), lessonTypeId
 ];
 
-export const useLessonTypes = (currentAccountId: string, accessToken: string) =>
+export const useLessonTypes = (currentAccountId: string | number) =>
 	useQuery({
 		queryKey: lessonTypesQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getLessonTypes(currentAccountId, accessToken),
-		enabled: !!currentAccountId && !!accessToken
+		queryFn: () => lessonApi.getLessonTypes(currentAccountId),
+		enabled: !!currentAccountId,
+		retry: 0,
 	});
 
-export const useLessonType = (currentAccountId: string, accessToken: string, id: number) =>
+export const useLessonType = (currentAccountId: string | number, id: number) =>
 	useQuery({
 		queryKey: lessonTypeQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getLessonType(currentAccountId, accessToken, id),
-		enabled: !!currentAccountId && !!accessToken && !!id
+		queryFn: () => lessonApi.getLessonType(currentAccountId, id),
+		enabled: !!currentAccountId && !!id,
+		retry: 0,
 	});
 
-export const useCreateLessonType = (currentAccountId: string, accessToken: string) => {
+export const useCreateLessonType = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: Partial<LessonType>) =>
-			lessonApi.createLessonType(currentAccountId, accessToken, data),
+			lessonApi.createLessonType(currentAccountId, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: lessonTypesQueryKey(currentAccountId) });
 			enqueueSnackbar('Lesson type created', { variant: 'success' });
@@ -47,12 +44,12 @@ export const useCreateLessonType = (currentAccountId: string, accessToken: strin
 	});
 };
 
-export const useUpdateLessonType = (currentAccountId: string, accessToken: string) => {
+export const useUpdateLessonType = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: Partial<LessonType> & { id: number }) =>
-			lessonApi.updateLessonType(currentAccountId, accessToken, data),
+			lessonApi.updateLessonType(currentAccountId, data),
 		onSuccess: (_, data) => {
 			queryClient.invalidateQueries({ queryKey: lessonTypesQueryKey(currentAccountId) });
 			queryClient.invalidateQueries({ queryKey: lessonTypeQueryKey(currentAccountId, data.id) });
@@ -62,11 +59,11 @@ export const useUpdateLessonType = (currentAccountId: string, accessToken: strin
 	});
 };
 
-export const useDeleteLessonType = (currentAccountId: string, accessToken: string) => {
+export const useDeleteLessonType = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (id: number) => lessonApi.deleteLessonType(currentAccountId, accessToken, id),
+		mutationFn: (id: number) => lessonApi.deleteLessonType(currentAccountId, id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: lessonTypesQueryKey(currentAccountId) });
 			enqueueSnackbar('Lesson type deleted', { variant: 'success' });
@@ -79,34 +76,34 @@ export const useDeleteLessonType = (currentAccountId: string, accessToken: strin
 // LEVELS
 // ════════════════════════════════════════════════════════════════════════════
 
-export const levelsQueryKey = (currentAccountId: string) => ['lesson', 'levels', currentAccountId];
-export const levelQueryKey = (currentAccountId: string, levelId: number) => [
-	'lesson',
-	'level',
-	currentAccountId,
-	levelId
+export const levelsQueryKey = (currentAccountId: string | number) => [
+	'lesson', 'levels', String(currentAccountId)
+];
+export const levelQueryKey = (currentAccountId: string | number, levelId: number) => [
+	'lesson', 'level', String(currentAccountId), levelId
 ];
 
-export const useLevels = (currentAccountId: string, accessToken: string) =>
+export const useLevels = (currentAccountId: string | number) =>
 	useQuery({
 		queryKey: levelsQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getLevels(currentAccountId, accessToken),
-		enabled: !!currentAccountId && !!accessToken
+		queryFn: () => lessonApi.getLevels(currentAccountId),
+		enabled: !!currentAccountId,
+		retry: 0,
 	});
 
-export const useLevel = (currentAccountId: string, accessToken: string, id: number) =>
+export const useLevel = (currentAccountId: string | number, id: number) =>
 	useQuery({
 		queryKey: levelQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getLevel(currentAccountId, accessToken, id),
-		enabled: !!currentAccountId && !!accessToken && !!id
+		queryFn: () => lessonApi.getLevel(currentAccountId, id),
+		enabled: !!currentAccountId && !!id,
+		retry: 0,
 	});
 
-export const useCreateLevel = (currentAccountId: string, accessToken: string) => {
+export const useCreateLevel = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (data: Partial<Level>) =>
-			lessonApi.createLevel(currentAccountId, accessToken, data),
+		mutationFn: (data: Partial<Level>) => lessonApi.createLevel(currentAccountId, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: levelsQueryKey(currentAccountId) });
 			enqueueSnackbar('Level created', { variant: 'success' });
@@ -115,12 +112,12 @@ export const useCreateLevel = (currentAccountId: string, accessToken: string) =>
 	});
 };
 
-export const useUpdateLevel = (currentAccountId: string, accessToken: string) => {
+export const useUpdateLevel = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: Partial<Level> & { id: number }) =>
-			lessonApi.updateLevel(currentAccountId, accessToken, data),
+			lessonApi.updateLevel(currentAccountId, data),
 		onSuccess: (_, data) => {
 			queryClient.invalidateQueries({ queryKey: levelsQueryKey(currentAccountId) });
 			queryClient.invalidateQueries({ queryKey: levelQueryKey(currentAccountId, data.id) });
@@ -130,11 +127,11 @@ export const useUpdateLevel = (currentAccountId: string, accessToken: string) =>
 	});
 };
 
-export const useDeleteLevel = (currentAccountId: string, accessToken: string) => {
+export const useDeleteLevel = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (id: number) => lessonApi.deleteLevel(currentAccountId, accessToken, id),
+		mutationFn: (id: number) => lessonApi.deleteLevel(currentAccountId, id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: levelsQueryKey(currentAccountId) });
 			enqueueSnackbar('Level deleted', { variant: 'success' });
@@ -147,38 +144,34 @@ export const useDeleteLevel = (currentAccountId: string, accessToken: string) =>
 // STUDY SUBJECTS
 // ════════════════════════════════════════════════════════════════════════════
 
-export const subjectsQueryKey = (currentAccountId: string) => [
-	'lesson',
-	'subjects',
-	currentAccountId
+export const subjectsQueryKey = (currentAccountId: string | number) => [
+	'lesson', 'subjects', String(currentAccountId)
 ];
-export const subjectQueryKey = (currentAccountId: string, subjectId: number) => [
-	'lesson',
-	'subject',
-	currentAccountId,
-	subjectId
+export const subjectQueryKey = (currentAccountId: string | number, subjectId: number) => [
+	'lesson', 'subject', String(currentAccountId), subjectId
 ];
 
-export const useSubjects = (currentAccountId: string, accessToken: string) =>
+export const useSubjects = (currentAccountId: string | number) =>
 	useQuery({
 		queryKey: subjectsQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getSubjects(currentAccountId, accessToken),
-		enabled: !!currentAccountId && !!accessToken
+		queryFn: () => lessonApi.getSubjects(currentAccountId),
+		enabled: !!currentAccountId,
+		retry: 0,
 	});
 
-export const useSubject = (currentAccountId: string, accessToken: string, id: number) =>
+export const useSubject = (currentAccountId: string | number, id: number) =>
 	useQuery({
 		queryKey: subjectQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getSubject(currentAccountId, accessToken, id),
-		enabled: !!currentAccountId && !!accessToken && !!id
+		queryFn: () => lessonApi.getSubject(currentAccountId, id),
+		enabled: !!currentAccountId && !!id,
+		retry: 0,
 	});
 
-export const useCreateSubject = (currentAccountId: string, accessToken: string) => {
+export const useCreateSubject = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (data: Partial<Subject>) =>
-			lessonApi.createSubject(currentAccountId, accessToken, data),
+		mutationFn: (data: Partial<Subject>) => lessonApi.createSubject(currentAccountId, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: subjectsQueryKey(currentAccountId) });
 			enqueueSnackbar('Subject created', { variant: 'success' });
@@ -187,12 +180,12 @@ export const useCreateSubject = (currentAccountId: string, accessToken: string) 
 	});
 };
 
-export const useUpdateSubject = (currentAccountId: string, accessToken: string) => {
+export const useUpdateSubject = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: Partial<Subject> & { id: number }) =>
-			lessonApi.updateSubject(currentAccountId, accessToken, data),
+			lessonApi.updateSubject(currentAccountId, data),
 		onSuccess: (_, data) => {
 			queryClient.invalidateQueries({ queryKey: subjectsQueryKey(currentAccountId) });
 			queryClient.invalidateQueries({ queryKey: subjectQueryKey(currentAccountId, data.id) });
@@ -202,11 +195,11 @@ export const useUpdateSubject = (currentAccountId: string, accessToken: string) 
 	});
 };
 
-export const useDeleteSubject = (currentAccountId: string, accessToken: string) => {
+export const useDeleteSubject = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (id: number) => lessonApi.deleteSubject(currentAccountId, accessToken, id),
+		mutationFn: (id: number) => lessonApi.deleteSubject(currentAccountId, id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: subjectsQueryKey(currentAccountId) });
 			enqueueSnackbar('Subject deleted', { variant: 'success' });
@@ -219,39 +212,34 @@ export const useDeleteSubject = (currentAccountId: string, accessToken: string) 
 // MODULES
 // ════════════════════════════════════════════════════════════════════════════
 
-export const modulesQueryKey = (currentAccountId: string) => [
-	'lesson',
-	'modules',
-	currentAccountId
+export const modulesQueryKey = (currentAccountId: string | number) => [
+	'lesson', 'modules', String(currentAccountId)
 ];
-export const moduleQueryKey = (currentAccountId: string, moduleId: number) => [
-	'lesson',
-	'module',
-	currentAccountId,
-	moduleId
+export const moduleQueryKey = (currentAccountId: string | number, moduleId: number) => [
+	'lesson', 'module', String(currentAccountId), moduleId
 ];
 
-export const useModules = (currentAccountId: string, accessToken: string) =>
+export const useModules = (currentAccountId: string | number) =>
 	useQuery({
 		queryKey: modulesQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getModules(currentAccountId, accessToken),
-		enabled: !!currentAccountId && !!accessToken,
-		retry: 0,          // ← add this
+		queryFn: () => lessonApi.getModules(currentAccountId),
+		enabled: !!currentAccountId,
+		retry: 0,
 	});
 
-export const useModule = (currentAccountId: string, accessToken: string, id: number) =>
+export const useModule = (currentAccountId: string | number, id: number) =>
 	useQuery({
 		queryKey: moduleQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getModule(currentAccountId, accessToken, id),
-		enabled: !!currentAccountId && !!accessToken && !!id
+		queryFn: () => lessonApi.getModule(currentAccountId, id),
+		enabled: !!currentAccountId && !!id,
+		retry: 0,
 	});
 
-export const useCreateModule = (currentAccountId: string, accessToken: string) => {
+export const useCreateModule = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (data: Partial<Module>) =>
-			lessonApi.createModule(currentAccountId, accessToken, data),
+		mutationFn: (data: Partial<Module>) => lessonApi.createModule(currentAccountId, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: modulesQueryKey(currentAccountId) });
 			enqueueSnackbar('Module created', { variant: 'success' });
@@ -260,12 +248,12 @@ export const useCreateModule = (currentAccountId: string, accessToken: string) =
 	});
 };
 
-export const useUpdateModule = (currentAccountId: string, accessToken: string) => {
+export const useUpdateModule = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: Partial<Module> & { id: number }) =>
-			lessonApi.updateModule(currentAccountId, accessToken, data),
+			lessonApi.updateModule(currentAccountId, data),
 		onSuccess: (_, data) => {
 			queryClient.invalidateQueries({ queryKey: modulesQueryKey(currentAccountId) });
 			queryClient.invalidateQueries({ queryKey: moduleQueryKey(currentAccountId, data.id) });
@@ -275,11 +263,11 @@ export const useUpdateModule = (currentAccountId: string, accessToken: string) =
 	});
 };
 
-export const useDeleteModule = (currentAccountId: string, accessToken: string) => {
+export const useDeleteModule = (currentAccountId: string | number) => {
 	const queryClient = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (id: number) => lessonApi.deleteModule(currentAccountId, accessToken, id),
+		mutationFn: (id: number) => lessonApi.deleteModule(currentAccountId, id),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: modulesQueryKey(currentAccountId) });
 			enqueueSnackbar('Module deleted', { variant: 'success' });
