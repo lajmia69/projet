@@ -1,19 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { lessonApi } from '../../services/lessonApiService';
-import { SearchLessons } from '../../types';
+import { SearchLessons } from '@/app/(control-panel)/(platform)/(lesson)/api/types';
 
-export const searchLessonsQueryKey = (accountId: string | number, search: SearchLessons) => [
-	'lesson', 'search', String(accountId), search
-];
+export const searchLessonsQueryKey = ['lesson', 'search'];
 
-export const useSearchLessons = (
-	current_account_id: string | number,
-	search: SearchLessons
-) => {
+export const useSearchLessons = (current_account_id: string, accessToken: string, search: SearchLessons) => {
 	return useQuery({
-		queryKey: searchLessonsQueryKey(current_account_id, search),
-		queryFn: () => lessonApi.searchLessons(current_account_id, search),
-		enabled: !!current_account_id,
-		retry: 0,
+		queryKey: searchLessonsQueryKey,
+		queryFn: () => lessonApi.searchLessons(current_account_id, accessToken, search)
 	});
 };

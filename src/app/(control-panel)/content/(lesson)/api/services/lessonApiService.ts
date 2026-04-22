@@ -1,4 +1,4 @@
-import { apiClient } from '@/utils/apiClient';
+import { api } from '@/utils/api';
 import {
 	Lesson,
 	LessonList,
@@ -11,203 +11,416 @@ import {
 	SearchLessons,
 	LessonCreatePayload,
 	LessonUpdatePayload,
-	LessonEmotion,
-	SetLessonEmotionPayload,
 } from '../types';
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
-/** Always send the account ID as a plain number, matching the OpenAPI schema. */
-const id = (v: string | number) => Number(v);
-
-/** Build clean search params — omit any key whose value is falsy. */
-const cleanParams = (raw: Record<string, string | number | null | undefined>) => {
-	const p = new URLSearchParams();
-	for (const [k, v] of Object.entries(raw)) {
-		if (v !== null && v !== undefined && v !== '') {
-			p.set(k, String(v));
-		}
-	}
-	return p;
-};
-
-// ─── service ─────────────────────────────────────────────────────────────────
+const authHeader = (accessToken: string) => ({
+	headers: { Authorization: `Bearer ${accessToken}` }
+});
 
 export const lessonApi = {
 	// ─── Lesson ─────────────────────────────────────────────────────────────────
 
-	searchLessons: (currentAccountId: string | number, search: SearchLessons): Promise<LessonList> =>
-		apiClient
-			.get(`lesson/search/${id(currentAccountId)}/`, {
-				// Use ky's searchParams option instead of manual URL building.
-				// This avoids the ?-in-path issue that can crash stricter Django views.
-				searchParams: cleanParams({
-					limit: search.limit ?? 50,
-					offset: search.offset ?? 0,
-					language: search.language,
-					module: search.module,
-					level: search.level,
-					subject: search.subject,
-					lesson_type: search.lesson_type,
-					tags: search.tags,
-					name: search.name,
-				}),
-			})
-			.json(),
+	searchLessons: async (
+		currentAccountId: string,
+		accessToken: string,
+		search: SearchLessons
+	): Promise<LessonList> => {
+		const params = new URLSearchParams();
+		params.set('limit', String(search.limit ?? 10));
+		params.set('offset', String(search.offset ?? 0));
+		if (search.language) params.set('language', search.language);
 
-	getLessons: (currentAccountId: string | number): Promise<LessonList> =>
-		apiClient.get(`lesson/list/${id(currentAccountId)}/`).json(),
+		return api
+			.get(`lesson/search/${currentAccountId}/?${params.toString()}`, authHeader(accessToken))
+			.json();
+	},
 
-	getLesson: (currentAccountId: string | number, lessonId: string | number): Promise<Lesson> =>
-		apiClient.get(`lesson/detail/${id(currentAccountId)}/${id(lessonId)}/`).json(),
+	getLessons: async (currentAccountId: string, accessToken: string): Promise<LessonList> => {
+		return api
+			.get(`lesson/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	createLesson: (
-		currentAccountId: string | number,
+	getLesson: async (
+		currentAccountId: string,
+		lessonId: string,
+		accessToken: string
+	): Promise<Lesson> => {
+		return api
+			.get(`lesson/detail/${currentAccountId}/${lessonId}/`, authHeader(accessToken))
+			.json();
+	},
+
+	createLesson: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: LessonCreatePayload
-	): Promise<Lesson> =>
-		apiClient.post(`lesson/create/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<Lesson> => {
+		return api
+			.post(`lesson/create/${currentAccountId}/`, {
+				headers: {
+					Authorization: `Bearer ${accessToken}`
+				},
+				json: data
+			})
+			.json();
+	},
 
-	updateLesson: (
-		currentAccountId: string | number,
+	updateLesson: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: LessonUpdatePayload
-	): Promise<Lesson> =>
-		apiClient.put(`lesson/update/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<Lesson> => {
+		return api
+			.put(`lesson/update/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	validateLesson: (currentAccountId: string | number, lessonId: number): Promise<Lesson> =>
-		apiClient
-			.patch(`lesson/validate/${id(currentAccountId)}/`, { json: { id: lessonId } })
-			.json(),
+	validateLesson: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> => {
+		return api
+			.patch(`lesson/validate/${currentAccountId}/`, {
+				json: { id: lessonId },
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	makePublicLesson: (currentAccountId: string | number, lessonId: number): Promise<Lesson> =>
-		apiClient
-			.patch(`lesson/public/${id(currentAccountId)}/`, { json: { id: lessonId } })
-			.json(),
+	makePublicLesson: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> => {
+		return api
+			.patch(`lesson/public/${currentAccountId}/`, {
+				json: { id: lessonId },
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	publishLesson: (currentAccountId: string | number, lessonId: number): Promise<Lesson> =>
-		apiClient
-			.patch(`lesson/publish/${id(currentAccountId)}/`, { json: { id: lessonId } })
-			.json(),
+	publishLesson: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> => {
+		return api
+			.patch(`lesson/publish/${currentAccountId}/`, {
+				json: { id: lessonId },
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	publishReleaseLesson: (currentAccountId: string | number, lessonId: number): Promise<Lesson> =>
-		apiClient
-			.patch(`lesson/publish/release/${id(currentAccountId)}/`, { json: { id: lessonId } })
-			.json(),
+	publishReleaseLesson: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> => {
+		return api
+			.patch(`lesson/publish/release/${currentAccountId}/`, {
+				json: { id: lessonId },
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	deleteLesson: (currentAccountId: string | number, lessonId: number): Promise<void> =>
-		apiClient.delete(`lesson/delete/${id(currentAccountId)}/${lessonId}/`).json(),
+	deleteLesson: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<void> => {
+		await api.delete(`lesson/delete/${currentAccountId}/${lessonId}/`, authHeader(accessToken));
+	},
 
 	// ─── Languages ───────────────────────────────────────────────────────────────
 
-	getLanguages: (currentAccountId: string | number): Promise<LanguageList> =>
-		apiClient.get(`setting/language/list/${id(currentAccountId)}/`).json(),
+	getLanguages: async (currentAccountId: string, accessToken: string): Promise<LanguageList> => {
+		return api
+			.get(`setting/language/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
 	// ─── Lesson Types ────────────────────────────────────────────────────────────
 
-	getLessonTypes: (
-		currentAccountId: string | number
-	): Promise<{ items: LessonType[]; count: number }> =>
-		apiClient.get(`lesson/type/list/${id(currentAccountId)}/`).json(),
+	getLessonTypes: async (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: LessonType[]; count: number }> => {
+		return api
+			.get(`lesson/type/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	getLessonType: (currentAccountId: string | number, lessonTypeId: number): Promise<LessonType> =>
-		apiClient.get(`lesson/type/detail/${id(currentAccountId)}/${lessonTypeId}/`).json(),
+	getLessonType: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonTypeId: number
+	): Promise<LessonType> => {
+		return api
+			.get(`lesson/type/detail/${currentAccountId}/${lessonTypeId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	createLessonType: (
-		currentAccountId: string | number,
+	createLessonType: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: Partial<LessonType>
-	): Promise<LessonType> =>
-		apiClient.post(`lesson/type/create/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<LessonType> => {
+		return api
+			.post(`lesson/type/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.json();
+	},
 
-	updateLessonType: (
-		currentAccountId: string | number,
+	updateLessonType: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: Partial<LessonType> & { id: number }
-	): Promise<LessonType> =>
-		apiClient.put(`lesson/type/update/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<LessonType> => {
+		return api
+			.put(`lesson/type/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.json();
+	},
 
-	deleteLessonType: (currentAccountId: string | number, lessonTypeId: number): Promise<void> =>
-		apiClient.delete(`lesson/type/delete/${id(currentAccountId)}/${lessonTypeId}/`).json(),
+	deleteLessonType: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonTypeId: number
+	): Promise<void> => {
+		await api.delete(
+			`lesson/type/delete/${currentAccountId}/${lessonTypeId}/`,
+			authHeader(accessToken)
+		);
+	},
 
 	// ─── Levels ──────────────────────────────────────────────────────────────────
 
-	getLevels: (
-		currentAccountId: string | number
-	): Promise<{ items: Level[]; count: number }> =>
-		apiClient.get(`lesson/level/list/${id(currentAccountId)}/`).json(),
+	getLevels: async (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: Level[]; count: number }> => {
+		return api
+			.get(`lesson/level/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	getLevel: (currentAccountId: string | number, levelId: number): Promise<Level> =>
-		apiClient.get(`lesson/level/detail/${id(currentAccountId)}/${levelId}/`).json(),
+	getLevel: async (
+		currentAccountId: string,
+		accessToken: string,
+		levelId: number
+	): Promise<Level> => {
+		return api
+			.get(`lesson/level/detail/${currentAccountId}/${levelId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	createLevel: (currentAccountId: string | number, data: Partial<Level>): Promise<Level> =>
-		apiClient.post(`lesson/level/create/${id(currentAccountId)}/`, { json: data }).json(),
+	createLevel: async (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Level>
+	): Promise<Level> => {
+		return api
+			.post(`lesson/level/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.json();
+	},
 
-	updateLevel: (
-		currentAccountId: string | number,
+	updateLevel: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: Partial<Level> & { id: number }
-	): Promise<Level> =>
-		apiClient.put(`lesson/level/update/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<Level> => {
+		return api
+			.put(`lesson/level/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.json();
+	},
 
-	deleteLevel: (currentAccountId: string | number, levelId: number): Promise<void> =>
-		apiClient.delete(`lesson/level/delete/${id(currentAccountId)}/${levelId}/`).json(),
+	deleteLevel: async (
+		currentAccountId: string,
+		accessToken: string,
+		levelId: number
+	): Promise<void> => {
+		await api.delete(
+			`lesson/level/delete/${currentAccountId}/${levelId}/`,
+			authHeader(accessToken)
+		);
+	},
 
 	// ─── Study Subjects ──────────────────────────────────────────────────────────
 
-	getSubjects: (
-		currentAccountId: string | number
-	): Promise<{ items: Subject[]; count: number }> =>
-		apiClient.get(`lesson/subject/list/${id(currentAccountId)}/`).json(),
+	getSubjects: async (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: Subject[]; count: number }> => {
+		return api
+			.get(`lesson/subject/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	getSubject: (currentAccountId: string | number, subjectId: number): Promise<Subject> =>
-		apiClient.get(`lesson/subject/detail/${id(currentAccountId)}/${subjectId}/`).json(),
+	getSubject: async (
+		currentAccountId: string,
+		accessToken: string,
+		subjectId: number
+	): Promise<Subject> => {
+		return api
+			.get(`lesson/subject/detail/${currentAccountId}/${subjectId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	createSubject: (currentAccountId: string | number, data: Partial<Subject>): Promise<Subject> =>
-		apiClient.post(`lesson/subject/create/${id(currentAccountId)}/`, { json: data }).json(),
+	createSubject: async (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Subject>
+	): Promise<Subject> => {
+		return api
+			.post(`lesson/subject/create/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	updateSubject: (
-		currentAccountId: string | number,
+	updateSubject: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: Partial<Subject> & { id: number }
-	): Promise<Subject> =>
-		apiClient.put(`lesson/subject/update/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<Subject> => {
+		return api
+			.put(`lesson/subject/update/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	deleteSubject: (currentAccountId: string | number, subjectId: number): Promise<void> =>
-		apiClient.delete(`lesson/subject/delete/${id(currentAccountId)}/${subjectId}/`).json(),
+	deleteSubject: async (
+		currentAccountId: string,
+		accessToken: string,
+		subjectId: number
+	): Promise<void> => {
+		await api.delete(
+			`lesson/subject/delete/${currentAccountId}/${subjectId}/`,
+			authHeader(accessToken)
+		);
+	},
 
 	// ─── Modules ─────────────────────────────────────────────────────────────────
 
-	getModules: (
-		currentAccountId: string | number
-	): Promise<{ items: Module[]; count: number }> =>
-		apiClient.get(`lesson/module/list/${id(currentAccountId)}/`).json(),
+	getModules: async (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: Module[]; count: number }> => {
+		return api
+			.get(`lesson/module/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	getModule: (currentAccountId: string | number, moduleId: number): Promise<Module> =>
-		apiClient.get(`lesson/module/detail/${id(currentAccountId)}/${moduleId}/`).json(),
+	getModule: async (
+		currentAccountId: string,
+		accessToken: string,
+		moduleId: number
+	): Promise<Module> => {
+		return api
+			.get(`lesson/module/detail/${currentAccountId}/${moduleId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	createModule: (currentAccountId: string | number, data: Partial<Module>): Promise<Module> =>
-		apiClient.post(`lesson/module/create/${id(currentAccountId)}/`, { json: data }).json(),
+	createModule: async (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Module>
+	): Promise<Module> => {
+		return api
+			.post(`lesson/module/create/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	updateModule: (
-		currentAccountId: string | number,
+	updateModule: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: Partial<Module> & { id: number }
-	): Promise<Module> =>
-		apiClient.put(`lesson/module/update/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<Module> => {
+		return api
+			.put(`lesson/module/update/${currentAccountId}/`, {
+				json: data,
+				...authHeader(accessToken)
+			})
+			.json();
+	},
 
-	deleteModule: (currentAccountId: string | number, moduleId: number): Promise<void> =>
-		apiClient.delete(`lesson/module/delete/${id(currentAccountId)}/${moduleId}/`).json(),
+	deleteModule: async (
+		currentAccountId: string,
+		accessToken: string,
+		moduleId: number
+	): Promise<void> => {
+		await api.delete(
+			`lesson/module/delete/${currentAccountId}/${moduleId}/`,
+			authHeader(accessToken)
+		);
+	},
 
 	// ─── Lesson Emotions ─────────────────────────────────────────────────────────
 
-	getLessonEmotions: (
-		currentAccountId: string | number
-	): Promise<{ items: LessonEmotion[]; count: number }> =>
-		apiClient.get(`lesson/emotion/list/${id(currentAccountId)}/`).json(),
+	getLessonEmotions: async (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: LessonEmotion[]; count: number }> => {
+		return api
+			.get(`lesson/emotion/list/${currentAccountId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	getLessonEmotion: (currentAccountId: string | number, lessonId: number): Promise<LessonEmotion> =>
-		apiClient.get(`lesson/emotion/detail/${id(currentAccountId)}/${lessonId}/`).json(),
+	getLessonEmotion: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<LessonEmotion> => {
+		return api
+			.get(`lesson/emotion/detail/${currentAccountId}/${lessonId}/`, authHeader(accessToken))
+			.json();
+	},
 
-	setLessonEmotion: (
-		currentAccountId: string | number,
+	setLessonEmotion: async (
+		currentAccountId: string,
+		accessToken: string,
 		data: SetLessonEmotionPayload
-	): Promise<LessonEmotion> =>
-		apiClient.post(`lesson/emotion/set/${id(currentAccountId)}/`, { json: data }).json(),
+	): Promise<LessonEmotion> => {
+		return api
+			.post(`lesson/emotion/set/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
+			.json();
+	},
 
-	deleteLessonEmotion: (currentAccountId: string | number, lessonId: number): Promise<void> =>
-		apiClient.delete(`lesson/emotion/delete/${id(currentAccountId)}/${lessonId}/`).json(),
+	deleteLessonEmotion: async (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<void> => {
+		await api.delete(
+			`lesson/emotion/delete/${currentAccountId}/${lessonId}/`,
+			authHeader(accessToken)
+		);
+	}
+};
+
+// local types used only by this service (also exported from types/index.ts)
+export type LessonEmotion = {
+	id: number;
+	lesson: number;
+	emotion_type: string;
+	emotion_label: string;
+	count: number;
+	user_emotion: string | null;
+};
+
+export type SetLessonEmotionPayload = {
+	lesson_id: number;
+	emotion_type: string;
 };

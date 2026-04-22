@@ -23,21 +23,10 @@ export type Audio = {
 	reference: string;
 };
 
-/**
- * All filter fields accepted by /lesson/search/{accountId}/.
- * Every field is optional — only set fields are forwarded to the backend.
- */
 export type SearchLessons = {
+	language?: string;
 	limit: number;
 	offset: number;
-	name?: string;
-	description?: string;
-	language?: string;
-	lesson_type?: string;
-	module?: string;
-	level?: string;
-	subject?: string;
-	tags?: string;
 };
 
 export type User = {
