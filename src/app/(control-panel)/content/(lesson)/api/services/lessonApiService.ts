@@ -1,4 +1,16 @@
-import { api } from '@/utils/api';
+/**
+ * lessonApiService.ts
+ *
+ * FIXED: Switched from the shared `api` utility (which did not reliably forward
+ * the Authorization header for non-staff/Member accounts) to a per-request
+ * `ky.create()` client — the same pattern used in podcastApiService.ts.
+ *
+ * This resolves:
+ *  - 401 on /lesson/module/list and /setting/language/list for Member accounts
+ *  - Consistent auth behaviour regardless of Django user role
+ */
+
+import ky from 'ky';
 import {
 	Lesson,
 	LessonList,
@@ -13,404 +25,27 @@ import {
 	LessonUpdatePayload,
 } from '../types';
 
-const authHeader = (accessToken: string) => ({
-	headers: { Authorization: `Bearer ${accessToken}` }
-});
+// ─── Shared client factory ─────────────────────────────────────────────────────
 
-export const lessonApi = {
-	// ─── Lesson ─────────────────────────────────────────────────────────────────
+const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
-	searchLessons: async (
-		currentAccountId: string,
-		accessToken: string,
-		search: SearchLessons
-	): Promise<LessonList> => {
-		const params = new URLSearchParams();
-		params.set('limit', String(search.limit ?? 10));
-		params.set('offset', String(search.offset ?? 0));
-		if (search.language) params.set('language', search.language);
+/**
+ * Creates an authenticated ky instance.
+ * retry: 0 prevents ky from re-sending failing requests.
+ */
+function createClient(token: string) {
+	return ky.create({
+		prefixUrl: BASE_URL,
+		retry: 0,
+		timeout: 30_000,
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
+}
 
-		return api
-			.get(`lesson/search/${currentAccountId}/?${params.toString()}`, authHeader(accessToken))
-			.json();
-	},
+// ─── Exported types re-used by emotion hooks ──────────────────────────────────
 
-	getLessons: async (currentAccountId: string, accessToken: string): Promise<LessonList> => {
-		return api
-			.get(`lesson/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	getLesson: async (
-		currentAccountId: string,
-		lessonId: string,
-		accessToken: string
-	): Promise<Lesson> => {
-		return api
-			.get(`lesson/detail/${currentAccountId}/${lessonId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	createLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: LessonCreatePayload
-	): Promise<Lesson> => {
-		return api
-			.post(`lesson/create/${currentAccountId}/`, {
-				headers: {
-					Authorization: `Bearer ${accessToken}`
-				},
-				json: data
-			})
-			.json();
-	},
-
-	updateLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: LessonUpdatePayload
-	): Promise<Lesson> => {
-		return api
-			.put(`lesson/update/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	validateLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<Lesson> => {
-		return api
-			.patch(`lesson/validate/${currentAccountId}/`, {
-				json: { id: lessonId },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	makePublicLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<Lesson> => {
-		return api
-			.patch(`lesson/public/${currentAccountId}/`, {
-				json: { id: lessonId },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	publishLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<Lesson> => {
-		return api
-			.patch(`lesson/publish/${currentAccountId}/`, {
-				json: { id: lessonId },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	publishReleaseLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<Lesson> => {
-		return api
-			.patch(`lesson/publish/release/${currentAccountId}/`, {
-				json: { id: lessonId },
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	deleteLesson: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<void> => {
-		await api.delete(`lesson/delete/${currentAccountId}/${lessonId}/`, authHeader(accessToken));
-	},
-
-	// ─── Languages ───────────────────────────────────────────────────────────────
-
-	getLanguages: async (currentAccountId: string, accessToken: string): Promise<LanguageList> => {
-		return api
-			.get(`setting/language/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	// ─── Lesson Types ────────────────────────────────────────────────────────────
-
-	getLessonTypes: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<{ items: LessonType[]; count: number }> => {
-		return api
-			.get(`lesson/type/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	getLessonType: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonTypeId: number
-	): Promise<LessonType> => {
-		return api
-			.get(`lesson/type/detail/${currentAccountId}/${lessonTypeId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	createLessonType: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<LessonType>
-	): Promise<LessonType> => {
-		return api
-			.post(`lesson/type/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
-
-	updateLessonType: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<LessonType> & { id: number }
-	): Promise<LessonType> => {
-		return api
-			.put(`lesson/type/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
-
-	deleteLessonType: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonTypeId: number
-	): Promise<void> => {
-		await api.delete(
-			`lesson/type/delete/${currentAccountId}/${lessonTypeId}/`,
-			authHeader(accessToken)
-		);
-	},
-
-	// ─── Levels ──────────────────────────────────────────────────────────────────
-
-	getLevels: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<{ items: Level[]; count: number }> => {
-		return api
-			.get(`lesson/level/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	getLevel: async (
-		currentAccountId: string,
-		accessToken: string,
-		levelId: number
-	): Promise<Level> => {
-		return api
-			.get(`lesson/level/detail/${currentAccountId}/${levelId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	createLevel: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Level>
-	): Promise<Level> => {
-		return api
-			.post(`lesson/level/create/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
-
-	updateLevel: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Level> & { id: number }
-	): Promise<Level> => {
-		return api
-			.put(`lesson/level/update/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
-
-	deleteLevel: async (
-		currentAccountId: string,
-		accessToken: string,
-		levelId: number
-	): Promise<void> => {
-		await api.delete(
-			`lesson/level/delete/${currentAccountId}/${levelId}/`,
-			authHeader(accessToken)
-		);
-	},
-
-	// ─── Study Subjects ──────────────────────────────────────────────────────────
-
-	getSubjects: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<{ items: Subject[]; count: number }> => {
-		return api
-			.get(`lesson/subject/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	getSubject: async (
-		currentAccountId: string,
-		accessToken: string,
-		subjectId: number
-	): Promise<Subject> => {
-		return api
-			.get(`lesson/subject/detail/${currentAccountId}/${subjectId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	createSubject: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Subject>
-	): Promise<Subject> => {
-		return api
-			.post(`lesson/subject/create/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	updateSubject: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Subject> & { id: number }
-	): Promise<Subject> => {
-		return api
-			.put(`lesson/subject/update/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	deleteSubject: async (
-		currentAccountId: string,
-		accessToken: string,
-		subjectId: number
-	): Promise<void> => {
-		await api.delete(
-			`lesson/subject/delete/${currentAccountId}/${subjectId}/`,
-			authHeader(accessToken)
-		);
-	},
-
-	// ─── Modules ─────────────────────────────────────────────────────────────────
-
-	getModules: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<{ items: Module[]; count: number }> => {
-		return api
-			.get(`lesson/module/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	getModule: async (
-		currentAccountId: string,
-		accessToken: string,
-		moduleId: number
-	): Promise<Module> => {
-		return api
-			.get(`lesson/module/detail/${currentAccountId}/${moduleId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	createModule: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Module>
-	): Promise<Module> => {
-		return api
-			.post(`lesson/module/create/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	updateModule: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: Partial<Module> & { id: number }
-	): Promise<Module> => {
-		return api
-			.put(`lesson/module/update/${currentAccountId}/`, {
-				json: data,
-				...authHeader(accessToken)
-			})
-			.json();
-	},
-
-	deleteModule: async (
-		currentAccountId: string,
-		accessToken: string,
-		moduleId: number
-	): Promise<void> => {
-		await api.delete(
-			`lesson/module/delete/${currentAccountId}/${moduleId}/`,
-			authHeader(accessToken)
-		);
-	},
-
-	// ─── Lesson Emotions ─────────────────────────────────────────────────────────
-
-	getLessonEmotions: async (
-		currentAccountId: string,
-		accessToken: string
-	): Promise<{ items: LessonEmotion[]; count: number }> => {
-		return api
-			.get(`lesson/emotion/list/${currentAccountId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	getLessonEmotion: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<LessonEmotion> => {
-		return api
-			.get(`lesson/emotion/detail/${currentAccountId}/${lessonId}/`, authHeader(accessToken))
-			.json();
-	},
-
-	setLessonEmotion: async (
-		currentAccountId: string,
-		accessToken: string,
-		data: SetLessonEmotionPayload
-	): Promise<LessonEmotion> => {
-		return api
-			.post(`lesson/emotion/set/${currentAccountId}/`, { json: data, ...authHeader(accessToken) })
-			.json();
-	},
-
-	deleteLessonEmotion: async (
-		currentAccountId: string,
-		accessToken: string,
-		lessonId: number
-	): Promise<void> => {
-		await api.delete(
-			`lesson/emotion/delete/${currentAccountId}/${lessonId}/`,
-			authHeader(accessToken)
-		);
-	}
-};
-
-// local types used only by this service (also exported from types/index.ts)
 export type LessonEmotion = {
 	id: number;
 	lesson: number;
@@ -423,4 +58,347 @@ export type LessonEmotion = {
 export type SetLessonEmotionPayload = {
 	lesson_id: number;
 	emotion_type: string;
+};
+
+// ─── Service ──────────────────────────────────────────────────────────────────
+
+export const lessonApi = {
+	// ─── Lesson ─────────────────────────────────────────────────────────────────
+
+	searchLessons: (
+		currentAccountId: string,
+		accessToken: string,
+		search: SearchLessons
+	): Promise<LessonList> => {
+		const params: Record<string, string | number> = {
+			limit: search.limit ?? 10,
+			offset: search.offset ?? 0,
+		};
+		if (search.language) params.language = search.language;
+
+		return createClient(accessToken)
+			.get(`lesson/search/${currentAccountId}/`, { searchParams: params })
+			.json<LessonList>();
+	},
+
+	getLessons: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<LessonList> =>
+		createClient(accessToken)
+			.get(`lesson/list/${currentAccountId}/`)
+			.json<LessonList>(),
+
+	getLesson: (
+		currentAccountId: string,
+		lessonId: string,
+		accessToken: string
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.get(`lesson/detail/${currentAccountId}/${lessonId}/`)
+			.json<Lesson>(),
+
+	createLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		data: LessonCreatePayload
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.post(`lesson/create/${currentAccountId}/`, { json: data })
+			.json<Lesson>(),
+
+	updateLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		data: LessonUpdatePayload
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.put(`lesson/update/${currentAccountId}/`, { json: data })
+			.json<Lesson>(),
+
+	validateLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.patch(`lesson/validate/${currentAccountId}/`, { json: { id: lessonId } })
+			.json<Lesson>(),
+
+	makePublicLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.patch(`lesson/public/${currentAccountId}/`, { json: { id: lessonId } })
+			.json<Lesson>(),
+
+	publishLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.patch(`lesson/publish/${currentAccountId}/`, { json: { id: lessonId } })
+			.json<Lesson>(),
+
+	publishReleaseLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<Lesson> =>
+		createClient(accessToken)
+			.patch(`lesson/publish/release/${currentAccountId}/`, { json: { id: lessonId } })
+			.json<Lesson>(),
+
+	deleteLesson: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<void> =>
+		createClient(accessToken)
+			.delete(`lesson/delete/${currentAccountId}/${lessonId}/`)
+			.json<void>(),
+
+	// ─── Languages ───────────────────────────────────────────────────────────────
+
+	getLanguages: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<LanguageList> =>
+		createClient(accessToken)
+			.get(`setting/language/list/${currentAccountId}/`)
+			.json<LanguageList>(),
+
+	// ─── Lesson Types ────────────────────────────────────────────────────────────
+
+	getLessonTypes: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: LessonType[]; count: number }> =>
+		createClient(accessToken)
+			.get(`lesson/type/list/${currentAccountId}/`)
+			.json<{ items: LessonType[]; count: number }>(),
+
+	getLessonType: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonTypeId: number
+	): Promise<LessonType> =>
+		createClient(accessToken)
+			.get(`lesson/type/detail/${currentAccountId}/${lessonTypeId}/`)
+			.json<LessonType>(),
+
+	createLessonType: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<LessonType>
+	): Promise<LessonType> =>
+		createClient(accessToken)
+			.post(`lesson/type/create/${currentAccountId}/`, { json: data })
+			.json<LessonType>(),
+
+	updateLessonType: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<LessonType> & { id: number }
+	): Promise<LessonType> =>
+		createClient(accessToken)
+			.put(`lesson/type/update/${currentAccountId}/`, { json: data })
+			.json<LessonType>(),
+
+	deleteLessonType: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonTypeId: number
+	): Promise<void> =>
+		createClient(accessToken)
+			.delete(`lesson/type/delete/${currentAccountId}/${lessonTypeId}/`)
+			.json<void>(),
+
+	// ─── Levels ──────────────────────────────────────────────────────────────────
+
+	getLevels: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: Level[]; count: number }> =>
+		createClient(accessToken)
+			.get(`lesson/level/list/${currentAccountId}/`)
+			.json<{ items: Level[]; count: number }>(),
+
+	getLevel: (
+		currentAccountId: string,
+		accessToken: string,
+		levelId: number
+	): Promise<Level> =>
+		createClient(accessToken)
+			.get(`lesson/level/detail/${currentAccountId}/${levelId}/`)
+			.json<Level>(),
+
+	createLevel: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Level>
+	): Promise<Level> =>
+		createClient(accessToken)
+			.post(`lesson/level/create/${currentAccountId}/`, { json: data })
+			.json<Level>(),
+
+	updateLevel: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Level> & { id: number }
+	): Promise<Level> =>
+		createClient(accessToken)
+			.put(`lesson/level/update/${currentAccountId}/`, { json: data })
+			.json<Level>(),
+
+	deleteLevel: (
+		currentAccountId: string,
+		accessToken: string,
+		levelId: number
+	): Promise<void> =>
+		createClient(accessToken)
+			.delete(`lesson/level/delete/${currentAccountId}/${levelId}/`)
+			.json<void>(),
+
+	// ─── Study Subjects ──────────────────────────────────────────────────────────
+
+	getSubjects: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: Subject[]; count: number }> =>
+		createClient(accessToken)
+			.get(`lesson/subject/list/${currentAccountId}/`)
+			.json<{ items: Subject[]; count: number }>(),
+
+	getSubject: (
+		currentAccountId: string,
+		accessToken: string,
+		subjectId: number
+	): Promise<Subject> =>
+		createClient(accessToken)
+			.get(`lesson/subject/detail/${currentAccountId}/${subjectId}/`)
+			.json<Subject>(),
+
+	createSubject: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Subject>
+	): Promise<Subject> =>
+		createClient(accessToken)
+			.post(`lesson/subject/create/${currentAccountId}/`, { json: data })
+			.json<Subject>(),
+
+	updateSubject: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Subject> & { id: number }
+	): Promise<Subject> =>
+		createClient(accessToken)
+			.put(`lesson/subject/update/${currentAccountId}/`, { json: data })
+			.json<Subject>(),
+
+	deleteSubject: (
+		currentAccountId: string,
+		accessToken: string,
+		subjectId: number
+	): Promise<void> =>
+		createClient(accessToken)
+			.delete(`lesson/subject/delete/${currentAccountId}/${subjectId}/`)
+			.json<void>(),
+
+	// ─── Modules ─────────────────────────────────────────────────────────────────
+
+	getModules: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: Module[]; count: number }> =>
+		createClient(accessToken)
+			.get(`lesson/module/list/${currentAccountId}/`)
+			.json<{ items: Module[]; count: number }>(),
+
+	getModule: (
+		currentAccountId: string,
+		accessToken: string,
+		moduleId: number
+	): Promise<Module> =>
+		createClient(accessToken)
+			.get(`lesson/module/detail/${currentAccountId}/${moduleId}/`)
+			.json<Module>(),
+
+	createModule: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Module>
+	): Promise<Module> =>
+		createClient(accessToken)
+			.post(`lesson/module/create/${currentAccountId}/`, { json: data })
+			.json<Module>(),
+
+	updateModule: (
+		currentAccountId: string,
+		accessToken: string,
+		data: Partial<Module> & { id: number }
+	): Promise<Module> =>
+		createClient(accessToken)
+			.put(`lesson/module/update/${currentAccountId}/`, { json: data })
+			.json<Module>(),
+
+	deleteModule: (
+		currentAccountId: string,
+		accessToken: string,
+		moduleId: number
+	): Promise<void> =>
+		createClient(accessToken)
+			.delete(`lesson/module/delete/${currentAccountId}/${moduleId}/`)
+			.json<void>(),
+
+	// ─── Lesson Emotions ─────────────────────────────────────────────────────────
+
+	getLessonEmotions: (
+		currentAccountId: string,
+		accessToken: string
+	): Promise<{ items: LessonEmotion[]; count: number }> =>
+		createClient(accessToken)
+			.get(`lesson/emotion/list/${currentAccountId}/`)
+			.json<{ items: LessonEmotion[]; count: number }>(),
+
+	getLessonEmotion: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<LessonEmotion> =>
+		createClient(accessToken)
+			.get(`lesson/emotion/detail/${currentAccountId}/${lessonId}/`)
+			.json<LessonEmotion>(),
+
+	setLessonEmotion: (
+		currentAccountId: string,
+		accessToken: string,
+		data: SetLessonEmotionPayload
+	): Promise<LessonEmotion> =>
+		createClient(accessToken)
+			.post(`lesson/emotion/set/${currentAccountId}/`, { json: data })
+			.json<LessonEmotion>(),
+
+	deleteLessonEmotion: (
+		currentAccountId: string,
+		accessToken: string,
+		lessonId: number
+	): Promise<void> =>
+		createClient(accessToken)
+			.delete(`lesson/emotion/delete/${currentAccountId}/${lessonId}/`)
+			.json<void>(),
+
+	// ─── Academy / Course stubs (kept for backward compat) ───────────────────────
+
+	getCategories: (): Promise<unknown[]> => Promise.resolve([]),
+	getCourses: (): Promise<unknown[]> => Promise.resolve([]),
+	getCourse: (_id: string): Promise<null> => Promise.resolve(null),
+	deleteCourse: (_id: string): Promise<void> => Promise.resolve(),
+	updateCourse: (_id: string, _data: unknown): Promise<null> => Promise.resolve(null),
+	getCourseSteps: (_id: string): Promise<unknown[]> => Promise.resolve([]),
+	getCourseStepContent: (_id: string): Promise<null> => Promise.resolve(null),
 };
