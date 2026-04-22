@@ -41,8 +41,13 @@ const STATUS_COLUMNS = [
 ];
 
 const TYPE_COLORS: Record<string, string> = {
-	Lesson: '#8b5cf6', CulturalRecord: '#06b6d4', CulturalProduct: '#f97316',
-	Episode: '#ec4899', Reportage: '#14b8a6', Broadcast: '#3b82f6', Podcast: '#a855f7',
+	'Lesson':            '#8b5cf6',
+	'Cultural Project':  '#06b6d4',
+	'Cultural Activity': '#f97316',
+	'Radio Episode':     '#ec4899',
+	'Radio Reportage':   '#14b8a6',
+	'Radio Emission':    '#3b82f6',
+	'Podcast':           '#a855f7',
 };
 
 // ─── New project form schema ──────────────────────────────────────────────────

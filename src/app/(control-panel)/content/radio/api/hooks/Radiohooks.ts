@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { radioApi } from '../services/RadioApiService';
+import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 import {
 	CreateEmissionTypePayload, UpdateEmissionTypePayload,
 	CreateSeasonPayload, UpdateSeasonPayload,
@@ -213,8 +214,13 @@ export const useDeleteEmission = (id: string, token: string) => {
 export const useValidateEmission = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (emissionId: number) => radioApi.validateEmission(id, token, emissionId),
-		onSuccess: (_, emissionId) => { qc.invalidateQueries({ queryKey: emissionsQueryKey(id) }); qc.invalidateQueries({ queryKey: emissionQueryKey(id, String(emissionId)) }); enqueueSnackbar('Emission validated', { variant: 'success' }); },
+		mutationFn: ({ id: emissionId }: { id: number; name: string }) => radioApi.validateEmission(id, token, emissionId),
+		onSuccess: (_, { id: emissionId, name }) => {
+			qc.invalidateQueries({ queryKey: emissionsQueryKey(id) });
+			qc.invalidateQueries({ queryKey: emissionQueryKey(id, String(emissionId)) });
+			enqueueSnackbar('Emission validated', { variant: 'success' });
+			createStudioProjectForContent(Number(id), token, 'radio_emission', emissionId, name);
+		},
 		onError: () => enqueueSnackbar('Error validating emission', { variant: 'error' }),
 	});
 };
@@ -298,8 +304,13 @@ export const useDeleteEpisode = (id: string, token: string) => {
 export const useValidateEpisode = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (episodeId: number) => radioApi.validateEpisode(id, token, episodeId),
-		onSuccess: (_, episodeId) => { qc.invalidateQueries({ queryKey: episodesQueryKey(id) }); qc.invalidateQueries({ queryKey: episodeQueryKey(id, String(episodeId)) }); enqueueSnackbar('Episode validated', { variant: 'success' }); },
+		mutationFn: ({ id: episodeId }: { id: number; name: string }) => radioApi.validateEpisode(id, token, episodeId),
+		onSuccess: (_, { id: episodeId, name }) => {
+			qc.invalidateQueries({ queryKey: episodesQueryKey(id) });
+			qc.invalidateQueries({ queryKey: episodeQueryKey(id, String(episodeId)) });
+			enqueueSnackbar('Episode validated', { variant: 'success' });
+			createStudioProjectForContent(Number(id), token, 'radio_episode', episodeId, name);
+		},
 		onError: () => enqueueSnackbar('Error validating episode', { variant: 'error' }),
 	});
 };
