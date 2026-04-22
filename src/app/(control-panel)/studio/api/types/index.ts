@@ -180,6 +180,18 @@ export type AudioFile = {
 	/** UUID */
 	reference?: string;
 	format: AudioFormat;
+	/**
+	 * Backend may return the linked production task with its parent project.
+	 * Used to scope audio files to a specific studio board (project).
+	 */
+	production_task?: {
+		id: number;
+		name: string;
+		production_project?: {
+			id: number;
+			name: string;
+		} | null;
+	} | null;
 };
 
 // ─── Create Audio (POST /audio/create/{accountId}/) ─────────────────────────
