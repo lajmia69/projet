@@ -34,14 +34,16 @@ const BASE_URL = 'https://radio.backend.ecocloud.tn';
  * retry: 0 prevents ky from re-sending failing requests.
  */
 function createClient(token: string) {
-	return ky.create({
-		prefixUrl: BASE_URL,
-		retry: 0,
-		timeout: 30_000,
-		headers: {
-			Authorization: `Bearer ${token}`,
-		},
-	});
+    // ADD THIS LOG TO SEE WHAT TOKEN IS ACTUALLY ARRIVING
+    console.log("DEBUG: Creating client with token:", token ? token.substring(0, 10) + "..." : "EMPTY TOKEN");
+    
+    return ky.create({
+        prefixUrl: BASE_URL,
+        retry: 0,
+        headers: {
+            Authorization: `Bearer ${token}`,
+        },
+    });
 }
 
 // ─── Exported types re-used by emotion hooks ──────────────────────────────────

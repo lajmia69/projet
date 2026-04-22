@@ -235,14 +235,17 @@ export const useModules = (currentAccountId: string, accessToken: string) =>
 	useQuery({
 		queryKey: modulesQueryKey(currentAccountId),
 		queryFn: () => lessonApi.getModules(currentAccountId, accessToken),
-		enabled: !!currentAccountId && !!accessToken
+		enabled: !!currentAccountId && !!accessToken,
+		retry: false 
 	});
 
 export const useModule = (currentAccountId: string, accessToken: string, id: number) =>
 	useQuery({
 		queryKey: moduleQueryKey(currentAccountId, id),
 		queryFn: () => lessonApi.getModule(currentAccountId, accessToken, id),
-		enabled: !!currentAccountId && !!accessToken && !!id
+		enabled: !!currentAccountId && !!accessToken && !!id,
+		retry: false
+		
 	});
 
 export const useCreateModule = (currentAccountId: string, accessToken: string) => {
@@ -255,7 +258,8 @@ export const useCreateModule = (currentAccountId: string, accessToken: string) =
 			queryClient.invalidateQueries({ queryKey: modulesQueryKey(currentAccountId) });
 			enqueueSnackbar('Module created', { variant: 'success' });
 		},
-		onError: () => enqueueSnackbar('Error creating module', { variant: 'error' })
+		onError: () => enqueueSnackbar('Error creating module', { variant: 'error' }),
+		retry: false 
 	});
 };
 
@@ -270,7 +274,8 @@ export const useUpdateModule = (currentAccountId: string, accessToken: string) =
 			queryClient.invalidateQueries({ queryKey: moduleQueryKey(currentAccountId, data.id) });
 			enqueueSnackbar('Module updated', { variant: 'success' });
 		},
-		onError: () => enqueueSnackbar('Error updating module', { variant: 'error' })
+		onError: () => enqueueSnackbar('Error updating module', { variant: 'error' }),
+		retry: false 
 	});
 };
 
@@ -283,6 +288,7 @@ export const useDeleteModule = (currentAccountId: string, accessToken: string) =
 			queryClient.invalidateQueries({ queryKey: modulesQueryKey(currentAccountId) });
 			enqueueSnackbar('Module deleted', { variant: 'success' });
 		},
-		onError: () => enqueueSnackbar('Error deleting module', { variant: 'error' })
+		onError: () => enqueueSnackbar('Error deleting module', { variant: 'error' }),
+		retry: false 
 	});
 };

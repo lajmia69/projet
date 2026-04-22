@@ -2,7 +2,14 @@
 
 import { ChangeEvent, useEffect, useState, useMemo } from 'react';
 import {
-	FormControl, MenuItem, Select, TextField, Typography, InputAdornment, InputLabel,
+    FormControl,
+    MenuItem,
+    Select,
+    TextField,
+    Typography,
+    InputAdornment,
+    InputLabel,
+    SelectChangeEvent,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { motion } from 'motion/react';
@@ -11,185 +18,185 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
 import LessonCard from '../ui/LessonCard';
-import { SearchLessons } from '../../../../content/(lesson)/api/types/index';
+import { SearchLessons } from '../../../../content/(lesson)/api/types';
 import { useLanguages } from '../../../../content/(lesson)/api/hooks/languages/useLanguages';
 import { useModules } from '../../../../content/(lesson)/api/hooks/lessons/Lessonmetahooks';
-import useUser from '@auth/useUser';
 import { useSearchLessons } from '../../../../content/(lesson)/api/hooks/lessons/useSearchLessons';
+import useUser from '@auth/useUser';
 
 const Root = styled(FusePageSimple)(() => ({
-	'& .FusePageSimple-header': {
-		background: 'transparent',
-		border: 'none',
-		boxShadow: 'none',
-		padding: 0,
-	},
-	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
-	'& .FusePageSimple-content': { overflow: 'visible !important' },
-	'& .FusePageSimple-rootWrapper': { overflow: 'visible !important' },
+    '& .FusePageSimple-header': {
+        background: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+        padding: 0,
+    },
+    '& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
+    '& .FusePageSimple-content': { overflow: 'visible !important' },
+    '& .FusePageSimple-rootWrapper': { overflow: 'visible !important' },
 }));
 
 const cardContainer = { show: { transition: { staggerChildren: 0.05 } } };
 const cardItem = {
-	hidden: { opacity: 0, y: 16 },
-	show: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+    hidden: { opacity: 0, y: 16 },
+    show: { opacity: 1, y: 0 },
 };
 
-const FADE_START = 20;
-const FADE_END = 180;
-
 function LessonsView() {
-	const { data: account, isLoading: isAccountLoading } = useUser();
+    const { data: account, isLoading: isUserLoading } = useUser();
+    
+    // State
+    const [searchText, setSearchText] = useState('');
+    const [selectedLanguage, setSelectedLanguage] = useState('');
+    const [selectedModule, setSelectedModule] = useState('');
 
-	// ── DEBUG: remove once confirmed working ─────────────────────────────────
-	useEffect(() => {
-		if (account) {
-			console.log('[LessonsView] account id:', account.id);
-			console.log('[LessonsView] access token present:', !!account?.token?.access);
-			console.log('[LessonsView] role:', account.role);
-		}
-	}, [account]);
-	// ─────────────────────────────────────────────────────────────────────────
+    // --- Dynamic ID Calculation ---
+    const accountId = useMemo(() => (account?.id ? String(account.id) : ''), [account]);
+    const accessToken = account?.token?.access || '';
 
-	const accountId = account?.id ?? '';
-	const accessToken = account?.token?.access ?? '';
+    // Log for verification - check your console to confirm this is NOT 18
+useEffect(() => {
+    if (!accessToken) {
+        console.error("DEBUG: Access Token is missing!");
+    }
+}, [accessToken]);
 
-	const { data: languages } = useLanguages(accountId, accessToken);
-	const { data: modules } = useModules(accountId, accessToken);
+    const searchParams: SearchLessons = useMemo(() => ({
+        limit: 50,
+        offset: 0,
+        ...(selectedLanguage && { language: selectedLanguage }),
+    }), [selectedLanguage]);
 
-	const searchParams: SearchLessons = { limit: 50, offset: 0 };
-	const { data: lessons, isLoading: isLessonsLoading } = useSearchLessons(
-		accountId,
-		accessToken,
-		searchParams
-	);
+    // Data Hooks
+    const { 
+    data: modules, 
+    isLoading: isModulesLoading, 
+    error: modulesError 
+} = useModules(accountId, accessToken);
 
-	const [searchText, setSearchText] = useState('');
-	const [filters, setFilters] = useState({ language: 'all', module: 'all' });
-	const [scrollY, setScrollY] = useState(0);
+useEffect(() => {
+    if (modulesError) {
+        console.error("Modules API failed:", modulesError);
+    }
+}, [modulesError]);
+    const { data: languages } = useLanguages(accountId, accessToken);
+    const { data: lessons, isLoading: isLessonsLoading } = useSearchLessons(
+        accountId,
+        accessToken,
+        searchParams
+    );
 
-	useEffect(() => {
-		const onScroll = () => setScrollY(window.scrollY);
-		window.addEventListener('scroll', onScroll, { passive: true });
-		return () => window.removeEventListener('scroll', onScroll);
-	}, []);
+    // Handlers
+    const handleSearchChange = (event: ChangeEvent<HTMLInputElement>) => {
+        setSearchText(event.target.value);
+    };
 
-	const progress = Math.min(1, Math.max(0, (scrollY - FADE_START) / (FADE_END - FADE_START)));
-	const heroOpacity = 1 - progress;
-	const heroTranslateY = -(progress * 24);
+    const handleLanguageChange = (event: SelectChangeEvent) => {
+        setSelectedLanguage(event.target.value);
+    };
 
-	const filteredData = useMemo(() => {
-		if (!lessons?.items) return [];
-		return lessons.items.filter((lesson) => {
-			const matchesSearch = lesson.name?.toLowerCase().includes(searchText.toLowerCase());
-			const matchesLang = filters.language === 'all' || lesson.language?.name === filters.language;
-			const matchesModule = filters.module === 'all' || String(lesson.module?.id) === filters.module;
-			return matchesSearch && matchesLang && matchesModule;
-		});
-	}, [lessons, searchText, filters]);
+    const handleModuleChange = (event: SelectChangeEvent) => {
+        setSelectedModule(event.target.value);
+    };
 
-	const handleFilterChange = (field: keyof typeof filters, value: string) => {
-		setFilters(prev => ({ ...prev, [field]: value }));
-	};
+    if (isUserLoading || isLessonsLoading) {
+        return <FuseLoading />;
+    }
 
-	// Wait for the session to resolve before rendering anything
-	if (isAccountLoading) return <FuseLoading />;
-	if (isLessonsLoading) return <FuseLoading />;
+    if (!account) {
+        return (
+            <div className="flex h-full items-center justify-center">
+                <Typography>Please log in to view lessons.</Typography>
+            </div>
+        );
+    }
 
-	return (
-		<Root
-			scroll="page"
-			header={
-				<div
-					style={{
-						position: 'relative',
-						width: '100%',
-						overflow: 'hidden',
-						background: 'linear-gradient(160deg, #1c2537 0%, #1e2d45 50%, #192132 100%)',
-						paddingTop: '56px',
-						paddingBottom: '64px',
-						opacity: heroOpacity,
-						transform: `translateY(${heroTranslateY}px)`,
-						pointerEvents: 'none',
-						willChange: 'opacity, transform',
-					}}
-				>
-					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(148,163,184,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(148,163,184,0.045) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
-					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(100,116,139,0.15) 0%, transparent 65%)' }} />
+    const filteredData = lessons?.items?.filter((lesson) => {
+        const matchesSearch = lesson.name.toLowerCase().includes(searchText.toLowerCase());
+        const matchesModule = selectedModule ? String(lesson.module.id) === selectedModule : true;
+        return matchesSearch && matchesModule;
+    }) || [];
 
-					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
-						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
-							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#dde6f0', textShadow: '0 2px 32px rgba(0,0,0,0.45)' }}>
-								What do you want to learn today?
-							</Typography>
-						</motion.div>
-						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
-							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(148,163,184,0.7)', lineHeight: 1.75 }}>
-								Browse our lessons — step through real content, one session at a time.
-							</Typography>
-						</motion.div>
-					</div>
-				</div>
-			}
-			content={
-				<div className="mx-auto flex w-full flex-1 flex-col p-4 pt-6">
-					{/* Filter bar */}
-					<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }} className="flex w-full flex-wrap items-center gap-2 mb-6">
+    return (
+        <Root
+            header={
+                <div className="flex flex-col gap-4 p-8">
+                    <Typography variant="h4">My Lessons</Typography>
+                </div>
+            }
+            content={
+                <div className="p-8">
+                    {/* Filters & Search */}
+                    <motion.div className="mb-8 flex flex-wrap items-center gap-4">
+                        <TextField
+                            placeholder="Search lessons..."
+                            value={searchText}
+                            onChange={handleSearchChange}
+                            sx={{ minWidth: 200, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
+                            slotProps={{ 
+                                input: { 
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon>
+                                        </InputAdornment>
+                                    ) 
+                                } 
+                            }}
+                        />
 
-						<FormControl size="small" sx={{ minWidth: 130 }} variant="outlined">
-							<InputLabel>Language</InputLabel>
-							<Select value={filters.language} label="Language" onChange={e => handleFilterChange('language', e.target.value)} sx={{ borderRadius: '10px' }}>
-								<MenuItem value="all"><em>All</em></MenuItem>
-								{languages?.items.map(lang => <MenuItem value={lang.name} key={lang.id}>{lang.name}</MenuItem>)}
-							</Select>
-						</FormControl>
+                        <FormControl sx={{ minWidth: 150 }}>
+                            <InputLabel>Language</InputLabel>
+                            <Select value={selectedLanguage} label="Language" onChange={handleLanguageChange}>
+                                <MenuItem value="">All</MenuItem>
+                               {languages?.items?.map((lang) => (
+    <MenuItem key={lang.id} value={lang.id}>{lang.name}</MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
 
-						<FormControl size="small" sx={{ minWidth: 130 }} variant="outlined">
-							<InputLabel>Module</InputLabel>
-							<Select value={filters.module} label="Module" onChange={e => handleFilterChange('module', e.target.value)} sx={{ borderRadius: '10px' }}>
-								<MenuItem value="all"><em>All</em></MenuItem>
-								{modules?.items.map(mod => <MenuItem value={String(mod.id)} key={mod.id}>{mod.name}</MenuItem>)}
-							</Select>
-						</FormControl>
+                        <FormControl sx={{ minWidth: 150 }}>
+                            <InputLabel>Module</InputLabel>
+                            <Select value={selectedModule} label="Module" onChange={handleModuleChange}>
+                                <MenuItem value="">All</MenuItem>
+                                {modules?.items?.map((mod) => (
+    <MenuItem key={mod.id} value={mod.id}>{mod.name}</MenuItem>
+))}
+                            </Select>
+                        </FormControl>
 
-						<TextField
-							size="small"
-							placeholder="Search lessons…"
-							value={searchText}
-							onChange={(e: ChangeEvent<HTMLInputElement>) => setSearchText(e.target.value)}
-							sx={{ minWidth: 200, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
-							slotProps={{ input: { startAdornment: (<InputAdornment position="start"><FuseSvgIcon size={16} color="disabled">lucide:search</FuseSvgIcon></InputAdornment>) } }}
-						/>
+                        {filteredData.length > 0 && (
+                            <Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', ml: 1 }}>
+                                {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
+                            </Typography>
+                        )}
+                    </motion.div>
 
-						{filteredData.length > 0 && (
-							<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'text.secondary', ml: 1 }}>
-								{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
-							</Typography>
-						)}
-					</motion.div>
-
-					{/* Card grid */}
-					{filteredData.length > 0 ? (
-						<motion.div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" variants={cardContainer} initial="hidden" animate="show">
-							{filteredData.map(lesson => (
-								<motion.div variants={cardItem} key={lesson.id}>
-									<LessonCard lesson={lesson} />
-								</motion.div>
-							))}
-						</motion.div>
-					) : (
-						<div className="flex flex-1 items-center justify-center py-20">
-							<div className="flex flex-col items-center gap-3">
-								<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:search-x</FuseSvgIcon>
-								<Typography color="text.secondary" variant="h6">No lessons found</Typography>
-								<Typography color="text.disabled" variant="body2">Try adjusting your filters or search terms</Typography>
-							</div>
-						</div>
-					)}
-				</div>
-			}
-		/>
-	);
+                    {/* Content Grid */}
+                    {filteredData.length > 0 ? (
+                        <motion.div 
+                            className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" 
+                            variants={cardContainer} 
+                            initial="hidden" 
+                            animate="show"
+                        >
+                            {filteredData.map((lesson) => (
+                                <motion.div variants={cardItem} key={lesson.id}>
+                                    <LessonCard lesson={lesson} />
+                                </motion.div>
+                            ))}
+                        </motion.div>
+                    ) : (
+                        <div className="flex flex-1 items-center justify-center py-20">
+                            <div className="flex flex-col items-center gap-3">
+                                <FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:search-x</FuseSvgIcon>
+                                <Typography color="text.secondary">No lessons found matching your filters.</Typography>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            }
+        />
+    );
 }
 
 export default LessonsView;

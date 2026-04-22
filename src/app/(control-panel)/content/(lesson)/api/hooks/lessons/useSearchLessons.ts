@@ -15,6 +15,7 @@ export const useSearchLessons = (
 	return useQuery({
 		queryKey: searchLessonsQueryKey(current_account_id, search),
 		queryFn: () => lessonApi.searchLessons(current_account_id, accessToken, search),
-		enabled: !!current_account_id && !!accessToken
+		enabled: !!current_account_id && !!accessToken,
+		retry: false // Added to stop 500 error spam
 	});
 };
