@@ -1,116 +1,203 @@
-/**
- * Podcastmutations.ts
- *
- * Payload types come from ../types (the single source of truth).
- * ValidatePodcastPayload / PublishPodcastPayload are imported from the service
- * since they are mutation-only and not part of the shared type surface.
- */
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { podcastApi } from '../services/podcastApiService';
-import type { ValidatePodcastPayload, PublishPodcastPayload } from '../services/podcastApiService';
-import type { CreatePodcastPayload, UpdatePodcastPayload } from '../types';
+import { useSnackbar } from 'notistack';
+import ky from 'ky';
+import { radioAdminKeys } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
 
-// Matches the queryKey used by useSearchPodcasts and usePodcasts
-const PODCASTS_KEY = ['podcast'];
+// ─── Podcast-specific ky instance ─────────────────────────────────────────────
 
-// ─── CRUD ─────────────────────────────────────────────────────────────────────
+const podcastApi = ky.create({
+	prefixUrl: 'https://radio.backend.ecocloud.tn/',
+	timeout: 30_000,
+});
 
-export function useCreatePodcast(accountId: string | number, token: string) {
-	const qc = useQueryClient();
-
-	return useMutation({
-		mutationFn: (payload: CreatePodcastPayload) => {
-			console.log('[useCreatePodcast] payload:', JSON.stringify(payload, null, 2));
-			return podcastApi.create(accountId, token, payload);
-		},
-		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: PODCASTS_KEY });
-			console.log('[useCreatePodcast] success – cache invalidated');
-		},
-		onError: (err: unknown) => {
-			console.error('[useCreatePodcast] error:', (err as Error)?.message ?? err);
-		},
-	});
+function authHeaders(token: string) {
+	return { Authorization: `Bearer ${token}` };
 }
 
-export function useUpdatePodcast(accountId: string | number, token: string) {
+// ─── Query keys ───────────────────────────────────────────────────────────────
+
+export const podcastKeys = {
+	list:   (accountId: string) => ['podcast', 'list',   accountId] as const,
+	search: (accountId: string) => ['podcast', 'search', accountId] as const,
+	item:   (accountId: string, id: number) => ['podcast', 'item', accountId, id] as const,
+};
+
+// ─── Validate ─────────────────────────────────────────────────────────────────
+
+export const useValidatePodcast = (accountId: string, token: string) => {
 	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (payload: UpdatePodcastPayload) => {
-			console.log('[useUpdatePodcast] payload:', JSON.stringify(payload, null, 2));
-			return podcastApi.update(accountId, token, payload);
-		},
+		mutationFn: (podcastId: number) =>
+			podcastApi
+				.patch(`podcast/validate/${accountId}/`, {
+					json: { id: podcastId, is_approved_content: true },
+					headers: authHeaders(token),
+				})
+				.json(),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: PODCASTS_KEY });
-			console.log('[useUpdatePodcast] success – cache invalidated');
+			qc.invalidateQueries({ queryKey: podcastKeys.list(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.search(accountId) });
+			// Invalidate radio emissions so any auto-created emission appears immediately
+			qc.invalidateQueries({ queryKey: ['radio-admin', 'emissions'] });
+			enqueueSnackbar('Podcast validated', { variant: 'success' });
 		},
-		onError: (err: unknown) => {
-			console.error('[useUpdatePodcast] error:', (err as Error)?.message ?? err);
+		onError: (err) => {
+			console.error('[useValidatePodcast] error:', err);
+			enqueueSnackbar('Error validating podcast', { variant: 'error' });
 		},
 	});
-}
+};
 
-export function useDeletePodcast(accountId: string | number, token: string) {
+// ─── Make public ──────────────────────────────────────────────────────────────
+
+export const usePublicPodcast = (accountId: string, token: string) => {
 	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (podcastId: number) => podcastApi.delete(accountId, token, podcastId),
+		mutationFn: (podcastId: number) =>
+			podcastApi
+				.patch(`podcast/public/${accountId}/`, {
+					json: { id: podcastId, is_pubic_content: true },
+					headers: authHeaders(token),
+				})
+				.json(),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: PODCASTS_KEY });
-			console.log('[useDeletePodcast] success – cache invalidated');
+			qc.invalidateQueries({ queryKey: podcastKeys.list(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.search(accountId) });
+			enqueueSnackbar('Podcast made public', { variant: 'success' });
 		},
-		onError: (err: unknown) => {
-			console.error('[useDeletePodcast] error:', (err as Error)?.message ?? err);
+		onError: (err) => {
+			console.error('[usePublicPodcast] error:', err);
+			enqueueSnackbar('Error making podcast public', { variant: 'error' });
 		},
 	});
-}
+};
 
-// ─── Status / workflow ────────────────────────────────────────────────────────
+// ─── Publish ──────────────────────────────────────────────────────────────────
 
-/**
- * PATCH /podcast/validate/{accountId}/
- * Body: { id: podcastId, is_approved_content: true }
- */
-export function useValidatePodcast(accountId: string | number, token: string) {
+export const usePublishPodcast = (accountId: string, token: string) => {
 	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (podcastId: number) => {
-			const payload: ValidatePodcastPayload = { id: podcastId, is_approved_content: true };
-			console.log('[useValidatePodcast] payload:', JSON.stringify(payload, null, 2));
-			return podcastApi.validate(accountId, token, payload);
-		},
+		mutationFn: (podcastId: number) =>
+			podcastApi
+				.patch(`podcast/publish/${accountId}/`, {
+					json: { id: podcastId, is_published: true },
+					headers: authHeaders(token),
+				})
+				.json(),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: PODCASTS_KEY });
-			console.log('[useValidatePodcast] success – cache invalidated');
+			qc.invalidateQueries({ queryKey: podcastKeys.list(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.search(accountId) });
+			enqueueSnackbar('Podcast published', { variant: 'success' });
 		},
-		onError: (err: unknown) => {
-			console.error('[useValidatePodcast] error:', (err as Error)?.message ?? err);
+		onError: (err) => {
+			console.error('[usePublishPodcast] error:', err);
+			enqueueSnackbar('Error publishing podcast', { variant: 'error' });
 		},
 	});
-}
+};
 
-/**
- * PATCH /podcast/publish/{accountId}/
- * Body: { id: podcastId, is_published: true }
- */
-export function usePublishPodcast(accountId: string | number, token: string) {
+// ─── Create ───────────────────────────────────────────────────────────────────
+
+export type CreatePodcastPayload = {
+	name: string;
+	slug: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	language_id: number;
+	podcast_category_id: number;
+	tags: string[];
+};
+
+export const useCreatePodcast = (accountId: string, token: string) => {
 	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (podcastId: number) => {
-			const payload: PublishPodcastPayload = { id: podcastId, is_published: true };
-			console.log('[usePublishPodcast] payload:', JSON.stringify(payload, null, 2));
-			return podcastApi.publish(accountId, token, payload);
-		},
+		mutationFn: (payload: CreatePodcastPayload) =>
+			podcastApi
+				.post(`podcast/create/${accountId}/`, {
+					json: payload,
+					headers: authHeaders(token),
+				})
+				.json(),
 		onSuccess: () => {
-			qc.invalidateQueries({ queryKey: PODCASTS_KEY });
-			console.log('[usePublishPodcast] success – cache invalidated');
+			qc.invalidateQueries({ queryKey: podcastKeys.list(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.search(accountId) });
+			enqueueSnackbar('Podcast created', { variant: 'success' });
 		},
-		onError: (err: unknown) => {
-			console.error('[usePublishPodcast] error:', (err as Error)?.message ?? err);
+		onError: (err) => {
+			console.error('[useCreatePodcast] error:', err);
+			enqueueSnackbar('Error creating podcast', { variant: 'error' });
 		},
 	});
-}
+};
+
+// ─── Update ───────────────────────────────────────────────────────────────────
+
+export type UpdatePodcastPayload = {
+	id: number;
+	name: string;
+	slug: string;
+	description: string;
+	transcription: Record<string, unknown>;
+	language_id: number;
+	podcast_category_id: number;
+	add_tags: string[];
+	remove_tags: string[];
+};
+
+export const useUpdatePodcast = (accountId: string, token: string) => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+
+	return useMutation({
+		mutationFn: (payload: UpdatePodcastPayload) =>
+			podcastApi
+				.put(`podcast/update/${accountId}/`, {
+					json: payload,
+					headers: authHeaders(token),
+				})
+				.json(),
+		onSuccess: (_, payload) => {
+			qc.invalidateQueries({ queryKey: podcastKeys.list(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.search(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.item(accountId, payload.id) });
+			enqueueSnackbar('Podcast updated', { variant: 'success' });
+		},
+		onError: (err) => {
+			console.error('[useUpdatePodcast] error:', err);
+			enqueueSnackbar('Error updating podcast', { variant: 'error' });
+		},
+	});
+};
+
+// ─── Delete ───────────────────────────────────────────────────────────────────
+
+export const useDeletePodcast = (accountId: string, token: string) => {
+	const qc = useQueryClient();
+	const { enqueueSnackbar } = useSnackbar();
+
+	return useMutation({
+		mutationFn: (podcastId: number) =>
+			podcastApi
+				.delete(`podcast/delete/${accountId}/${podcastId}/`, {
+					headers: authHeaders(token),
+				})
+				.json(),
+		onSuccess: () => {
+			qc.invalidateQueries({ queryKey: podcastKeys.list(accountId) });
+			qc.invalidateQueries({ queryKey: podcastKeys.search(accountId) });
+			enqueueSnackbar('Podcast deleted', { variant: 'success' });
+		},
+		onError: (err) => {
+			console.error('[useDeletePodcast] error:', err);
+			enqueueSnackbar('Error deleting podcast', { variant: 'error' });
+		},
+	});
+};
