@@ -30,10 +30,15 @@ function LessonView() {
 	const params = useParams();
 	const [lessonId] = params.lessonParams as string;
 	const { data: account } = useUser();
-	const { data: lesson, isLoading } = useLesson(account.id, lessonId, account.token.access);
+
+	// account is undefined while auth is still resolving — must guard before any hook that depends on it
+	const accountId = account?.id ?? '';
+	const accessToken = account?.token?.access ?? '';
+
+	const { data: lesson, isLoading } = useLesson(accountId, lessonId, accessToken);
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
-	if (isLoading) {
+	if (!account || isLoading) {
 		return <FuseLoading />;
 	}
 
