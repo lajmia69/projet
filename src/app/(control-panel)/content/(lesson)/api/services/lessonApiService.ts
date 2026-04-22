@@ -1,15 +1,3 @@
-/**
- * lessonApiService.ts
- *
- * FIXED: Switched from the shared `api` utility (which did not reliably forward
- * the Authorization header for non-staff/Member accounts) to a per-request
- * `ky.create()` client — the same pattern used in podcastApiService.ts.
- *
- * This resolves:
- *  - 401 on /lesson/module/list and /setting/language/list for Member accounts
- *  - Consistent auth behaviour regardless of Django user role
- */
-
 import ky from 'ky';
 import {
 	Lesson,
@@ -25,28 +13,17 @@ import {
 	LessonUpdatePayload,
 } from '../types';
 
-// ─── Shared client factory ─────────────────────────────────────────────────────
-
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
-/**
- * Creates an authenticated ky instance.
- * retry: 0 prevents ky from re-sending failing requests.
- */
 function createClient(token: string) {
-    // ADD THIS LOG TO SEE WHAT TOKEN IS ACTUALLY ARRIVING
-    console.log("DEBUG: Creating client with token:", token ? token.substring(0, 10) + "..." : "EMPTY TOKEN");
-    
-    return ky.create({
-        prefixUrl: BASE_URL,
-        retry: 0,
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+	return ky.create({
+		prefixUrl: BASE_URL,
+		retry: 0,
+		headers: {
+			Authorization: `Bearer ${token}`,
+		},
+	});
 }
-
-// ─── Exported types re-used by emotion hooks ──────────────────────────────────
 
 export type LessonEmotion = {
 	id: number;
@@ -61,8 +38,6 @@ export type SetLessonEmotionPayload = {
 	lesson_id: number;
 	emotion_type: string;
 };
-
-// ─── Service ──────────────────────────────────────────────────────────────────
 
 export const lessonApi = {
 	// ─── Lesson ─────────────────────────────────────────────────────────────────
@@ -394,7 +369,7 @@ export const lessonApi = {
 			.delete(`lesson/emotion/delete/${currentAccountId}/${lessonId}/`)
 			.json<void>(),
 
-	// ─── Academy / Course stubs (kept for backward compat) ───────────────────────
+	// ─── Academy / Course stubs ───────────────────────────────────────────────────
 
 	getCategories: (): Promise<unknown[]> => Promise.resolve([]),
 	getCourses: (): Promise<unknown[]> => Promise.resolve([]),
