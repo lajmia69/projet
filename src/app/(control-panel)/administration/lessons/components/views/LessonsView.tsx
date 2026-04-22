@@ -14,12 +14,12 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 
 import LessonCard from '../ui/LessonCard';
-import { SearchLessons, LessonCreatePayload } from '../../api/types';
-import { useLanguages } from '../../api/hooks/languages/useLanguages';
-import { useLessonTypes, useModules } from '../../api/hooks/lessons/Lessonmetahooks';
+import { SearchLessons, LessonCreatePayload } from '../../../../content/(lesson)/api/types/index';
+import { useLanguages } from '../../../../content/(lesson)/api/hooks/languages/useLanguages';
+import { useLessonTypes, useModules } from '../../../../content/(lesson)/api/hooks/lessons/Lessonmetahooks';
 import useUser from '@auth/useUser';
-import { useSearchLessons } from '../../api/hooks/lessons/useSearchLessons';
-import { useCreateLesson } from '../../api/hooks/lessons/Lessonmutations';
+import { useSearchLessons } from '../../../../content/(lesson)/api/hooks/lessons/useSearchLessons';
+import { useCreateLesson } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
 
 const Root = styled(FusePageSimple)(() => ({
     '& .FusePageSimple-header': {

@@ -235,7 +235,8 @@ export const useModules = (currentAccountId: string, accessToken: string) =>
 	useQuery({
 		queryKey: modulesQueryKey(currentAccountId),
 		queryFn: () => lessonApi.getModules(currentAccountId, accessToken),
-		enabled: !!currentAccountId && !!accessToken
+		enabled: !!currentAccountId && !!accessToken,
+		retry: 0,          // ← add this
 	});
 
 export const useModule = (currentAccountId: string, accessToken: string, id: number) =>
