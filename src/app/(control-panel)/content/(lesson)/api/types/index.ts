@@ -142,7 +142,7 @@ export type Lesson = {
  */
 export type LessonCreatePayload = {
 	name: string;
-	description?: string;
+	description: string;
 	language_id: number;
 	lesson_type_id: number;
 	module_id: number;
