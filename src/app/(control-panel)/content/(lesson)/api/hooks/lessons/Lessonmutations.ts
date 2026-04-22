@@ -1,19 +1,9 @@
 /**
- * Lessonmutations.ts
- *
- * Fixes applied:
- * 1. ✅ `createClient(token)` used for EVERY mutation → no more 401 on public/publish
- * 2. ✅ `retry: 0` → no more triple 500 floods in the console
- * 3. ✅ `queryClient.invalidateQueries` in onSuccess of ALL mutations
- *    → the lessons table now refreshes after validate / make-public / publish
- * 4. ✅ Proper console logging so errors always appear in the log
+ * Lessonmutations.ts — with Studio auto-create on lesson creation
  */
-
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky, { HTTPError } from 'ky';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-// These mirror the OpenAPI schemas exactly.
+import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 
 export type LessonCreatePayload = {
 	tags: string[] | null;
@@ -26,7 +16,6 @@ export type LessonCreatePayload = {
 };
 
 export type LessonUpdatePayload = {
-	/** Optional — the server identifies the record from the body id field */
 	id?: number | null;
 	remove_tags: string[] | null;
 	add_tags: string[] | null;
@@ -38,45 +27,32 @@ export type LessonUpdatePayload = {
 	module_id: number;
 };
 
-/** PATCH /lesson/validate/{accountId}/ */
 export type ValidateLessonPayload = {
 	id?: number | null;
 	is_approved_content: boolean;
 };
 
-/** PATCH /lesson/public/{accountId}/ */
 export type PublicLessonPayload = {
 	id?: number | null;
 	is_pubic_content: boolean;
 };
 
-/** PATCH /lesson/publish/{accountId}/ */
 export type PublishLessonPayload = {
 	id?: number | null;
 	is_published: boolean;
 };
 
-// ─── Shared helpers ───────────────────────────────────────────────────────────
-
 const BASE_URL = 'https://radio.backend.ecocloud.tn';
 
-/**
- * Creates an authenticated ky instance.
- * retry: 0 prevents ky from re-sending failing requests
- * (otherwise a single 500 floods the log with 3 identical errors).
- */
 function createClient(token: string) {
 	return ky.create({
 		prefixUrl: BASE_URL,
 		retry: 0,
 		timeout: 30_000,
-		headers: {
-			Authorization: `Bearer ${token}`,
-		},
+		headers: { Authorization: `Bearer ${token}` },
 	});
 }
 
-/** Extract a readable message from any error shape */
 async function readError(err: unknown): Promise<string> {
 	if (err instanceof HTTPError) {
 		try {
@@ -89,11 +65,8 @@ async function readError(err: unknown): Promise<string> {
 	return String(err);
 }
 
-// ─── CRUD mutations ───────────────────────────────────────────────────────────
+// ─── CREATE ───────────────────────────────────────────────────────────────────
 
-/**
- * POST /lesson/create/{accountId}/
- */
 export function useCreateLesson(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -102,13 +75,19 @@ export function useCreateLesson(accountId: string | number, token: string) {
 			console.log('[useCreateLesson] payload:', JSON.stringify(payload, null, 2));
 			return createClient(token)
 				.post(`lesson/create/${accountId}/`, { json: payload })
-				.json();
+				.json<{ id: number; name: string }>();
 		},
-		onSuccess: () => {
-			// Invalidate every query whose key starts with 'lessons' or 'lesson'
+		onSuccess: (lesson) => {
 			qc.invalidateQueries({ queryKey: ['lessons'] });
 			qc.invalidateQueries({ queryKey: ['lesson'] });
 			console.log('[useCreateLesson] success – cache invalidated');
+
+			// Auto-create Studio production project board
+			if (lesson?.id && lesson?.name) {
+				createStudioProjectForContent(
+					Number(accountId), token, 'lesson', lesson.id, lesson.name,
+				);
+			}
 		},
 		onError: async (err) => {
 			console.error('[useCreateLesson] error:', await readError(err));
@@ -116,15 +95,8 @@ export function useCreateLesson(accountId: string | number, token: string) {
 	});
 }
 
-/**
- * PUT /lesson/update/{accountId}/
- *
- * ⚠️  If the backend still returns 500 after this fix, the issue is server-side.
- * Inspect the Django traceback in: Network tab → failing request → Response body.
- * Most common cause: the backend crashes when `transcription` is `{}` and tries
- * to access a sub-field. In that case pass the existing transcription object
- * unmodified (see LessonsAdminView handleEdit – already does `editingLesson.transcription ?? {}`).
- */
+// ─── UPDATE ───────────────────────────────────────────────────────────────────
+
 export function useUpdateLesson(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -146,9 +118,8 @@ export function useUpdateLesson(accountId: string | number, token: string) {
 	});
 }
 
-/**
- * DELETE /lesson/delete/{accountId}/{lessonId}/
- */
+// ─── DELETE ───────────────────────────────────────────────────────────────────
+
 export function useDeleteLesson(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -167,15 +138,8 @@ export function useDeleteLesson(accountId: string | number, token: string) {
 	});
 }
 
-// ─── Status / workflow mutations ──────────────────────────────────────────────
+// ─── VALIDATE ─────────────────────────────────────────────────────────────────
 
-/**
- * PATCH /lesson/validate/{accountId}/
- * Body: { id: lessonId, is_approved_content: true }
- *
- * ✅ FIX: added queryClient.invalidateQueries → the Status column now updates
- *         without requiring a manual page refresh.
- */
 export function useValidateLesson(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -187,7 +151,6 @@ export function useValidateLesson(accountId: string | number, token: string) {
 				.json();
 		},
 		onSuccess: () => {
-			// ← This was the missing piece: the toast fired but the list never refreshed
 			qc.invalidateQueries({ queryKey: ['lessons'] });
 			qc.invalidateQueries({ queryKey: ['lesson'] });
 			console.log('[useValidateLesson] success – lesson approved, cache invalidated');
@@ -198,12 +161,8 @@ export function useValidateLesson(accountId: string | number, token: string) {
 	});
 }
 
-/**
- * PATCH /lesson/public/{accountId}/
- * Body: { id: lessonId, is_pubic_content: true }
- *
- * ✅ FIX: createClient(token) now attaches Authorization header → 401 resolved.
- */
+// ─── MAKE PUBLIC ──────────────────────────────────────────────────────────────
+
 export function usePublicLesson(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -225,12 +184,8 @@ export function usePublicLesson(accountId: string | number, token: string) {
 	});
 }
 
-/**
- * PATCH /lesson/publish/{accountId}/
- * Body: { id: lessonId, is_published: true }
- *
- * ✅ FIX: createClient(token) now attaches Authorization header → 401 resolved.
- */
+// ─── PUBLISH ──────────────────────────────────────────────────────────────────
+
 export function usePublishLesson(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 

@@ -1,8 +1,17 @@
+/**
+ * useCultureProjectsActivities.ts — with Studio auto-create on content creation
+ *
+ * Changes vs original:
+ * - useCreateCulturalProject: creates a Studio project board after success
+ * - useCreateCulturalActivity: creates a Studio project board after success
+ * All other hooks are unchanged.
+ */
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import * as api from '../services/cultureApiService';
-import { getNextAuthAccountId } from '../utils/authTokenUtils';
+import { getNextAuthAccountId, getAccessTokenAsync } from '../utils/authTokenUtils';
+import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 import {
 	CreateCulturalProjectPayload,
 	UpdateCulturalProjectPayload,
@@ -11,7 +20,7 @@ import {
 	CreateCulturalProjectTypePayload,
 	UpdateCulturalProjectTypePayload,
 	CreateCulturalActivityTypePayload,
-	UpdateCulturalActivityTypePayload
+	UpdateCulturalActivityTypePayload,
 } from '../types/projectsAndActivities';
 
 // ─── useAccountId ─────────────────────────────────────────────────────────────
@@ -32,12 +41,12 @@ export function useAccountId(): number {
 
 // ─── Query Keys ───────────────────────────────────────────────────────────────
 
-export const projectTypesQueryKey = ['culture', 'project-types'];
+export const projectTypesQueryKey  = ['culture', 'project-types'];
 export const activityTypesQueryKey = ['culture', 'activity-types'];
-export const projectsQueryKey = ['culture', 'projects'];
-export const projectQueryKey = (id: number) => ['culture', 'project', id];
-export const activitiesQueryKey = ['culture', 'activities'];
-export const activityQueryKey = (id: number) => ['culture', 'activity', id];
+export const projectsQueryKey      = ['culture', 'projects'];
+export const projectQueryKey       = (id: number) => ['culture', 'project', id];
+export const activitiesQueryKey    = ['culture', 'activities'];
+export const activityQueryKey      = (id: number) => ['culture', 'activity', id];
 
 // ════════════════════════════════════════════════════════════════════════════
 // PROJECT TYPES
@@ -50,7 +59,7 @@ export const useCulturalProjectTypes = () => {
 		queryFn: () => api.getProjectTypes(accountId),
 		enabled: accountId > 0,
 		retry: false,
-		refetchOnWindowFocus: false
+		refetchOnWindowFocus: false,
 	});
 };
 
@@ -67,7 +76,7 @@ export const useCreateCulturalProjectType = () => {
 			enqueueSnackbar('Project type created', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -84,7 +93,7 @@ export const useUpdateCulturalProjectType = () => {
 			enqueueSnackbar('Project type updated', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -100,7 +109,7 @@ export const useDeleteCulturalProjectType = () => {
 			enqueueSnackbar('Project type deleted', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -115,7 +124,7 @@ export const useCulturalActivityTypes = () => {
 		queryFn: () => api.getActivityTypes(accountId),
 		enabled: accountId > 0,
 		retry: false,
-		refetchOnWindowFocus: false
+		refetchOnWindowFocus: false,
 	});
 };
 
@@ -132,7 +141,7 @@ export const useCreateCulturalActivityType = () => {
 			enqueueSnackbar('Activity type created', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -149,7 +158,7 @@ export const useUpdateCulturalActivityType = () => {
 			enqueueSnackbar('Activity type updated', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -165,7 +174,7 @@ export const useDeleteCulturalActivityType = () => {
 			enqueueSnackbar('Activity type deleted', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -180,7 +189,7 @@ export const useCulturalProjects = () => {
 		queryFn: () => api.getProjects(accountId),
 		enabled: accountId > 0,
 		retry: false,
-		refetchOnWindowFocus: false
+		refetchOnWindowFocus: false,
 	});
 };
 
@@ -191,7 +200,7 @@ export const useCulturalProject = (id: number) => {
 		queryFn: () => api.getProject(accountId, id),
 		enabled: id > 0 && accountId > 0,
 		retry: false,
-		refetchOnWindowFocus: false
+		refetchOnWindowFocus: false,
 	});
 };
 
@@ -199,16 +208,27 @@ export const useCreateCulturalProject = () => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	const accountId = useAccountId();
+
 	return useMutation({
 		mutationFn: (payload: CreateCulturalProjectPayload) =>
 			api.createProject(accountId, payload),
 		retry: false,
-		onSuccess: () => {
+		onSuccess: async (project) => {
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
 			enqueueSnackbar('Project created successfully', { variant: 'success' });
+
+			// Auto-create Studio production project board
+			if (project?.id && project?.name && accountId > 0) {
+				const token = await getAccessTokenAsync();
+				if (token) {
+					createStudioProjectForContent(
+						accountId, token, 'cultural_project', project.id, project.name,
+					);
+				}
+			}
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error creating project: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error creating project: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -226,7 +246,7 @@ export const useUpdateCulturalProject = () => {
 			enqueueSnackbar('Project updated', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error updating project: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error updating project: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -239,13 +259,13 @@ export const useValidateCulturalProject = () => {
 		retry: false,
 		onSuccess: (_, id) => {
 			qc.setQueryData(projectQueryKey(id), (old: any) =>
-				old ? { ...old, is_approved_content: true } : old
+				old ? { ...old, is_approved_content: true } : old,
 			);
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
 			enqueueSnackbar('Project validated successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error validating project: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error validating project: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -258,13 +278,13 @@ export const usePublishCulturalProject = () => {
 		retry: false,
 		onSuccess: (_, id) => {
 			qc.setQueryData(projectQueryKey(id), (old: any) =>
-				old ? { ...old, is_published: true } : old
+				old ? { ...old, is_published: true } : old,
 			);
 			qc.invalidateQueries({ queryKey: projectsQueryKey });
 			enqueueSnackbar('Project published successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error publishing project: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error publishing project: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -280,7 +300,7 @@ export const useDeleteCulturalProject = () => {
 			enqueueSnackbar('Project deleted', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error deleting project: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error deleting project: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -295,7 +315,7 @@ export const useCulturalActivities = () => {
 		queryFn: () => api.getActivities(accountId),
 		enabled: accountId > 0,
 		retry: false,
-		refetchOnWindowFocus: false
+		refetchOnWindowFocus: false,
 	});
 };
 
@@ -306,7 +326,7 @@ export const useCulturalActivity = (id: number) => {
 		queryFn: () => api.getActivity(accountId, id),
 		enabled: id > 0 && accountId > 0,
 		retry: false,
-		refetchOnWindowFocus: false
+		refetchOnWindowFocus: false,
 	});
 };
 
@@ -314,16 +334,27 @@ export const useCreateCulturalActivity = () => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	const accountId = useAccountId();
+
 	return useMutation({
 		mutationFn: (payload: CreateCulturalActivityPayload) =>
 			api.createActivity(accountId, payload),
 		retry: false,
-		onSuccess: () => {
+		onSuccess: async (activity) => {
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
 			enqueueSnackbar('Activity created successfully', { variant: 'success' });
+
+			// Auto-create Studio production project board
+			if (activity?.id && activity?.name && accountId > 0) {
+				const token = await getAccessTokenAsync();
+				if (token) {
+					createStudioProjectForContent(
+						accountId, token, 'cultural_activity', activity.id, activity.name,
+					);
+				}
+			}
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error creating activity: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error creating activity: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -341,7 +372,7 @@ export const useUpdateCulturalActivity = () => {
 			enqueueSnackbar('Activity updated', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error updating activity: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error updating activity: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -354,13 +385,13 @@ export const useValidateCulturalActivity = () => {
 		retry: false,
 		onSuccess: (_, id) => {
 			qc.setQueryData(activityQueryKey(id), (old: any) =>
-				old ? { ...old, is_approved_content: true } : old
+				old ? { ...old, is_approved_content: true } : old,
 			);
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
 			enqueueSnackbar('Activity validated successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error validating activity: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error validating activity: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -373,13 +404,13 @@ export const usePublishCulturalActivity = () => {
 		retry: false,
 		onSuccess: (_, id) => {
 			qc.setQueryData(activityQueryKey(id), (old: any) =>
-				old ? { ...old, is_published: true } : old
+				old ? { ...old, is_published: true } : old,
 			);
 			qc.invalidateQueries({ queryKey: activitiesQueryKey });
 			enqueueSnackbar('Activity published successfully', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error publishing activity: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error publishing activity: ${err.message}`, { variant: 'error' }),
 	});
 };
 
@@ -395,6 +426,6 @@ export const useDeleteCulturalActivity = () => {
 			enqueueSnackbar('Activity deleted', { variant: 'success' });
 		},
 		onError: (err: Error) =>
-			enqueueSnackbar(`Error deleting activity: ${err.message}`, { variant: 'error' })
+			enqueueSnackbar(`Error deleting activity: ${err.message}`, { variant: 'error' }),
 	});
 };
