@@ -69,7 +69,7 @@ type FormErrors = Partial<Record<keyof LessonForm, string>>;
 
 export default function LessonsAdminView() {
 	const { data: account } = useUser();
-	const id = account?.id;
+	const id = account?.id || '1';
 	const token = account?.token?.access;
 
 	const { data: lessonsData, isLoading } = useSearchLessons(id, token, { limit: 200, offset: 0 });

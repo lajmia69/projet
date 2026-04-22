@@ -19,19 +19,23 @@ export const lessonTypeQueryKey = (currentAccountId: string, lessonTypeId: numbe
 	lessonTypeId
 ];
 
-export const useLessonTypes = (currentAccountId: string, accessToken: string) =>
-	useQuery({
-		queryKey: lessonTypesQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getLessonTypes(currentAccountId, accessToken),
+export const useLessonTypes = (currentAccountId: string, accessToken: string) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: lessonTypesQueryKey(lessonAccountId),
+		queryFn: () => lessonApi.getLessonTypes(lessonAccountId, accessToken),
 		enabled: !!currentAccountId && !!accessToken
 	});
+};
 
-export const useLessonType = (currentAccountId: string, accessToken: string, id: number) =>
-	useQuery({
-		queryKey: lessonTypeQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getLessonType(currentAccountId, accessToken, id),
+export const useLessonType = (currentAccountId: string, accessToken: string, id: number) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: lessonTypeQueryKey(lessonAccountId, id),
+		queryFn: () => lessonApi.getLessonType(lessonAccountId, accessToken, id),
 		enabled: !!currentAccountId && !!accessToken && !!id
 	});
+};
 
 export const useCreateLessonType = (currentAccountId: string, accessToken: string) => {
 	const queryClient = useQueryClient();
@@ -87,19 +91,23 @@ export const levelQueryKey = (currentAccountId: string, levelId: number) => [
 	levelId
 ];
 
-export const useLevels = (currentAccountId: string, accessToken: string) =>
-	useQuery({
-		queryKey: levelsQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getLevels(currentAccountId, accessToken),
+export const useLevels = (currentAccountId: string, accessToken: string) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: levelsQueryKey(lessonAccountId),
+		queryFn: () => lessonApi.getLevels(lessonAccountId, accessToken),
 		enabled: !!currentAccountId && !!accessToken
 	});
+};
 
-export const useLevel = (currentAccountId: string, accessToken: string, id: number) =>
-	useQuery({
-		queryKey: levelQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getLevel(currentAccountId, accessToken, id),
+export const useLevel = (currentAccountId: string, accessToken: string, id: number) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: levelQueryKey(lessonAccountId, id),
+		queryFn: () => lessonApi.getLevel(lessonAccountId, accessToken, id),
 		enabled: !!currentAccountId && !!accessToken && !!id
 	});
+};
 
 export const useCreateLevel = (currentAccountId: string, accessToken: string) => {
 	const queryClient = useQueryClient();
@@ -159,19 +167,23 @@ export const subjectQueryKey = (currentAccountId: string, subjectId: number) => 
 	subjectId
 ];
 
-export const useSubjects = (currentAccountId: string, accessToken: string) =>
-	useQuery({
-		queryKey: subjectsQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getSubjects(currentAccountId, accessToken),
+export const useSubjects = (currentAccountId: string, accessToken: string) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: subjectsQueryKey(lessonAccountId),
+		queryFn: () => lessonApi.getSubjects(lessonAccountId, accessToken),
 		enabled: !!currentAccountId && !!accessToken
 	});
+};
 
-export const useSubject = (currentAccountId: string, accessToken: string, id: number) =>
-	useQuery({
-		queryKey: subjectQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getSubject(currentAccountId, accessToken, id),
+export const useSubject = (currentAccountId: string, accessToken: string, id: number) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: subjectQueryKey(lessonAccountId, id),
+		queryFn: () => lessonApi.getSubject(lessonAccountId, accessToken, id),
 		enabled: !!currentAccountId && !!accessToken && !!id
 	});
+};
 
 export const useCreateSubject = (currentAccountId: string, accessToken: string) => {
 	const queryClient = useQueryClient();
@@ -231,22 +243,25 @@ export const moduleQueryKey = (currentAccountId: string, moduleId: number) => [
 	moduleId
 ];
 
-export const useModules = (currentAccountId: string, accessToken: string) =>
-	useQuery({
-		queryKey: modulesQueryKey(currentAccountId),
-		queryFn: () => lessonApi.getModules(currentAccountId, accessToken),
+export const useModules = (currentAccountId: string, accessToken: string) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: modulesQueryKey(lessonAccountId),
+		queryFn: () => lessonApi.getModules(lessonAccountId, accessToken),
 		enabled: !!currentAccountId && !!accessToken,
 		retry: false 
 	});
+};
 
-export const useModule = (currentAccountId: string, accessToken: string, id: number) =>
-	useQuery({
-		queryKey: moduleQueryKey(currentAccountId, id),
-		queryFn: () => lessonApi.getModule(currentAccountId, accessToken, id),
+export const useModule = (currentAccountId: string, accessToken: string, id: number) => {
+	const lessonAccountId = '1';
+	return useQuery({
+		queryKey: moduleQueryKey(lessonAccountId, id),
+		queryFn: () => lessonApi.getModule(lessonAccountId, accessToken, id),
 		enabled: !!currentAccountId && !!accessToken && !!id,
 		retry: false
-		
 	});
+};
 
 export const useCreateModule = (currentAccountId: string, accessToken: string) => {
 	const queryClient = useQueryClient();

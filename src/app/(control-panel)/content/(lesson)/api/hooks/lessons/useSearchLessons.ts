@@ -12,9 +12,12 @@ export const useSearchLessons = (
 	accessToken: string,
 	search: SearchLessons
 ) => {
+	// Hardcoded to account 1 so lessons list is always fetched from the base account
+	const lessonAccountId = '1';
+
 	return useQuery({
-		queryKey: searchLessonsQueryKey(current_account_id, search),
-		queryFn: () => lessonApi.searchLessons(current_account_id, accessToken, search),
+		queryKey: searchLessonsQueryKey(lessonAccountId, search),
+		queryFn: () => lessonApi.searchLessons(lessonAccountId, accessToken, search),
 		enabled: !!current_account_id && !!accessToken,
 		retry: false // Added to stop 500 error spam
 	});
