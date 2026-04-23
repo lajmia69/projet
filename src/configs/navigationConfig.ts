@@ -45,7 +45,7 @@ const navigationConfig: FuseNavItemType[] = [
 				children: [
 					{ id: 'platform-radio-emissions', title: 'Emissions', auth: authRoles.member, type: 'item', url: '/content/radio/emissions' },
 					{ id: 'platform-radio-episodes',  title: 'Episodes',  auth: authRoles.member, type: 'item', url: '/content/radio/episodes' },
-					{ id: 'platform-radio-reportage', title: 'Reportage', auth: authRoles.member, type: 'item', url: '/content/radio/reportagessssss' }
+					{ id: 'platform-radio-reportage', title: 'Reportage', auth: authRoles.member, type: 'item', url: '/content/radio/reportages' }
 				]
 			},
 			{
@@ -230,7 +230,7 @@ const navigationConfig: FuseNavItemType[] = [
 				children: [
 					{ id: 'radio-content-emissions', title: 'Emissions', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/emissions' },
 					{ id: 'radio-content-episodes',  title: 'Episodes',  auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/episodes' },
-					{ id: 'radio-content-reportage', title: 'Reportage', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/reportagessssss' }
+					{ id: 'radio-content-reportage', title: 'Reportage', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/reportages' }
 				]
 			}
 		]

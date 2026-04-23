@@ -73,15 +73,16 @@ function AudioBlock({
 }
 
 function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
-	const { data: account } = useUser();
-	const { data: reportage, isLoading } = useReportage(
+	const { data: account, isLoading: accountLoading } = useUser();
+	const { data: reportage, isLoading: reportageLoading, isError, fetchStatus } = useReportage(
 		account?.id,
 		account?.token?.access,
 		reportageId,
 	);
 
-	if (isLoading) return <FuseLoading />;
-	if (!reportage) {
+	// Show loading while account resolves OR while the query is actively fetching
+	if (accountLoading || reportageLoading || fetchStatus === 'fetching') return <FuseLoading />;
+	if (!reportage || isError) {
 		return (
 			<div className="flex flex-1 items-center justify-center py-32">
 				<div className="flex flex-col items-center gap-3">
@@ -91,7 +92,7 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 					</Typography>
 					<Button
 						component={Link}
-						to="/content/radio/reportagessssss"
+						to="/content/radio/reportages"
 						variant="outlined"
 						sx={{ borderRadius: '10px', textTransform: 'none' }}
 					>
@@ -150,7 +151,7 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 						>
 							<Button
 								component={Link}
-								to="/content/radio/reportagessssss"
+								to="/content/radio/reportages"
 								size="small"
 								startIcon={<FuseSvgIcon size={14}>lucide:arrow-left</FuseSvgIcon>}
 								sx={{

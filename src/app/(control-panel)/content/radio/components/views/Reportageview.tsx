@@ -147,7 +147,7 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 								</Typography>
 							</div>
 						)}
-						<Button component={Link} to={`/content/radio/reportagess/${reportage.id}`} size="small" variant="contained"
+						<Button component={Link} to={`/content/radio/reportages/${reportage.id}`} size="small" variant="contained"
 							sx={(t) => ({
 								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
 								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',

@@ -74,15 +74,16 @@ function AudioBlock({
 }
 
 function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
-	const { data: account } = useUser();
-	const { data: episode, isLoading } = useEpisode(
+	const { data: account, isLoading: accountLoading } = useUser();
+	const { data: episode, isLoading: episodeLoading, isError, fetchStatus } = useEpisode(
 		account?.id,
 		account?.token?.access,
 		episodeId,
 	);
 
-	if (isLoading) return <FuseLoading />;
-	if (!episode) {
+	// Show loading while account resolves OR while the query is actively fetching
+	if (accountLoading || episodeLoading || fetchStatus === 'fetching') return <FuseLoading />;
+	if (!episode || isError) {
 		return (
 			<div className="flex flex-1 items-center justify-center py-32">
 				<div className="flex flex-col items-center gap-3">

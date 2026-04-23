@@ -75,15 +75,16 @@ function AudioBlock({
 }
 
 function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
-	const { data: account } = useUser();
-	const { data: emission, isLoading } = useEmission(
+	const { data: account, isLoading: accountLoading } = useUser();
+	const { data: emission, isLoading: emissionLoading, isError, fetchStatus } = useEmission(
 		account?.id,
 		account?.token?.access,
 		emissionId,
 	);
 
-	if (isLoading) return <FuseLoading />;
-	if (!emission) {
+	// Show loading while account resolves OR while the query is actively fetching
+	if (accountLoading || emissionLoading || fetchStatus === 'fetching') return <FuseLoading />;
+	if (!emission || isError) {
 		return (
 			<div className="flex flex-1 items-center justify-center py-32">
 				<div className="flex flex-col items-center gap-3">
