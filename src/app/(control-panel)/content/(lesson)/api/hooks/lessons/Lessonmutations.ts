@@ -3,7 +3,6 @@
  */
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import ky, { HTTPError } from 'ky';
-import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 
 export type LessonCreatePayload = {
 	tags: string[] | null;
@@ -77,17 +76,10 @@ export function useCreateLesson(accountId: string | number, token: string) {
 				.post(`lesson/create/${accountId}/`, { json: payload })
 				.json<{ id: number; name: string }>();
 		},
-		onSuccess: (lesson) => {
+		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ['lessons'] });
 			qc.invalidateQueries({ queryKey: ['lesson'] });
 			console.log('[useCreateLesson] success – cache invalidated');
-
-			// Auto-create Studio production project board
-			if (lesson?.id && lesson?.name) {
-				createStudioProjectForContent(
-					Number(accountId), token, 'lesson', lesson.id, lesson.name,
-				);
-			}
 		},
 		onError: async (err) => {
 			console.error('[useCreateLesson] error:', await readError(err));
