@@ -121,16 +121,8 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 							: <div />
 						}
 						<div className="flex items-center gap-0.5 shrink-0">
-							<Tooltip title="Edit">
-								<IconButton size="small" onClick={handleOpenEdit} sx={(theme) => ({ color: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.6)' : 'rgba(100,116,139,0.7)', '&:hover': { color: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)' } })}>
-									<FuseSvgIcon size={15}>lucide:pencil</FuseSvgIcon>
-								</IconButton>
-							</Tooltip>
-							<Tooltip title="Delete">
-								<IconButton size="small" onClick={() => setConfirmOpen(true)} sx={(theme) => ({ color: theme.palette.mode === 'dark' ? 'rgba(148,163,184,0.6)' : 'rgba(100,116,139,0.7)', '&:hover': { color: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)' } })}>
-									<FuseSvgIcon size={15}>lucide:trash-2</FuseSvgIcon>
-								</IconButton>
-							</Tooltip>
+							
+							
 						</div>
 					</div>
 

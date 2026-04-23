@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 function AcademyApp() {
-	redirect(`/apps/academy/courses`);
+	redirect(`/content/podcast/courses`);
 	return null;
 }
 
