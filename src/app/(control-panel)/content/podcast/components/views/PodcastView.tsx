@@ -25,7 +25,11 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 
 function CourseView() {
 	const params = useParams();
-	const [podcastId] = params.courseParams as string;
+
+	// catch-all route [...courseParams] gives an array — grab the first element (the podcast ID)
+	const courseParams = params.courseParams as string[];
+	const podcastId = Array.isArray(courseParams) ? courseParams[0] : courseParams;
+
 	const { data: account } = useUser();
 	const { data: podcast, isLoading } = usePodcast(account.id, podcastId, account.token.access);
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
@@ -52,11 +56,11 @@ function CourseView() {
 					dir={podcast.transcription?.language_orientation}
 					className="p-6 flex flex-col gap-2"
 				>
-					{/* Category + language */}
+					{/* Category + status chips */}
 					<div className="flex items-center gap-2 flex-wrap">
-						{podcast.category?.name && (
+						{podcast.podcast_category?.name && (
 							<Chip
-								label={podcast.category.name}
+								label={podcast.podcast_category.name}
 								size="small"
 								sx={(theme) => ({
 									fontSize: '0.68rem',
@@ -112,7 +116,7 @@ function CourseView() {
 						</Typography>
 					)}
 
-					{/* Meta */}
+					{/* Meta row */}
 					<div className="flex items-center gap-4 mt-1 flex-wrap">
 						{(podcast.streaming_version?.duration || podcast.hd_version?.duration) && (
 							<div className="flex items-center gap-1.5">

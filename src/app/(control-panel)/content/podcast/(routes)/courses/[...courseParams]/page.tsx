@@ -1,3 +1,8 @@
-import CourseView from '../../../components/views/CourseView';
+import { redirect } from 'next/navigation';
 
-export default CourseView;
+function PodcastApp() {
+	redirect('/content/podcast/courses');
+	return null;
+}
+
+export default PodcastApp;
