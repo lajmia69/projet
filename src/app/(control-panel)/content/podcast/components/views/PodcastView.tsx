@@ -3,6 +3,7 @@
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import { styled } from '@mui/material/styles';
 import useParams from '@fuse/hooks/useParams';
+import { usePodcast } from '../../api/hooks/usePodcast';
 import useUser from '@auth/useUser';
 import FuseLoading from '@fuse/core/FuseLoading';
 import Player from '@/components/Player';
@@ -12,7 +13,6 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/Durationdisplay';
-import { usePodcast } from '../../api/hooks/usePodcast';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -20,40 +20,104 @@ const Root = styled(FusePageSimple)(({ theme }) => ({
 		borderBottomWidth: 1,
 		borderStyle: 'solid',
 		borderColor: theme.vars.palette.divider
-	}
+	},
+	'& .FusePageSimple-content': {},
+	'& .FusePageSimple-sidebarHeader': {},
+	'& .FusePageSimple-sidebarContent': {}
 }));
 
-function CourseView() {
+function safeTranscription(raw: unknown): {
+	title?: string;
+	author?: string;
+	source?: string;
+	language_orientation: string;
+	is_original?: boolean;
+	type?: string;
+	content: Array<{
+		index: number;
+		type: string;
+		paragraph: number;
+		is_new_paragraph: boolean;
+		text: string;
+		speaker: string;
+		time: string;
+		timestamp: number;
+	}>;
+} {
+	if (!raw || typeof raw !== 'object') {
+		return { language_orientation: 'ltr', content: [] };
+	}
+	const t = raw as Record<string, unknown>;
+	return {
+		...t,
+		language_orientation:
+			typeof t.language_orientation === 'string' ? t.language_orientation : 'ltr',
+		content: Array.isArray(t.content) ? t.content : [],
+	} as ReturnType<typeof safeTranscription>;
+}
+
+function PodcastView() {
 	const params = useParams();
-
-	// catch-all route [...courseParams] gives an array — grab the first element (the podcast ID)
-	const courseParams = params.courseParams as string[];
-	const podcastId = Array.isArray(courseParams) ? courseParams[0] : courseParams;
-
+	const [podcastId] = params.podcastParams as string[];
 	const { data: account } = useUser();
-	const { data: podcast, isLoading } = usePodcast(account.id, podcastId, account.token.access);
+
+	const accountId = account?.id ?? '';
+	const accessToken = account?.token?.access ?? '';
+
+	const { data: podcast, isLoading } = usePodcast(accountId, podcastId, accessToken);
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
-	if (isLoading) return <FuseLoading />;
-	if (!podcast) return null;
+	if (!account || isLoading) {
+		return <FuseLoading />;
+	}
+
+	if (!podcast) {
+		return (
+			<Root
+				scroll={isMobile ? 'page' : 'content'}
+				header={
+					<div className="p-6">
+						<Typography variant="h6">Podcast not found</Typography>
+					</div>
+				}
+				content={
+					<div className="flex flex-1 items-center justify-center py-16">
+						<Typography color="text.disabled">
+							This podcast could not be loaded.
+						</Typography>
+					</div>
+				}
+			/>
+		);
+	}
+
+	const transcription = safeTranscription(podcast.transcription);
+	const langOrientation = transcription.language_orientation;
+	const hasContent = transcription.content.length > 0;
 
 	function getSteps() {
-		return (podcast.transcription?.content ?? []).map((content) => ({
-			index: content.index - 1,
-			languageOrientation: podcast.transcription.language_orientation,
-			speaker: content.speaker,
-			time: content.time,
-			timestamp: content.timestamp,
-			text: content.text
+		const content = podcast?.transcription?.content;
+		if (!content || !Array.isArray(content) || content.length === 0) return [];
+		return content.map((c: any) => ({
+			index: (c?.index ?? 1) - 1,
+			languageOrientation: podcast?.transcription?.language_orientation ?? 'ltr',
+			speaker: c?.speaker ?? '',
+			time: c?.time ?? '',
+			timestamp: c?.timestamp ?? 0,
+			text: c?.text ?? '',
 		}));
 	}
+
+	const audioSrc = podcast.hd_version?.src || podcast.streaming_version?.src || null;
+	const audioTimestamp = podcast.hd_version?.timestamp ?? podcast.streaming_version?.timestamp ?? 0;
+	const audioDuration = podcast.streaming_version?.duration || podcast.hd_version?.duration || null;
 
 	return (
 		<Root
 			scroll={isMobile ? 'page' : 'content'}
 			header={
 				<div
-					dir={podcast.transcription?.language_orientation}
+					dir={langOrientation}
 					className="p-6 flex flex-col gap-2"
 				>
 					{/* Category + status chips */}
@@ -76,7 +140,7 @@ function CourseView() {
 									border:
 										theme.palette.mode === 'dark'
 											? '1px solid rgba(99,179,237,0.3)'
-											: '1px solid rgba(59,130,246,0.25)'
+											: '1px solid rgba(59,130,246,0.25)',
 								})}
 							/>
 						)}
@@ -99,74 +163,45 @@ function CourseView() {
 					</div>
 
 					{/* Title */}
-					<Typography
-						variant="h4"
-						className="font-semibold"
-					>
+					<Typography variant="h4" className="font-semibold">
 						{podcast.name}
 					</Typography>
 
-					{/* Author */}
-					{podcast.transcription?.author && (
-						<Typography
-							color="text.secondary"
-							className="text-md"
-						>
-							{podcast.transcription.author}
+					{/* Author from transcription */}
+					{transcription.author && (
+						<Typography color="text.secondary" className="text-md">
+							{transcription.author}
 						</Typography>
 					)}
 
 					{/* Meta row */}
 					<div className="flex items-center gap-4 mt-1 flex-wrap">
-						{(podcast.streaming_version?.duration || podcast.hd_version?.duration) && (
+						{audioDuration && (
 							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon
-									size={14}
-									color="disabled"
-								>
+								<FuseSvgIcon size={14} color="disabled">
 									lucide:clock
 								</FuseSvgIcon>
-								<Typography
-									className="text-sm"
-									color="text.secondary"
-								>
-									<DurationDisplay
-										isoDuration={
-											podcast.streaming_version?.duration || podcast.hd_version?.duration
-										}
-										format="long"
-									/>
+								<Typography className="text-sm" color="text.secondary">
+									<DurationDisplay isoDuration={audioDuration} format="long" />
 								</Typography>
 							</div>
 						)}
 						{podcast.language?.name && (
 							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon
-									size={14}
-									color="disabled"
-								>
+								<FuseSvgIcon size={14} color="disabled">
 									lucide:globe
 								</FuseSvgIcon>
-								<Typography
-									className="text-sm"
-									color="text.secondary"
-								>
+								<Typography className="text-sm" color="text.secondary">
 									{podcast.language.name}
 								</Typography>
 							</div>
 						)}
 						{podcast.created_by?.full_name && (
 							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon
-									size={14}
-									color="disabled"
-								>
+								<FuseSvgIcon size={14} color="disabled">
 									lucide:mic-2
 								</FuseSvgIcon>
-								<Typography
-									className="text-sm"
-									color="text.secondary"
-								>
+								<Typography className="text-sm" color="text.secondary">
 									{podcast.created_by.full_name}
 								</Typography>
 							</div>
@@ -176,32 +211,65 @@ function CourseView() {
 			}
 			content={
 				<div className="mx-auto flex w-full flex-1 flex-col p-4">
+					{/* Description */}
 					{podcast.description && (
 						<>
-							<Typography
-								color="text.secondary"
-								className="text-sm mb-4"
-							>
+							<Typography color="text.secondary" className="text-sm mb-4">
 								{podcast.description}
 							</Typography>
 							<Divider className="mb-4" />
 						</>
 					)}
 
-					{podcast.hd_version?.src || podcast.streaming_version?.src ? (
+					{/* Player — only when audio is available */}
+					{audioSrc ? (
 						<Player
 							steps={getSteps()}
-							playlist={[
-								{
-									src: podcast.hd_version?.src || podcast.streaming_version?.src,
-									timestamp: podcast.hd_version?.timestamp || 0
-								}
-							]}
-							transcription={podcast.transcription}
+							playlist={[{ src: podcast.hd_version?.src || podcast.streaming_version?.src, timestamp: audioTimestamp }]}
+							transcription={transcription as any}
 						/>
 					) : (
-						<div className="flex flex-1 items-center justify-center py-16">
-							<Typography color="text.disabled">No audio available for this episode.</Typography>
+						<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
+							<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>
+								lucide:audio-lines
+							</FuseSvgIcon>
+							<Typography color="text.secondary" variant="h6">
+								No audio available yet
+							</Typography>
+							<Typography color="text.disabled" variant="body2">
+								Audio will appear here once it has been uploaded and processed.
+							</Typography>
+
+							{/* Still show transcription text if present, no audio */}
+							{hasContent && (
+								<div
+									dir={langOrientation}
+									className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
+									style={{ borderColor: 'rgba(0,0,0,0.12)' }}
+								>
+									<Typography
+										variant="subtitle2"
+										color="text.secondary"
+										className="mb-4 font-semibold uppercase tracking-widest"
+									>
+										Transcription
+									</Typography>
+									{transcription.content.map((item, idx) => (
+										<p
+											key={idx}
+											className="text-sm leading-relaxed"
+											style={{ color: 'var(--mui-palette-text-secondary)' }}
+										>
+											{item.speaker && (
+												<span className="mr-2 font-semibold" style={{ color: 'var(--mui-palette-text-primary)' }}>
+													{item.speaker}:
+												</span>
+											)}
+											{item.text}
+										</p>
+									))}
+								</div>
+							)}
 						</div>
 					)}
 				</div>
@@ -210,4 +278,4 @@ function CourseView() {
 	);
 }
 
-export default CourseView;
+export default PodcastView;
