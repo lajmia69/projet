@@ -1,15 +1,20 @@
 /**
- * Podcastmutations.ts — with Studio auto-create on podcast creation
+ * Podcastmutations.ts
+ *
+ * Payload types come from ../types (the single source of truth).
+ * ValidatePodcastPayload / PublishPodcastPayload are imported from the service
+ * since they are mutation-only and not part of the shared type surface.
  */
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { podcastApi } from '../services/podcastApiService';
 import type { ValidatePodcastPayload, PublishPodcastPayload } from '../services/podcastApiService';
 import type { CreatePodcastPayload, UpdatePodcastPayload } from '../types';
-import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 
+// Matches the queryKey used by useSearchPodcasts and usePodcasts
 const PODCASTS_KEY = ['podcast'];
 
-// ─── CREATE ───────────────────────────────────────────────────────────────────
+// ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export function useCreatePodcast(accountId: string | number, token: string) {
 	const qc = useQueryClient();
@@ -19,24 +24,15 @@ export function useCreatePodcast(accountId: string | number, token: string) {
 			console.log('[useCreatePodcast] payload:', JSON.stringify(payload, null, 2));
 			return podcastApi.create(accountId, token, payload);
 		},
-		onSuccess: (podcast) => {
+		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: PODCASTS_KEY });
 			console.log('[useCreatePodcast] success – cache invalidated');
-
-			// Auto-create Studio production project board
-			if (podcast?.id && podcast?.name) {
-				createStudioProjectForContent(
-					Number(accountId), token, 'podcast', podcast.id, podcast.name,
-				);
-			}
 		},
 		onError: (err: unknown) => {
 			console.error('[useCreatePodcast] error:', (err as Error)?.message ?? err);
 		},
 	});
 }
-
-// ─── UPDATE ───────────────────────────────────────────────────────────────────
 
 export function useUpdatePodcast(accountId: string | number, token: string) {
 	const qc = useQueryClient();
@@ -56,8 +52,6 @@ export function useUpdatePodcast(accountId: string | number, token: string) {
 	});
 }
 
-// ─── DELETE ───────────────────────────────────────────────────────────────────
-
 export function useDeletePodcast(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -73,8 +67,12 @@ export function useDeletePodcast(accountId: string | number, token: string) {
 	});
 }
 
-// ─── VALIDATE ─────────────────────────────────────────────────────────────────
+// ─── Status / workflow ────────────────────────────────────────────────────────
 
+/**
+ * PATCH /podcast/validate/{accountId}/
+ * Body: { id: podcastId, is_approved_content: true }
+ */
 export function useValidatePodcast(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 
@@ -94,8 +92,10 @@ export function useValidatePodcast(accountId: string | number, token: string) {
 	});
 }
 
-// ─── PUBLISH ──────────────────────────────────────────────────────────────────
-
+/**
+ * PATCH /podcast/publish/{accountId}/
+ * Body: { id: podcastId, is_published: true }
+ */
 export function usePublishPodcast(accountId: string | number, token: string) {
 	const qc = useQueryClient();
 

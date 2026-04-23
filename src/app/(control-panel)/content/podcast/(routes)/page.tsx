@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
 
-function PodcastApp() {
-	// Ensure this URL matches the file structure of your app
-	redirect(`/content/podcast`);
+function AcademyApp() {
+	redirect(`/apps/academy/courses`);
 	return null;
 }
 
-export default PodcastApp;
+export default AcademyApp;
