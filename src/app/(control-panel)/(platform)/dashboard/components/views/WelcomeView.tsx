@@ -62,7 +62,7 @@ const quickLinks = [
         label: 'Radio Reportages',
         description: 'In-depth radio reporting',
         icon: 'heroicons-outline:speakerphone',
-        url: '/content/radio/reportage',
+        url: '/content/radio/reportagess',
         color: '#06b6d4', // Cyan accent
         bg: 'linear-gradient(135deg, #083344 0%, #0891b2 100%)',
         accent: 'rgba(6,182,212,0.15)'
