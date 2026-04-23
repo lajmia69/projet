@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 function PodcastApp() {
-	redirect(`/podcasts`);
+	redirect(`/content/podcast`);
 	return null;
 }
 
