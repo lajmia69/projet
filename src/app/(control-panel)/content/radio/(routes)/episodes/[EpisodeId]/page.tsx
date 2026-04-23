@@ -1,11 +1,12 @@
 import EpisodeDetailView from '../../../components/views/EpisodeDetailView';
 
 interface EpisodeDetailPageProps {
-	params: { episodeId: string };
+	params: Promise<{ episodeId: string }>;
 }
 
-function EpisodeDetailPage({ params }: EpisodeDetailPageProps) {
-	return <EpisodeDetailView episodeId={params.episodeId} />;
+async function EpisodeDetailPage({ params }: EpisodeDetailPageProps) {
+	const { episodeId } = await params;
+	return <EpisodeDetailView episodeId={episodeId} />;
 }
 
 export default EpisodeDetailPage;

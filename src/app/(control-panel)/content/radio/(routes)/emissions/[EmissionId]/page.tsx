@@ -1,11 +1,12 @@
 import EmissionDetailView from '../../../components/views/EmissionDetailView';
 
 interface EmissionDetailPageProps {
-	params: { emissionId: string };
+	params: Promise<{ emissionId: string }>;
 }
 
-function EmissionDetailPage({ params }: EmissionDetailPageProps) {
-	return <EmissionDetailView emissionId={params.emissionId} />;
+async function EmissionDetailPage({ params }: EmissionDetailPageProps) {
+	const { emissionId } = await params;
+	return <EmissionDetailView emissionId={emissionId} />;
 }
 
 export default EmissionDetailPage;

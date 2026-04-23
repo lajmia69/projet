@@ -1,11 +1,12 @@
 import ReportageDetailView from '../../../components/views/ReportageDetailView';
 
 interface ReportageDetailPageProps {
-	params: { reportageId: string };
+	params: Promise<{ reportageId: string }>;
 }
 
-function ReportageDetailPage({ params }: ReportageDetailPageProps) {
-	return <ReportageDetailView reportageId={params.reportageId} />;
+async function ReportageDetailPage({ params }: ReportageDetailPageProps) {
+	const { reportageId } = await params;
+	return <ReportageDetailView reportageId={reportageId} />;
 }
 
 export default ReportageDetailPage;
