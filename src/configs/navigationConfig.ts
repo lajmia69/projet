@@ -49,15 +49,14 @@ const navigationConfig: FuseNavItemType[] = [
 				]
 			},
 			{
-				id: 'platform-podcast',
-				title: 'Podcast',
-				type: 'collapse',
-				icon: 'heroicons-outline:microphone',
-				auth: authRoles.member,
-				children: [
-					{ id: 'platform-podcast-courses', title: 'Episodes', auth: authRoles.member, type: 'item', url: '/content/podcast' }
-				]
-			}
+    id: 'platform-podcast',
+    title: 'Podcasts',
+    translate: 'PODCASTS',
+    auth: authRoles.member,
+    type: 'item',
+    icon: 'heroicons-outline:microphone',
+    url: '/content/podcast'
+},
 		]
 	},
 
@@ -218,7 +217,7 @@ const navigationConfig: FuseNavItemType[] = [
 				icon: 'heroicons-outline:microphone',
 				auth: authRoles.podcastContentCreator,
 				children: [
-					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/content/podcast/courses' }
+					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/content/podcast' }
 				]
 			},
 			{
