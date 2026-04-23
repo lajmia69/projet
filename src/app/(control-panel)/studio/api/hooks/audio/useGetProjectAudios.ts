@@ -18,12 +18,10 @@ export const projectAudiosQueryKey = (accountId: number) => [
  *
  * Filtering strategy:
  *   1. Fetch all audio files for the account.
- *   2. Filter to files whose linked task belongs to this project.
- *   3. If the backend doesn't populate the task→project relationship on ANY
- *      file, return an empty array — never fall back to all files, because
- *      that causes the wrong (oldest) audio to appear in the player.
- *   4. Results are sorted newest-first by id so studioAudios[0] is always
- *      the most recently uploaded file for this project.
+ *   2. If any file carries `production_task.production_project.id` (i.e. the
+ *      backend exposes the relationship), filter by project ID.
+ *   3. If the backend doesn't return that relationship, fall back to showing
+ *      all files (safe degradation — same behaviour as before this fix).
  */
 export function useGetProjectAudios(projectId?: number | string) {
 	const accountId = useCurrentAccountId();
@@ -38,22 +36,25 @@ export function useGetProjectAudios(projectId?: number | string) {
 		queryFn: async () => {
 			const { items } = await studioApiService.getAudioFiles(accountId);
 
-			// No project scope requested — return everything (used by the Studio
-			// audio panel which shows all account files).
+			// No project scope requested — return everything.
 			if (!numericProjectId) return items;
 
-			// Filter to files whose linked task belongs to this project.
-			// If the backend doesn't populate production_task.production_project.id
-			// we return an empty array — showing nothing is safer than showing a
-			// random old file from another project.
-			const projectFiles = items.filter(
-				(item) =>
-					item.production_task?.production_project?.id !== undefined &&
-					Number(item.production_task.production_project.id) === numericProjectId
+			// Check whether the backend populates the task→project relationship.
+			const hasTaskRef = items.some(
+				(item) => item.production_task?.production_project?.id !== undefined
 			);
 
-			// Sort newest-first so studioAudios[0] is always the latest upload.
-			return projectFiles.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
+			if (!hasTaskRef) {
+				// Backend doesn't expose the relationship yet; return all files
+				// so the panel isn't empty (safe fallback).
+				return items;
+			}
+
+			// Filter to files whose linked task belongs to this project.
+			return items.filter(
+				(item) =>
+					item.production_task?.production_project?.id === numericProjectId
+			);
 		},
 		enabled: !!accountId
 	});

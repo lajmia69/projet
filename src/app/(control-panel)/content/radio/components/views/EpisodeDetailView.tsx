@@ -1,16 +1,16 @@
 'use client';
+import { motion } from 'motion/react';
 import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
-import Avatar from '@mui/material/Avatar';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
-import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
@@ -49,17 +49,15 @@ function safeTranscription(raw: unknown): {
 
 // ─────────────────────────────────────────────────────────────────────────────
 
-const Root = styled(FusePageSimple)(({ theme }) => ({
-	'& .FusePageSimple-header': {
-		backgroundColor: theme.vars.palette.background.paper,
-		borderBottomWidth: 1,
-		borderStyle: 'solid',
-		borderColor: theme.vars.palette.divider,
-	},
-	'& .FusePageSimple-content': {},
-	'& .FusePageSimple-sidebarHeader': {},
-	'& .FusePageSimple-sidebarContent': {},
+const Root = styled(FusePageSimple)(() => ({
+	'& .FusePageSimple-header': { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
+	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
+	'& .FusePageSimple-content': { overflow: 'visible !important' },
+	'& .FusePageSimple-rootWrapper': { overflow: 'visible !important' },
 }));
+
+const CRIMSON = '#f43f5e';
+const CRIMSON_DEEP = '#be123c';
 
 interface EpisodeDetailViewProps {
 	episodeId: string;
@@ -72,8 +70,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		account?.token?.access,
 		episodeId,
 	);
-	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
-
 	// ── Studio audio fallback ─────────────────────────────────────────────────
 	useStudioAuth(); // ✅ Fix 1: inject auth token so Studio API calls don't get 401
 	const { data: linkedProject } = useLinkedStudioProject('radio_episode', Number(episodeId));
@@ -84,7 +80,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 	if (!episode || isError) {
 		return (
 			<Root
-				scroll={isMobile ? 'page' : 'content'}
+				scroll="page"
 				header={
 					<div className="p-6">
 						<Typography variant="h6">Episode not found</Typography>
@@ -143,149 +139,143 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 
 	return (
 		<Root
-			scroll={isMobile ? 'page' : 'content'}
+			scroll="page"
 			header={
-				<div dir={langOrientation} className="p-6 flex flex-col gap-2">
-					{/* Back link */}
-					<div className="mb-1">
-						<Button
-							component={Link}
-							to="/content/radio/episodes"
-							size="small"
-							startIcon={<FuseSvgIcon size={14}>lucide:arrow-left</FuseSvgIcon>}
-							sx={{ textTransform: 'none', fontWeight: 600, fontSize: '0.8rem', color: 'text.secondary' }}
-						>
-							All Episodes
-						</Button>
-					</div>
+				<div
+					style={{
+						position: 'relative',
+						width: '100%',
+						overflow: 'hidden',
+						background: 'linear-gradient(160deg, #1a0a0e 0%, #2d0b15 50%, #1a0509 100%)',
+						paddingTop: '56px',
+						paddingBottom: '64px',
+					}}
+				>
+					{/* Grid texture */}
+					<div
+						style={{
+							position: 'absolute', inset: 0,
+							backgroundImage: `linear-gradient(rgba(244,63,94,0.04) 1px, transparent 1px),
+							                  linear-gradient(90deg, rgba(244,63,94,0.04) 1px, transparent 1px)`,
+							backgroundSize: '52px 52px',
+						}}
+					/>
+					{/* Radial glow */}
+					<div
+						style={{
+							position: 'absolute', top: '-80px', right: '-100px',
+							width: '420px', height: '420px', borderRadius: '50%',
+							background: 'radial-gradient(circle, rgba(190,18,60,0.22) 0%, transparent 65%)',
+							pointerEvents: 'none',
+						}}
+					/>
 
-					{/* Status / meta chips */}
-					<div className="flex items-center gap-2 flex-wrap">
-						{episode.emission_type?.name && (
-							<Chip
-								label={episode.emission_type.name}
+					<div className="relative mx-auto max-w-5xl px-6" style={{ zIndex: 1 }}>
+						<motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0, transition: { duration: 0.35 } }}>
+							<Button
+								component={Link}
+								to="/content/radio/episodes"
 								size="small"
-								sx={(theme) => ({
-									fontSize: '0.68rem',
-									fontWeight: 700,
-									letterSpacing: '0.04em',
-									textTransform: 'uppercase',
-									height: 20,
-									color: theme.palette.mode === 'dark' ? '#93c5fd' : '#1d4ed8',
-									backgroundColor:
-										theme.palette.mode === 'dark'
-											? 'rgba(59,130,246,0.18)'
-											: 'rgba(59,130,246,0.1)',
-									border:
-										theme.palette.mode === 'dark'
-											? '1px solid rgba(99,179,237,0.3)'
-											: '1px solid rgba(59,130,246,0.25)',
-								})}
-							/>
-						)}
-						{episode.season?.name && (
-							<Chip
-								label={episode.season.name}
-								size="small"
-								sx={{ fontSize: '0.68rem', fontWeight: 600, height: 20 }}
-							/>
-						)}
-						{episode.episode_number != null && (
-							<Chip
-								label={`Episode ${episode.episode_number}`}
-								size="small"
-								sx={{ fontSize: '0.68rem', fontWeight: 700, height: 20 }}
-							/>
-						)}
-						{episode.is_published && (
-							<Chip
-								label="On Air"
-								size="small"
-								color="success"
-								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
-							/>
-						)}
-						{episode.is_approved_content && (
-							<Chip
-								label="Approved"
-								size="small"
-								color="info"
-								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
-							/>
-						)}
-					</div>
+								startIcon={<FuseSvgIcon size={14}>lucide:arrow-left</FuseSvgIcon>}
+								sx={{ color: 'rgba(253,205,215,0.55)', textTransform: 'none', fontWeight: 600, fontSize: '0.8rem', mb: 3, '&:hover': { color: '#fda4af' } }}
+							>
+								All Episodes
+							</Button>
+						</motion.div>
 
-					{/* Title */}
-					<Typography variant="h4" className="font-semibold">
-						{episode.name}
-					</Typography>
+						<div className="flex flex-col gap-4">
+							{/* Chips */}
+							<motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.4 } }} className="flex flex-wrap gap-2">
+								{episode.emission_type?.name && (
+									<Chip label={episode.emission_type.name} size="small"
+										sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', height: 22, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.18)', border: '1px solid rgba(244,63,94,0.35)' }}
+									/>
+								)}
+								{episode.season?.name && (
+									<Chip label={episode.season.name} size="small"
+										sx={{ fontSize: '0.7rem', fontWeight: 600, height: 22, color: 'rgba(253,205,215,0.6)', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+									/>
+								)}
+								{episode.episode_number != null && (
+									<Chip label={`Episode ${episode.episode_number}`} size="small"
+										sx={{ fontSize: '0.7rem', fontWeight: 700, height: 22, color: 'rgba(253,205,215,0.6)', backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+									/>
+								)}
+								{episode.is_published && (
+									<Chip label="On Air" size="small"
+										sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.15)', border: '1px solid rgba(244,63,94,0.4)' }}
+									/>
+								)}
+								{episode.is_approved_content && (
+									<Chip label="Approved" size="small"
+										sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.3)' }}
+									/>
+								)}
+							</motion.div>
 
-					{/* Author from transcription (optional) */}
-					{transcription.author && (
-						<Typography color="text.secondary" className="text-md">
-							{transcription.author}
-						</Typography>
-					)}
+							{/* Title */}
+							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.45 } }}>
+								<Typography component="h1" dir={langOrientation}
+									sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' }, fontWeight: 800, color: '#ffe4e8', textShadow: '0 2px 32px rgba(0,0,0,0.5)', lineHeight: 1.2 }}>
+									{episode.name}
+								</Typography>
+							</motion.div>
 
-					{/* Meta row */}
-					<div className="flex items-center gap-4 mt-1 flex-wrap">
-						{audioDuration && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:clock</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									<DurationDisplay isoDuration={audioDuration} format="long" />
-								</Typography>
-							</div>
-						)}
-						{episode.language?.name && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:globe</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{episode.language.name}
-								</Typography>
-							</div>
-						)}
-						{episode.emission?.name && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:radio</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{episode.emission.name}
-								</Typography>
-							</div>
-						)}
-						{episode.created_by?.full_name && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:mic-2</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{episode.created_by.full_name}
-								</Typography>
-							</div>
-						)}
-						{episode.publishing_date && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:calendar</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{new Date(episode.publishing_date).toLocaleDateString(undefined, {
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-									})}
-								</Typography>
-							</div>
-						)}
-						{episode.view_number != null && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:eye</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{episode.view_number.toLocaleString()} views
-								</Typography>
-							</div>
-						)}
+							{/* Meta row */}
+							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.16, duration: 0.4 } }} className="flex flex-wrap items-center gap-4">
+								{transcription.author && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: 'rgba(253,205,215,0.5)' }}>lucide:user</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', color: 'rgba(253,205,215,0.6)' }}>{transcription.author}</Typography>
+									</div>
+								)}
+								{episode.language?.name && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: 'rgba(253,205,215,0.5)' }}>lucide:globe</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', color: 'rgba(253,205,215,0.6)' }}>{episode.language.name}</Typography>
+									</div>
+								)}
+								{episode.emission?.name && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: 'rgba(253,205,215,0.5)' }}>lucide:radio</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', color: 'rgba(253,205,215,0.6)' }}>{episode.emission.name}</Typography>
+									</div>
+								)}
+								{episode.created_by?.full_name && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: 'rgba(253,205,215,0.5)' }}>lucide:mic-2</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', color: 'rgba(253,205,215,0.6)' }}>{episode.created_by.full_name}</Typography>
+									</div>
+								)}
+								{episode.publishing_date && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: 'rgba(253,205,215,0.5)' }}>lucide:calendar</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', color: 'rgba(253,205,215,0.6)' }}>
+											{new Date(episode.publishing_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+										</Typography>
+									</div>
+								)}
+								{episode.view_number != null && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: 'rgba(253,205,215,0.5)' }}>lucide:eye</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', color: 'rgba(253,205,215,0.6)' }}>{episode.view_number.toLocaleString()} views</Typography>
+									</div>
+								)}
+								{audioDuration && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: CRIMSON }}>lucide:clock</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: CRIMSON }}>
+											<DurationDisplay isoDuration={audioDuration} format="short" />
+										</Typography>
+									</div>
+								)}
+							</motion.div>
+						</div>
 					</div>
 				</div>
 			}
 			content={
-				<div className="mx-auto flex w-full flex-1 flex-col p-4">
+				<div className="mx-auto w-full max-w-5xl p-4 pt-8 pb-16 flex flex-col gap-8">
 					{/* Description */}
 					{episode.description && (
 						<>
