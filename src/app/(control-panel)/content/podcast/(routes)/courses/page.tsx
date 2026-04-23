@@ -1,3 +1,3 @@
-import CoursesView from '../../components/views/CoursesView';
+import CoursesView from '../../components/views/PodcastsView';
 
 export default CoursesView;
