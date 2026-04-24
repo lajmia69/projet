@@ -65,8 +65,6 @@ export async function createStudioProjectForContent(
 			token,
 		);
 
-		console.log('[DEBUG validate] Available project types:', types.items.map(t => t.project_class));
-
 		const targetClass = CONTENT_TYPE_TO_CLASS[contentType];
 		const pt = types.items.find(t => t.project_class === targetClass);
 

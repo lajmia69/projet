@@ -67,6 +67,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 	);
 
 	console.log('[DEBUG] Episode is_approved_content:', episode?.is_approved_content, 'is_published:', episode?.is_published);
+	console.log('[DEBUG] episodeId:', episodeId, 'account:', account?.id, 'hd_version:', episode?.hd_version, 'streaming_version:', episode?.streaming_version);
 
 	useStudioAuth();
 	const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_episode', Number(episodeId));

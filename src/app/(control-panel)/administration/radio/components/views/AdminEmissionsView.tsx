@@ -48,7 +48,7 @@ import {
 import { radioAdminApi } from '@/app/(control-panel)/administration/radio/api/services/radioAdminApiService';
 import { Emission, CreateEmissionPayload, UpdateEmissionPayload, RadioTag } from '@/app/(control-panel)/administration/radio/api/types';
 // ✅ Studio service for auto-creating a production board on validate
-import { studioApiService } from '@/app/(control-panel)/studio/api/services/studioApiService';
+import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -296,38 +296,16 @@ export default function AdminEmissionsView() {
 				if (!accountId || !account?.token?.access) return;
 
 				try {
-					studioApiService.setToken(account.token.access);
-
-					const { items: projectTypes } = await studioApiService.getProjectTypes(accountId);
-
-					const emissionKeywords = ['emission', 'broadcast', 'radio'];
-					const emissionType =
-						projectTypes.find((pt) =>
-							emissionKeywords.some(
-								(kw) =>
-									pt.project_class?.toLowerCase().includes(kw) ||
-									pt.name?.toLowerCase().includes(kw)
-							)
-						) ?? projectTypes[0];
-
-					if (!emissionType?.id) {
-						console.warn('[AdminEmissionsView] No project type found for emission — skipping studio board creation.');
-						return;
-					}
-
-					const today = new Date().toISOString().split('T')[0];
-
-					await studioApiService.createProject(accountId, {
-						name:            emission.name,
-						description:     emission.description ?? '',
-						start_date:      toDateOnly(emission.start_date)   ?? today,
-						end_date:        toDateOnly(emission.end_date)     ?? today,
-						project_type_id: Number(emissionType.id),
-					});
-
+					// Use createStudioProjectForContent which uses the correct project type mapping
+					await createStudioProjectForContent(
+						1,
+						account.token.access,
+						'radio_emission',
+						emission.id,
+						emission.name,
+					);
 					enqueueSnackbar('Studio board created for emission', { variant: 'success' });
 				} catch (err) {
-					// Board creation failing should never block the validate workflow.
 					console.error('[AdminEmissionsView] Failed to create studio board:', err);
 					enqueueSnackbar('Emission validated, but studio board creation failed', { variant: 'warning' });
 				}

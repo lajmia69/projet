@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { Token } from '@auth/user';
 import { radioAdminApi } from '../services/radioAdminApiService';
+import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
 import {
 	CreateEmissionTypePayload, UpdateEmissionTypePayload,
 	CreateSeasonPayload, UpdateSeasonPayload,
@@ -376,7 +377,14 @@ export const useValidateEmission = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (emissionId: number) => radioAdminApi.validateEmission(token, emissionId),
+		mutationFn: async (emissionId: number) => {
+			const emission = await radioAdminApi.validateEmission(token, emissionId);
+			// Create Studio project after validation (pass token.access for the JWT string)
+			if (emission?.name && token?.access) {
+				await createStudioProjectForContent(1, token.access, 'radio_emission', emissionId, emission.name);
+			}
+			return emission;
+		},
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.emissions(token) });
 			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.emission(token, res.id) });
@@ -511,7 +519,14 @@ export const useValidateEpisode = (token: Token | undefined) => {
 	const qc = useQueryClient();
 	const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
-		mutationFn: (episodeId: number) => radioAdminApi.validateEpisode(token, episodeId),
+		mutationFn: async (episodeId: number) => {
+			const episode = await radioAdminApi.validateEpisode(token, episodeId);
+			// Create Studio project after validation (pass token.access for the JWT string)
+			if (episode?.name && token?.access) {
+				await createStudioProjectForContent(1, token.access, 'radio_episode', episodeId, episode.name);
+			}
+			return episode;
+		},
 		onSuccess: (res) => {
 			qc.invalidateQueries({ queryKey: radioAdminKeys.episodes(token) });
 			if (res.id) qc.invalidateQueries({ queryKey: radioAdminKeys.episode(token, res.id) });
