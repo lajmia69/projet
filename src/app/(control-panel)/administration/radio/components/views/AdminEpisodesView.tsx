@@ -24,6 +24,7 @@ import {
 	useDeleteEpisode,
 	useValidateEpisode,
 	usePublishEpisode,
+	useMakePublicEpisode,
 	useRadioAdminEmissions,
 	useRadioAdminSeasons,
 } from '@/app/(control-panel)/administration/radio/api/hooks/useRadioAdmin';
@@ -86,6 +87,7 @@ export default function AdminEpisodesView() {
 	const { mutate: remove,  isPending: isDeleting } = useDeleteEpisode(token);
 	const { mutate: validate }                       = useValidateEpisode(token);
 	const { mutate: publish }                        = usePublishEpisode(token);
+	const { mutate: makePublic }                     = useMakePublicEpisode(token);
 
 	const [addOpen,      setAddOpen]      = useState(false);
 	const [editOpen,     setEditOpen]     = useState(false);
@@ -392,7 +394,12 @@ export default function AdminEpisodesView() {
 									</MenuItem>,
 									<MenuItem key="validate" onClick={() => { validate(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>
-										Validate
+										Approve
+									</MenuItem>,
+									// ✅ Make Public — mirrors lesson workflow step 2
+									<MenuItem key="public" onClick={() => { makePublic(row.original.id); closeMenu(); }}>
+										<ListItemIcon><FuseSvgIcon>lucide:globe</FuseSvgIcon></ListItemIcon>
+										Make Public
 									</MenuItem>,
 									<MenuItem key="publish" onClick={() => { publish(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>

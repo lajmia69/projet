@@ -22,6 +22,7 @@ import {
 	useDeleteReportage,
 	useValidateReportage,
 	usePublishReportage,
+	useMakePublicReportage,
 	useRadioAdminReportageTypes,
 	useRadioAdminLanguages,
 	useRadioAdminEpisodes,
@@ -95,6 +96,7 @@ export default function AdminReportagesView() {
 	const { mutate: remove } = useDeleteReportage(token);
 	const { mutate: validate } = useValidateReportage(token);
 	const { mutate: publish } = usePublishReportage(token);
+	const { mutate: makePublic } = useMakePublicReportage(token);
 
 	const [addOpen, setAddOpen] = useState(false);
 	const [editOpen, setEditOpen] = useState(false);
@@ -326,7 +328,11 @@ export default function AdminReportagesView() {
 										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>Edit
 									</MenuItem>,
 									<MenuItem key="validate" onClick={() => { validate(row.original.id); closeMenu(); }}>
-										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Validate
+										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Approve
+									</MenuItem>,
+									// ✅ Make Public — mirrors lesson workflow step 2
+									<MenuItem key="public" onClick={() => { makePublic(row.original.id); closeMenu(); }}>
+										<ListItemIcon><FuseSvgIcon>lucide:globe</FuseSvgIcon></ListItemIcon>Make Public
 									</MenuItem>,
 									<MenuItem key="publish" onClick={() => { publish(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish

@@ -40,6 +40,7 @@ import {
 	useDeleteEmission,
 	useValidateEmission,
 	usePublishEmission,
+	useMakePublicEmission,
 	useRadioAdminEmissionTypes,
 	useRadioAdminLanguages,
 	useRadioAdminTags,
@@ -118,6 +119,7 @@ export default function AdminEmissionsView() {
 	const { mutate: remove, isPending: isDeleting } = useDeleteEmission(token);
 	const { mutate: validate }                       = useValidateEmission(token);
 	const { mutate: publish }                        = usePublishEmission(token);
+	const { mutate: makePublic }                     = useMakePublicEmission(token);
 
 	const [addOpen,      setAddOpen]      = useState(false);
 	const [editOpen,     setEditOpen]     = useState(false);
@@ -589,7 +591,11 @@ export default function AdminEmissionsView() {
 										handleValidateEmission(row.original);
 										closeMenu();
 									}}>
-										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Validate
+										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Approve
+									</MenuItem>,
+									// ✅ Make Public — mirrors lesson workflow step 2
+									<MenuItem key="public" onClick={() => { makePublic(row.original.id); closeMenu(); }}>
+										<ListItemIcon><FuseSvgIcon>lucide:globe</FuseSvgIcon></ListItemIcon>Make Public
 									</MenuItem>,
 									<MenuItem key="publish" onClick={() => { publish(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish

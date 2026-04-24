@@ -14,8 +14,10 @@ import { useReportage } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
 import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
-import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useLinkedStudioProjectForRadio, useLinkedStudioProjectTasksForRadio } from '../../api/hooks/useLinkedStudioProjectForRadio';
 import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
+
+const RADIO_STUDIO_ACCOUNT_ID = 1;
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -67,10 +69,12 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 	);
 
 	useStudioAuth();
-const { data: linkedProject } = useLinkedStudioProject('radio_reportage', Number(reportageId));
-	const { data: tasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_reportage', Number(reportageId));
+	const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
 	const taskId = tasks[0]?.id;
-	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
+	// ✅ Pass RADIO_STUDIO_ACCOUNT_ID so audio is fetched from account 1,
+	//    not the currently logged-in user's account.
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId, RADIO_STUDIO_ACCOUNT_ID);
 
 	if (!account || accountLoading || reportageLoading) return <FuseLoading />;
 	if (!reportage || isError) {
