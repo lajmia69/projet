@@ -14,8 +14,8 @@ import { useReportage } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
 import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
-import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
-import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
+import { useLinkedStudioProject } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios';
 
 // ─── Safe transcription helper ────────────────────────────────────────────────
 
@@ -114,14 +114,12 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 	);
 
 	// ── Studio audio fallback ─────────────────────────────────────────────────
-	// ── Studio audio ─ scoped to the task linked to this specific reportage ────────
-	// Mirrors Lesson: resolve the one audio attached to the content item's
-	// own studio task, never [0] from a shared project-wide list.
+	// ── Studio audio ─ scoped to the project linked to this specific reportage ────────
+	// useGetProjectAudios filters strictly to audios belonging to this content
+	// item's project. It never falls back to all-account audios.
 	useStudioAuth(); // inject auth token so Studio API calls don't get 401
 	const { data: linkedProject } = useLinkedStudioProject('radio_reportage', Number(reportageId));
-	const { data: linkedTasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
-	const linkedTaskId = linkedTasks[0]?.id ?? null;
-	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, linkedTaskId);
+	const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id);
 
 	if (!account || accountLoading || reportageLoading) return <FuseLoading />;
 	if (!reportage || isError) {
@@ -160,12 +158,12 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 
 	// Radio API versions take priority; fall back to Studio audio ✅ Fix
 	const radioAudioSrc = reportage.hd_version?.src || reportage.streaming_version?.src || null;
-	// Use the task-linked studio audio only — never [0] from the full list
-	const studioAudioSrc = taskAudio?.src ?? null;
+	// studioAudios is already project-scoped: all items belong to this reportage
+	const studioAudioSrc = studioAudios[0]?.src ?? null;
 	const audioSrc = radioAudioSrc || studioAudioSrc;
 
 	const radioAudioDuration = reportage.streaming_version?.duration || reportage.hd_version?.duration || null;
-	const studioAudioDuration = taskAudio?.duration ?? null;
+	const studioAudioDuration = studioAudios[0]?.duration ?? null;
 	const audioDuration = radioAudioDuration || studioAudioDuration;
 
 	const hasRadioVersions = !!(reportage.streaming_version || reportage.hd_version || reportage.teaser_version);
@@ -341,9 +339,9 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 						)}
 
 						{/* Studio audio files (shown when no Radio API versions exist) ✅ Fix */}
-						{!hasRadioVersions && taskAudio && (
+						{!hasRadioVersions && studioAudios.length > 0 && (
 							<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-								{[taskAudio].map((audio) => (
+								{studioAudios.map((audio) => (
 									<AudioBlock
 										key={audio.id}
 										label={audio.type_label || 'Studio'}
@@ -355,7 +353,7 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 						)}
 
 						{/* No versions at all ✅ Fix */}
-						{!hasRadioVersions && !taskAudio && (
+						{!hasRadioVersions && studioAudios.length === 0 && (
 							<Typography color="text.disabled" variant="body2">
 								No audio versions available.
 							</Typography>

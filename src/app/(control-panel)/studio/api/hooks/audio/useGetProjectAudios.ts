@@ -16,12 +16,14 @@ export const projectAudiosQueryKey = (accountId: number) => [
 /**
  * Returns audio files scoped to a specific project when `projectId` is supplied.
  *
- * Filtering strategy:
- *   1. Fetch all audio files for the account.
- *   2. If any file carries `production_task.production_project.id` (i.e. the
- *      backend exposes the relationship), filter by project ID.
- *   3. If the backend doesn't return that relationship, fall back to showing
- *      all files (safe degradation — same behaviour as before this fix).
+ * Filtering strategy (in priority order):
+ *   1. audio.production_task.production_project.id === projectId  (backend exposes full chain)
+ *   2. audio.production_task.id is in the project's task id list  (cross-reference via task list)
+ *   3. No projectId given — return everything (used by AudioPanel for display purposes)
+ *
+ * Unlike the previous version, this hook NEVER falls back to returning all account
+ * audios when a projectId is supplied. That fallback was the root cause of the
+ * wrong audio being played in Episode / Emission / Reportage detail views.
  */
 export function useGetProjectAudios(projectId?: number | string) {
 	const accountId = useCurrentAccountId();
@@ -31,31 +33,54 @@ export function useGetProjectAudios(projectId?: number | string) {
 			: undefined;
 
 	return useQuery({
-		// Include projectId in the cache key so each board gets its own slice.
 		queryKey: [...projectAudiosQueryKey(accountId), numericProjectId ?? 'all'],
 		queryFn: async () => {
-			const { items } = await studioApiService.getAudioFiles(accountId);
+			const { items: audioItems } = await studioApiService.getAudioFiles(accountId);
 
-			// No project scope requested — return everything.
-			if (!numericProjectId) return items;
+			// No project scope requested — return everything (AudioPanel use-case).
+			if (!numericProjectId) return audioItems;
 
-			// Check whether the backend populates the task→project relationship.
-			const hasTaskRef = items.some(
-				(item) => item.production_task?.production_project?.id !== undefined
+			// ── Strategy 1: backend returns production_task.production_project.id ──
+			const hasFullChain = audioItems.some(
+				(item) => item.production_task?.production_project?.id !== undefined,
 			);
-
-			if (!hasTaskRef) {
-				// Backend doesn't expose the relationship yet; return all files
-				// so the panel isn't empty (safe fallback).
-				return items;
+			if (hasFullChain) {
+				return audioItems.filter(
+					(item) => item.production_task?.production_project?.id === numericProjectId,
+				);
 			}
 
-			// Filter to files whose linked task belongs to this project.
-			return items.filter(
-				(item) =>
-					item.production_task?.production_project?.id === numericProjectId
-			);
+			// ── Strategy 2: cross-reference via task list ─────────────────────────
+			// Fetch all tasks for the account, filter to those belonging to this project,
+			// then keep only audios whose production_task.id is in that set.
+			try {
+				const { items: taskItems } = await studioApiService.getTasks(accountId);
+				const projectTaskIds = new Set(
+					taskItems
+						.filter((t) => Number(t.production_project?.id) === numericProjectId)
+						.map((t) => t.id)
+						.filter((id): id is number => id !== null),
+				);
+
+				if (projectTaskIds.size > 0) {
+					const matched = audioItems.filter(
+						(item) =>
+							item.production_task?.id !== undefined &&
+							item.production_task.id !== null &&
+							projectTaskIds.has(item.production_task.id as number),
+					);
+					// Return matched files; if none found yet the upload may not have
+					// happened — return empty array so caller shows "no audio" state.
+					return matched;
+				}
+			} catch {
+				// Task list failed — fall through to empty result rather than
+				// returning all account audios.
+			}
+
+			// No matching audio found for this project.
+			return [];
 		},
-		enabled: !!accountId
+		enabled: !!accountId,
 	});
 }
