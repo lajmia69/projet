@@ -13,9 +13,9 @@ import useUser from '@auth/useUser';
 import { useEmission } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
-import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth'; // ✅ Fix: import added
-import { useLinkedStudioProject } from '../../../../studio/api/hooks/useLinkedStudioProject'; // ✅ Fix: import added
-import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios'; // ✅ Fix: import added
+import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
+import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 
 // ─── Safe transcription helper ────────────────────────────────────────────────
 
@@ -114,9 +114,14 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 	);
 
 	// ── Studio audio fallback ─────────────────────────────────────────────────
-	useStudioAuth(); // ✅ Fix: inject auth token so Studio API calls don't get 401
-	const { data: linkedProject } = useLinkedStudioProject('radio_emission', Number(emissionId)); // ✅ Fix: added
-	const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id); // ✅ Fix: added
+	// ── Studio audio ─ scoped to the task linked to this specific emission ────────
+	// Mirrors Lesson: resolve the one audio attached to the content item's
+	// own studio task, never [0] from a shared project-wide list.
+	useStudioAuth(); // inject auth token so Studio API calls don't get 401
+	const { data: linkedProject } = useLinkedStudioProject('radio_emission', Number(emissionId));
+	const { data: linkedTasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+	const linkedTaskId = linkedTasks[0]?.id ?? null;
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, linkedTaskId);
 
 	if (!account || accountLoading || emissionLoading) return <FuseLoading />;
 	if (!emission || isError) {
@@ -143,26 +148,29 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 	function getSteps() {
 		const content = emission?.transcription?.content;
 		if (!content || !Array.isArray(content) || content.length === 0) return [];
-		return content.map((c: any) => ({
-			index: (c?.index ?? 1) - 1,
-			languageOrientation: emission?.transcription?.language_orientation ?? 'ltr',
-			speaker: c?.speaker ?? '',
-			time: c?.time ?? '',
-			timestamp: c?.timestamp ?? 0,
-			text: c?.text ?? '',
-		}));
+		return content
+			.filter((c): c is NonNullable<typeof c> => c != null)
+			.map((c) => ({
+				index: Math.max(0, (c.index ?? 1) - 1),
+				languageOrientation: emission?.transcription?.language_orientation ?? 'ltr',
+				speaker: c.speaker ?? '',
+				time: c.time ?? '',
+				timestamp: c.timestamp ?? 0,
+				text: c.text ?? '',
+			}));
 	}
 
 	// Radio API versions take priority; fall back to Studio audio ✅ Fix
 	const radioAudioSrc = emission.hd_version?.src || emission.streaming_version?.src || null;
-	const studioAudioSrc = studioAudios[0]?.src || null;
-	const audioSrc = radioAudioSrc || studioAudioSrc; // ✅ Fix
+	// Use the task-linked studio audio only — never [0] from the full list
+	const studioAudioSrc = taskAudio?.src ?? null;
+	const audioSrc = radioAudioSrc || studioAudioSrc;
 
 	const radioAudioDuration = emission.streaming_version?.duration || emission.hd_version?.duration || null;
-	const studioAudioDuration = studioAudios[0]?.duration || null;
-	const audioDuration = radioAudioDuration || studioAudioDuration; // ✅ Fix
+	const studioAudioDuration = taskAudio?.duration ?? null;
+	const audioDuration = radioAudioDuration || studioAudioDuration;
 
-	const hasRadioVersions = !!(emission.streaming_version || emission.hd_version || emission.teaser_version); // ✅ Fix
+	const hasRadioVersions = !!(emission.streaming_version || emission.hd_version || emission.teaser_version);
 
 	return (
 		<Root
@@ -340,9 +348,9 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 						)}
 
 						{/* Studio audio files (shown when no Radio API versions exist) ✅ Fix */}
-						{!hasRadioVersions && studioAudios.length > 0 && (
+						{!hasRadioVersions && taskAudio && (
 							<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-								{studioAudios.map((audio) => (
+								{[taskAudio].map((audio) => (
 									<AudioBlock
 										key={audio.id}
 										label={audio.type_label || 'Studio'}
@@ -354,7 +362,7 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 						)}
 
 						{/* No versions at all ✅ Fix */}
-						{!hasRadioVersions && studioAudios.length === 0 && (
+						{!hasRadioVersions && !taskAudio && (
 							<Typography color="text.disabled" variant="body2">
 								No audio versions available.
 							</Typography>

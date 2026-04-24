@@ -14,9 +14,9 @@ import useUser from '@auth/useUser';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
-import { useLinkedStudioProject } from '../../../../studio/api/hooks/useLinkedStudioProject';
-import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios';
-import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth'; // ✅ Fix 1: import added
+import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
+import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
 
 // ─── Safe transcription helper ────────────────────────────────────────────────
 
@@ -71,9 +71,15 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		episodeId,
 	);
 	// ── Studio audio fallback ─────────────────────────────────────────────────
-	useStudioAuth(); // ✅ Fix 1: inject auth token so Studio API calls don't get 401
+	// ── Studio audio ─ scoped to the task linked to this specific episode ────────
+	// This mirrors the Lesson pattern: resolve the single audio attached to
+	// the content item's own studio task, never [0] from a shared project list.
+	useStudioAuth(); // inject auth token so Studio API calls don't get 401
 	const { data: linkedProject } = useLinkedStudioProject('radio_episode', Number(episodeId));
-	const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id);
+	const { data: linkedTasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+	// Each content item has exactly one task; take its id to retrieve its audio.
+	const linkedTaskId = linkedTasks[0]?.id ?? null;
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, linkedTaskId);
 
 	if (!account || accountLoading || episodeLoading) return <FuseLoading />;
 
@@ -128,11 +134,12 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 
 	// Radio API versions take priority; fall back to Studio audio
 	const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
-	const studioAudioSrc = studioAudios[0]?.src || null;
+	// Use the task-linked studio audio only — never [0] from the full list
+	const studioAudioSrc = taskAudio?.src ?? null;
 	const audioSrc = radioAudioSrc || studioAudioSrc;
 
 	const radioAudioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
-	const studioAudioDuration = studioAudios[0]?.duration || null;
+	const studioAudioDuration = taskAudio?.duration ?? null;
 	const audioDuration = radioAudioDuration || studioAudioDuration;
 
 	const hasRadioVersions = !!(episode.streaming_version || episode.hd_version || episode.teaser_version);
@@ -394,9 +401,9 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 					)}
 
 					{/* Studio audio files (shown when no Radio API versions exist) */}
-					{!hasRadioVersions && studioAudios.length > 0 && (
+					{!hasRadioVersions && taskAudio && (
 						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-							{studioAudios.map((audio) => (
+							{[taskAudio].map((audio) => (
 								<div
 									key={audio.id}
 									className="flex flex-col gap-1 rounded-xl p-3"
@@ -439,7 +446,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 					)}
 
 					{/* No versions at all */}
-					{!hasRadioVersions && studioAudios.length === 0 && (
+					{!hasRadioVersions && !taskAudio && (
 						<Typography color="text.disabled" variant="body2" className="mb-4">
 							No audio versions available.
 						</Typography>
