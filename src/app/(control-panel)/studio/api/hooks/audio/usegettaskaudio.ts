@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import useUser from '@auth/useUser';
 import { studioApiService } from '../../services/studioApiService';
 import { useCurrentAccountId } from '../../useCurrentAccountId';
 import type { AudioFile } from '../../types';
@@ -19,12 +20,18 @@ export function useGetTaskAudio(
 	taskId?: number | null,
 	accountIdOverride?: number,
 ): { data: AudioFile | null | undefined; isLoading: boolean } {
+	const { data: user } = useUser();
+	const token = user?.token?.access ?? '';
 	const currentAccountId = useCurrentAccountId();
 	const accountId = accountIdOverride ?? currentAccountId;
 
 	return useQuery({
 		queryKey: ['studio', 'task-audio', accountId, projectId ?? null, taskId ?? null],
 		queryFn: async (): Promise<AudioFile | null> => {
+			// Inject the session token so studioFetch uses it instead of
+			// falling back to localStorage (which may be stale or missing).
+			if (token) studioApiService.setToken(token);
+
 			const { items } = await studioApiService.getAudioFiles(accountId);
 
 			// No project/task context – can't determine audio

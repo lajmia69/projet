@@ -17,6 +17,7 @@ import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
 import { useLinkedStudioProjectForRadio, useLinkedStudioProjectTasksForRadio } from '../../api/hooks/useLinkedStudioProjectForRadio';
 import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 
+// Radio content is always stored under studio account 1
 const RADIO_STUDIO_ACCOUNT_ID = 1;
 
 function safeTranscription(raw: unknown): {
@@ -71,8 +72,6 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 	const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_emission', Number(emissionId));
 	const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
 	const taskId = tasks[0]?.id;
-	// ✅ Pass RADIO_STUDIO_ACCOUNT_ID so audio is fetched from account 1,
-	//    not the currently logged-in user's account.
 	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId, RADIO_STUDIO_ACCOUNT_ID);
 
 	if (!account || accountLoading || emissionLoading) return <FuseLoading />;

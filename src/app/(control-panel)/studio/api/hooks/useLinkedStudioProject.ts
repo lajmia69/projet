@@ -21,7 +21,7 @@ export function useLinkedStudioProject(contentType: StudioContentType, contentId
 	const token     = user?.token?.access ?? '';
 
 	return useQuery({
-		queryKey: ['studio', 'linked-project', contentType, contentId],
+		queryKey: ['studio', 'linked-project', contentType, contentId, token],
 		queryFn:  () => findLinkedStudioProject(accountId, token, contentType, contentId),
 		enabled:  !!accountId && !!token && contentId > 0,
 		staleTime: 1000 * 60 * 2,
@@ -56,7 +56,7 @@ export function useLinkedStudioProjectTasks(studioProjectId: number | null | und
 	const token     = user?.token?.access ?? '';
 
 	return useQuery({
-		queryKey: ['studio', 'tasks-for-linked-project', studioProjectId],
+		queryKey: ['studio', 'tasks-for-linked-project', studioProjectId, token],
 		queryFn:  async () => {
 			if (token) studioApiService.setToken(token);
 			const { items } = await studioApiService.getTasks(accountId);
