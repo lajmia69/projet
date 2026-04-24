@@ -14,6 +14,9 @@ import useUser from '@auth/useUser';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
+import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
+import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -62,6 +65,12 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		account?.token?.access,
 		episodeId,
 	);
+
+	useStudioAuth();
+	const { data: linkedProject } = useLinkedStudioProject('radio_episode', Number(episodeId));
+	const { data: tasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+	const taskId = tasks[0]?.id;
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
 
 	if (!account || accountLoading || episodeLoading) return <FuseLoading />;
 
@@ -113,9 +122,14 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 			}));
 	}
 
-	const audioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
+	const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
+	const studioAudioSrc = taskAudio?.src ?? null;
+	const audioSrc = radioAudioSrc || studioAudioSrc;
+
 	const audioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
-	const audioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
+	const radioAudioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
+	const studioAudioDuration = taskAudio?.duration ?? null;
+	const audioDuration = radioAudioDuration || studioAudioDuration;
 
 	const hasRadioVersions = !!(episode.streaming_version || episode.hd_version || episode.teaser_version);
 
@@ -316,7 +330,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						Audio Versions
 					</Typography>
 
-					{hasRadioVersions && (
+{hasRadioVersions && (
 						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
 							{[
 								{ label: 'Streaming', audio: episode.streaming_version },
@@ -362,11 +376,40 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 										</div>
 									</div>
 								) : null
-						)}
-					</div>
-				)}
+							)}
+						</div>
+					)}
 
-				{!audioSrc && (
+					{taskAudio && !hasRadioVersions && (
+						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+							<div
+								className="flex flex-col gap-1 rounded-xl p-3"
+								style={{ border: '1px solid var(--mui-palette-divider)', background: 'var(--mui-palette-background-paper)' }}
+							>
+								<Typography
+									variant="caption"
+									sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.disabled' }}
+								>
+									{taskAudio.type_label || 'Studio'}
+								</Typography>
+								<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
+									{taskAudio.name || '—'}
+								</Typography>
+								<div className="flex flex-wrap gap-3 mt-0.5">
+									{taskAudio.duration && (
+										<div className="flex items-center gap-1.5">
+											<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+											<Typography className="text-xs" color="text.secondary">
+												<DurationDisplay isoDuration={taskAudio.duration} format="short" />
+											</Typography>
+										</div>
+									)}
+								</div>
+							</div>
+						</div>
+					)}
+
+					{!audioSrc && (
 					<Typography color="text.disabled" variant="body2" className="mb-4">
 						No audio versions available.
 					</Typography>
