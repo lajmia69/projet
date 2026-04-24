@@ -14,11 +14,6 @@ import useUser from '@auth/useUser';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
-import { useLinkedStudioProject } from '../../../../studio/api/hooks/useLinkedStudioProject';
-import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios';
-import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
-
-// ─── Safe transcription helper ────────────────────────────────────────────────
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -47,8 +42,6 @@ function safeTranscription(raw: unknown): {
 	} as ReturnType<typeof safeTranscription>;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 const Root = styled(FusePageSimple)(() => ({
 	'& .FusePageSimple-header': { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
 	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
@@ -57,7 +50,6 @@ const Root = styled(FusePageSimple)(() => ({
 }));
 
 const CRIMSON = '#f43f5e';
-const CRIMSON_DEEP = '#be123c';
 
 interface EpisodeDetailViewProps {
 	episodeId: string;
@@ -70,13 +62,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		account?.token?.access,
 		episodeId,
 	);
-	// ── Studio audio fallback ─────────────────────────────────────────────────
-	// ── Studio audio ─ scoped to the project linked to this episode ────────
-	// useGetProjectAudios filters strictly to audios belonging to this content
-	// item's project. It never falls back to all-account audios.
-	useStudioAuth(); // inject auth token so Studio API calls don't get 401
-	const { data: linkedProject } = useLinkedStudioProject('radio_episode', Number(episodeId));
-	const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id);
 
 	if (!account || accountLoading || episodeLoading) return <FuseLoading />;
 
@@ -109,7 +94,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		);
 	}
 
-	// ── Safe transcription ────────────────────────────────────────────────────
 	const transcription = safeTranscription(episode.transcription);
 	const langOrientation = transcription.language_orientation;
 	const hasContent = transcription.content.length > 0;
@@ -129,16 +113,8 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 			}));
 	}
 
-	// Radio API versions take priority; fall back to Studio audio
-	const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
-	// studioAudios is project-scoped — all items belong to this episode
-	const studioAudioSrc = studioAudios[0]?.src ?? null;
-	const audioSrc = radioAudioSrc || studioAudioSrc;
-
-	const radioAudioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
-	const studioAudioDuration = studioAudios[0]?.duration ?? null;
-	const audioDuration = radioAudioDuration || studioAudioDuration;
-
+	const audioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
+	const audioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
 	const hasRadioVersions = !!(episode.streaming_version || episode.hd_version || episode.teaser_version);
 
 	return (
@@ -155,7 +131,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						paddingBottom: '64px',
 					}}
 				>
-					{/* Grid texture */}
 					<div
 						style={{
 							position: 'absolute', inset: 0,
@@ -164,7 +139,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 							backgroundSize: '52px 52px',
 						}}
 					/>
-					{/* Radial glow */}
 					<div
 						style={{
 							position: 'absolute', top: '-80px', right: '-100px',
@@ -188,7 +162,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</motion.div>
 
 						<div className="flex flex-col gap-4">
-							{/* Chips */}
 							<motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.4 } }} className="flex flex-wrap gap-2">
 								{episode.emission_type?.name && (
 									<Chip label={episode.emission_type.name} size="small"
@@ -217,7 +190,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 								)}
 							</motion.div>
 
-							{/* Title */}
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.45 } }}>
 								<Typography component="h1" dir={langOrientation}
 									sx={{ fontSize: { xs: '1.75rem', sm: '2.25rem', md: '2.75rem' }, fontWeight: 800, color: '#ffe4e8', textShadow: '0 2px 32px rgba(0,0,0,0.5)', lineHeight: 1.2 }}>
@@ -225,7 +197,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 								</Typography>
 							</motion.div>
 
-							{/* Meta row */}
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.16, duration: 0.4 } }} className="flex flex-wrap items-center gap-4">
 								{transcription.author && (
 									<div className="flex items-center gap-1.5">
@@ -280,7 +251,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 			}
 			content={
 				<div className="mx-auto w-full max-w-5xl p-4 pt-8 pb-16 flex flex-col gap-8">
-					{/* Description */}
 					{episode.description && (
 						<>
 							<Typography dir={langOrientation} color="text.secondary" className="text-sm mb-4">
@@ -290,7 +260,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</>
 					)}
 
-					{/* Player — Radio API audio first, then Studio audio fallback */}
 					{audioSrc ? (
 						<Player
 							steps={getSteps()}
@@ -336,7 +305,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</div>
 					)}
 
-					{/* Audio Versions */}
 					<Divider className="my-4" />
 					<Typography
 						variant="subtitle2"
@@ -346,7 +314,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						Audio Versions
 					</Typography>
 
-					{/* Radio API versions (hd / streaming / teaser) */}
 					{hasRadioVersions && (
 						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
 							{[
@@ -397,59 +364,12 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</div>
 					)}
 
-					{/* Studio audio files (shown when no Radio API versions exist) */}
-					{!hasRadioVersions && studioAudios.length > 0 && (
-						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-							{studioAudios.map((audio) => (
-								<div
-									key={audio.id}
-									className="flex flex-col gap-1 rounded-xl p-3"
-									style={{ border: '1px solid var(--mui-palette-divider)', background: 'var(--mui-palette-background-paper)' }}
-								>
-									<Typography
-										variant="caption"
-										sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.disabled' }}
-									>
-										{audio.type_label || 'Studio'}
-									</Typography>
-									<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
-										{audio.name || '—'}
-									</Typography>
-									<div className="flex flex-wrap gap-3 mt-0.5">
-										{audio.duration && (
-											<div className="flex items-center gap-1.5">
-												<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
-												<Typography className="text-xs" color="text.secondary">
-													<DurationDisplay isoDuration={audio.duration} format="short" />
-												</Typography>
-											</div>
-										)}
-										{audio.format?.name && (
-											<div className="flex items-center gap-1.5">
-												<FuseSvgIcon size={13} color="disabled">lucide:file-audio</FuseSvgIcon>
-												<Typography className="text-xs" color="text.secondary">{audio.format.name}</Typography>
-											</div>
-										)}
-										{audio.format?.bit_rates && (
-											<div className="flex items-center gap-1.5">
-												<FuseSvgIcon size={13} color="disabled">lucide:activity</FuseSvgIcon>
-												<Typography className="text-xs" color="text.secondary">{audio.format.bit_rates} kbps</Typography>
-											</div>
-										)}
-									</div>
-								</div>
-							))}
-						</div>
-					)}
-
-					{/* No versions at all */}
-					{!hasRadioVersions && studioAudios.length === 0 && (
+					{!hasRadioVersions && (
 						<Typography color="text.disabled" variant="body2" className="mb-4">
 							No audio versions available.
 						</Typography>
 					)}
 
-					{/* Guests */}
 					{episode.guests && episode.guests.length > 0 && (
 						<>
 							<Divider className="my-4" />
@@ -495,7 +415,6 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</>
 					)}
 
-					{/* Tags */}
 					{episode.tags && episode.tags.length > 0 && (
 						<>
 							<Divider className="my-4" />

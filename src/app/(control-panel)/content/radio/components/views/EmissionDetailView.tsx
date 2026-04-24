@@ -13,11 +13,6 @@ import useUser from '@auth/useUser';
 import { useEmission } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
-import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
-import { useLinkedStudioProject } from '../../../../studio/api/hooks/useLinkedStudioProject';
-import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios';
-
-// ─── Safe transcription helper ────────────────────────────────────────────────
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -46,8 +41,6 @@ function safeTranscription(raw: unknown): {
 	} as ReturnType<typeof safeTranscription>;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 const Root = styled(FusePageSimple)(() => ({
 	'& .FusePageSimple-header': { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
 	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
@@ -56,53 +49,9 @@ const Root = styled(FusePageSimple)(() => ({
 }));
 
 const AMBER = '#f59e0b';
-const AMBER_DEEP = '#b45309';
 
 interface EmissionDetailViewProps {
 	emissionId: string;
-}
-
-function MetaBadge({ icon, label }: { icon: string; label: React.ReactNode }) {
-	return (
-		<div className="flex items-center gap-1.5">
-			<FuseSvgIcon size={14} sx={{ color: AMBER }}>{icon}</FuseSvgIcon>
-			<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'text.secondary' }}>
-				{label}
-			</Typography>
-		</div>
-	);
-}
-
-function AudioBlock({
-	label,
-	audio,
-	accentColor,
-}: {
-	label: string;
-	audio: { name?: string; duration?: string; format?: { name?: string; bit_rates?: string } } | null | undefined;
-	accentColor: string;
-}) {
-	if (!audio) return null;
-	return (
-		<div
-			className="flex flex-col gap-1 rounded-xl p-3"
-			style={{ border: `1px solid ${accentColor}33`, background: `${accentColor}0a` }}
-		>
-			<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: accentColor }}>
-				{label}
-			</Typography>
-			<Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary' }}>
-				{audio.name || '—'}
-			</Typography>
-			<div className="flex flex-wrap gap-3 mt-0.5">
-				{audio.duration && (
-					<MetaBadge icon="lucide:clock" label={<DurationDisplay isoDuration={audio.duration} format="short" />} />
-				)}
-				{audio.format?.name && <MetaBadge icon="lucide:file-audio" label={audio.format.name} />}
-				{audio.format?.bit_rates && <MetaBadge icon="lucide:activity" label={`${audio.format.bit_rates} kbps`} />}
-			</div>
-		</div>
-	);
 }
 
 function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
@@ -112,14 +61,6 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 		account?.token?.access,
 		emissionId,
 	);
-
-	// ── Studio audio fallback ─────────────────────────────────────────────────
-	// ── Studio audio ─ scoped to the project linked to this specific emission ────────
-	// useGetProjectAudios filters strictly to audios belonging to this content
-	// item's project. It never falls back to all-account audios.
-	useStudioAuth(); // inject auth token so Studio API calls don't get 401
-	const { data: linkedProject } = useLinkedStudioProject('radio_emission', Number(emissionId));
-	const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id);
 
 	if (!account || accountLoading || emissionLoading) return <FuseLoading />;
 	if (!emission || isError) {
@@ -138,7 +79,6 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 		);
 	}
 
-	// ── Safe transcription ────────────────────────────────────────────────────
 	const transcription = safeTranscription(emission.transcription);
 	const langOrientation = transcription.language_orientation;
 	const hasContent = transcription.content.length > 0;
@@ -158,16 +98,8 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 			}));
 	}
 
-	// Radio API versions take priority; fall back to Studio audio ✅ Fix
-	const radioAudioSrc = emission.hd_version?.src || emission.streaming_version?.src || null;
-	// studioAudios is already project-scoped: all items belong to this emission
-	const studioAudioSrc = studioAudios[0]?.src ?? null;
-	const audioSrc = radioAudioSrc || studioAudioSrc;
-
-	const radioAudioDuration = emission.streaming_version?.duration || emission.hd_version?.duration || null;
-	const studioAudioDuration = studioAudios[0]?.duration ?? null;
-	const audioDuration = radioAudioDuration || studioAudioDuration;
-
+	const audioSrc = emission.hd_version?.src || emission.streaming_version?.src || null;
+	const audioDuration = emission.streaming_version?.duration || emission.hd_version?.duration || null;
 	const hasRadioVersions = !!(emission.streaming_version || emission.hd_version || emission.teaser_version);
 
 	return (
@@ -274,7 +206,6 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 			}
 			content={
 				<div className="mx-auto w-full max-w-5xl p-4 pt-8 pb-16 flex flex-col gap-8">
-					{/* Description */}
 					{emission.description && (
 						<motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.4 } }}>
 							<Typography sx={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: AMBER, mb: 1.5 }}>
@@ -288,7 +219,6 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 
 					<Divider sx={{ borderColor: 'rgba(245,158,11,0.12)' }} />
 
-					{/* Player — Radio API audio first, then Studio audio fallback */}
 					<motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.4 } }}>
 						{audioSrc ? (
 							<Player
@@ -329,45 +259,60 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 						)}
 					</motion.section>
 
-					{/* Audio version info cards */}
 					<Divider sx={{ borderColor: 'rgba(245,158,11,0.12)' }} />
 					<motion.section initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.4 } }}>
 						<Typography sx={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: AMBER, mb: 2 }}>
 							Audio Versions
 						</Typography>
 
-						{/* Radio API versions */}
 						{hasRadioVersions && (
 							<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-								<AudioBlock label="Streaming" audio={emission.streaming_version} accentColor={AMBER} />
-								<AudioBlock label="HD" audio={emission.hd_version} accentColor={AMBER_DEEP} />
-								<AudioBlock label="Teaser" audio={emission.teaser_version} accentColor="#fcd34d" />
+								{emission.streaming_version && (
+									<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid ${AMBER}33`, background: `${AMBER}0a` }}>
+										<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: AMBER }}>Streaming</Typography>
+										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">{emission.streaming_version.name || '—'}</Typography>
+										{emission.streaming_version.duration && (
+											<div className="flex items-center gap-1.5 mt-0.5">
+												<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+												<Typography className="text-xs" color="text.secondary"><DurationDisplay isoDuration={emission.streaming_version.duration} format="short" /></Typography>
+											</div>
+										)}
+									</div>
+								)}
+								{emission.hd_version && (
+									<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid ${AMBER_DEEP}33`, background: `${AMBER_DEEP}0a` }}>
+										<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: AMBER_DEEP }}>HD</Typography>
+										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">{emission.hd_version.name || '—'}</Typography>
+										{emission.hd_version.duration && (
+											<div className="flex items-center gap-1.5 mt-0.5">
+												<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+												<Typography className="text-xs" color="text.secondary"><DurationDisplay isoDuration={emission.hd_version.duration} format="short" /></Typography>
+											</div>
+										)}
+									</div>
+								)}
+								{emission.teaser_version && (
+									<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: '1px solid #fcd34d33', background: '#fcd34d0a' }}>
+										<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fcd34d' }}>Teaser</Typography>
+										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">{emission.teaser_version.name || '—'}</Typography>
+										{emission.teaser_version.duration && (
+											<div className="flex items-center gap-1.5 mt-0.5">
+												<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+												<Typography className="text-xs" color="text.secondary"><DurationDisplay isoDuration={emission.teaser_version.duration} format="short" /></Typography>
+											</div>
+										)}
+									</div>
+								)}
 							</div>
 						)}
 
-						{/* Studio audio files (shown when no Radio API versions exist) ✅ Fix */}
-						{!hasRadioVersions && studioAudios.length > 0 && (
-							<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-								{studioAudios.map((audio) => (
-									<AudioBlock
-										key={audio.id}
-										label={audio.type_label || 'Studio'}
-										audio={{ name: audio.name, duration: audio.duration, format: audio.format }}
-										accentColor={AMBER}
-									/>
-								))}
-							</div>
-						)}
-
-						{/* No versions at all ✅ Fix */}
-						{!hasRadioVersions && studioAudios.length === 0 && (
+						{!hasRadioVersions && (
 							<Typography color="text.disabled" variant="body2">
 								No audio versions available.
 							</Typography>
 						)}
 					</motion.section>
 
-					{/* Tags */}
 					{emission.tags && emission.tags.length > 0 && (
 						<>
 							<Divider sx={{ borderColor: 'rgba(245,158,11,0.12)' }} />
@@ -391,19 +336,31 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 						</>
 					)}
 
-					{/* Publishing info footer */}
 					{(emission.publishing_date || emission.view_number != null) && (
 						<>
 							<Divider sx={{ borderColor: 'rgba(245,158,11,0.12)' }} />
 							<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { delay: 0.3 } }} className="flex flex-wrap gap-6">
 								{emission.publishing_date && (
-									<MetaBadge icon="lucide:calendar" label={new Date(emission.publishing_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })} />
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: AMBER }}>lucide:calendar</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'text.secondary' }}>
+											{new Date(emission.publishing_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+										</Typography>
+									</div>
 								)}
 								{emission.view_number != null && (
-									<MetaBadge icon="lucide:eye" label={`${emission.view_number.toLocaleString()} views`} />
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: AMBER }}>lucide:eye</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'text.secondary' }}>
+											{emission.view_number.toLocaleString()} views
+										</Typography>
+									</div>
 								)}
 								{emission.is_approved_content && (
-									<MetaBadge icon="lucide:shield-check" label="Approved" />
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={14} sx={{ color: AMBER }}>lucide:shield-check</FuseSvgIcon>
+										<Typography sx={{ fontSize: '0.82rem', fontWeight: 500, color: 'text.secondary' }}>Approved</Typography>
+									</div>
 								)}
 							</motion.div>
 						</>
