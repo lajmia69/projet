@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateStudioBoard } from '../../../api/hooks/boards/useCreateStudioBoard';
 import { useGetProjectTypes } from '../../../api/hooks/boards/useGetProjectTypes';
+import { CreateProductionProject } from '../../../api/types';
 import MenuItem from '@mui/material/MenuItem';
 
 const schema = z.object({
@@ -26,7 +27,9 @@ type FormType = z.infer<typeof schema>;
 function NewBoardItem() {
 	const [open, setOpen] = useState(false);
 	const { mutateAsync: createBoard } = useCreateStudioBoard();
-	const { data: projectTypes = [] } = useGetProjectTypes();
+	const { data: allProjectTypes = [] } = useGetProjectTypes();
+	// Filter to show only Radio Episode type
+	const projectTypes = allProjectTypes.filter((pt) => pt.project_class === 'Radio Episode');
 
 	const today = new Date().toISOString().split('T')[0];
 
@@ -42,7 +45,13 @@ function NewBoardItem() {
 	});
 
 	function onSubmit(data: FormType) {
-		createBoard(data).then(() => {
+		createBoard({
+			name: data.name,
+			description: data.description,
+			start_date: data.start_date,
+			end_date: data.end_date,
+			project_type_id: data.project_type_id
+		} as CreateProductionProject).then(() => {
 			reset();
 			setOpen(false);
 		});

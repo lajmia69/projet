@@ -10,13 +10,19 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import { styled } from '@mui/material/styles';
+import { useEffect, useState } from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
 import useUser from '@auth/useUser';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
-import Player from '@/components/Player';
+// Player wrapper moved to utils (UnifiedAudioPlayer)
+import UnifiedAudioPlayer from '../../../../studio/utils/UnifiedAudioPlayer';
+import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios';
 import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
 import { useLinkedStudioProjectForRadio, useLinkedStudioProjectTasksForRadio } from '../../api/hooks/useLinkedStudioProjectForRadio';
 import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
+import { createStudioProjectForContent } from '../../../../studio/api/utils/autoCreateStudioProject';
+import { useQueryClient } from '@tanstack/react-query';
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -70,10 +76,53 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 	console.log('[DEBUG] episodeId:', episodeId, 'account:', account?.id, 'hd_version:', episode?.hd_version, 'streaming_version:', episode?.streaming_version);
 
 	useStudioAuth();
-	const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_episode', Number(episodeId));
-	const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
-	const taskId = tasks[0]?.id;
-	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
+  const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_episode', Number(episodeId));
+  const queryClient = useQueryClient();
+  const [autoLinked, setAutoLinked] = useState(false);
+  const [linkingInProgress, setLinkingInProgress] = useState(false);
+  async function handleLinkStudio() {
+    if (!episode) return;
+    const token = (account?.token?.access) ?? '';
+    const start = Date.now();
+    // Link with content type radio_episode, episodeId as contentId, episode name as title
+    try {
+      setLinkingInProgress(true);
+      const res = await createStudioProjectForContent(1, token, 'radio_episode', Number(episodeId), episode.name ?? `Radio Episode ${episodeId}`);
+      if (res?.id) {
+        // refresh linked project data
+        queryClient.invalidateQueries({ queryKey: ['studio', 'linked-project-radio', 'radio_episode', Number(episodeId)] });
+      }
+    } catch (e) {
+      // Non-blocking; log for debugging
+      console.error('[Studio] Failed to link Studio project for episode', e);
+    } finally {
+      const elapsed = Date.now() - start;
+      const minVisible = 250;
+      if (elapsed < minVisible) {
+        await new Promise((r) => setTimeout(r, minVisible - elapsed));
+      }
+      setLinkingInProgress(false);
+    }
+  }
+
+  // Auto-link Studio project on first load if not linked yet
+  useEffect(() => {
+    console.log('[DEBUG] EpisodeDetailView auto-link check', {
+      episodeId,
+      episodeLoaded: !!episode,
+      linkedProject,
+      autoLinked,
+      linkingInProgress,
+    });
+    if (episode && !linkedProject && !autoLinked && !linkingInProgress) {
+      handleLinkStudio();
+      setAutoLinked(true);
+    }
+  }, [episode, linkedProject, autoLinked]);
+  const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
+  const taskId = tasks[0]?.id;
+  const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
+  const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id ?? null);
 
 	console.log('[DEBUG] Studio - linkedProject:', linkedProject, 'tasks:', tasks, 'taskAudio:', taskAudio);
 
@@ -129,18 +178,23 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 
 	console.log('[DEBUG] episodeId:', episodeId, 'account:', account?.id, 'hd_version:', episode?.hd_version, 'streaming_version:', episode?.streaming_version);
 
-	const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
-	const studioAudioSrc = taskAudio?.src ?? null;
-	const audioSrc = radioAudioSrc || studioAudioSrc;
+  const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
+  const studioAudioSrc = taskAudio?.src ?? null;
+  const studioMatch = (studioAudios ?? []).find(a => a.production_task?.id === taskId) 
+    ?? (studioAudios ?? []).find(a => a.production_task?.production_project?.id === linkedProject?.id) ?? null;
+  const studioSrc = studioMatch?.src ?? null;
+  const finalSrc = (radioAudioSrc ?? studioSrc) ?? null;
 
-	const audioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
-	const radioAudioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
-	const studioAudioDuration = taskAudio?.duration ?? null;
-	const audioDuration = radioAudioDuration || studioAudioDuration;
+  const radioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
+  const radioDuration = episode.streaming_version?.duration ?? episode.hd_version?.duration ?? null;
+  const studioDuration = taskAudio?.duration ?? null;
+  const durationFromStudio = studioDuration ?? '';
+  const audioDuration = (radioDuration ?? durationFromStudio) as string;
+  const finalTimestamp = radioTimestamp !== 0 ? radioTimestamp : 0;
 
 	const hasRadioVersions = !!(episode.streaming_version || episode.hd_version || episode.teaser_version);
 
-	return (
+  return (
 		<Root
 			scroll="page"
 			header={
@@ -184,8 +238,8 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 							</Button>
 						</motion.div>
 
-						<div className="flex flex-col gap-4">
-							<motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.4 } }} className="flex flex-wrap gap-2">
+  <div className="flex flex-col gap-4">
+                          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.4 } }} className="flex flex-wrap gap-2">
 								{episode.emission_type?.name && (
 									<Chip label={episode.emission_type.name} size="small"
 										sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', height: 22, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.18)', border: '1px solid rgba(244,63,94,0.35)' }}
@@ -206,12 +260,28 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 										sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.15)', border: '1px solid rgba(244,63,94,0.4)' }}
 									/>
 								)}
-								{episode.is_approved_content && (
+                                {episode.is_approved_content && (
 									<Chip label="Approved" size="small"
 										sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.3)' }}
 									/>
 								)}
-							</motion.div>
+                          </motion.div>
+
+                          {!linkedProject && (
+                            <div className="flex items-center gap-2 mt-2 p-2 border border-dashed rounded" style={{ borderColor: 'var(--mui-palette-divider)' }}>
+                              <FuseSvgIcon size={16} sx={{ color: 'var(--mui-palette-warning-main)' }}>lucide:alert-circle</FuseSvgIcon>
+                              <Typography variant="caption" color="text.secondary">
+                                Studio project not linked. Audio from Studio can be surfaced once linked.
+                              </Typography>
+                              {linkingInProgress ? (
+                                <><CircularProgress size={20} sx={{ color: 'var(--mui-palette-warning-main)' }} /><Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>Auto-linking...</Typography></>
+                              ) : (
+                                <Button variant="outlined" size="small" onClick={handleLinkStudio} sx={{ textTransform: 'none' }}>
+                                  Link Studio Project
+                                </Button>
+                              )}
+                            </div>
+                          )}
 
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.45 } }}>
 								<Typography component="h1" dir={langOrientation}
@@ -283,16 +353,14 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</>
 					)}
 
-					{audioSrc ? (
-						<Player
-							steps={getSteps()}
-							playlist={[{
-								src: audioSrc,
-								timestamp: audioTimestamp,
-							}]}
-							transcription={transcription as any}
-						/>
-					) : (
+                    {finalSrc ? (
+                        <UnifiedAudioPlayer
+                            src={finalSrc}
+                            timestamp={finalTimestamp}
+                            transcription={transcription as any}
+                            steps={getSteps()}
+                        />
+                    ) : (
 						<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
 							<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:audio-lines</FuseSvgIcon>
 							<Typography color="text.secondary" variant="h6">No audio available yet</Typography>
@@ -416,7 +484,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</div>
 					)}
 
-					{!audioSrc && (
+                    {!finalSrc && (
 					<Typography color="text.disabled" variant="body2" className="mb-4">
 						No audio versions available.
 					</Typography>

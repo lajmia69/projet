@@ -28,11 +28,14 @@ export function useGetTaskAudio(
 		queryFn: async (): Promise<AudioFile | null> => {
 			const { items } = await studioApiService.getAudioFiles(accountId);
 
+			// No project/task context - can't determine audio
+			if (!projectId && !taskId) return null;
+
 			// Strategy 1 – backend exposes production_task.id directly
-			const byTaskId = taskId
-				? items.find((a) => a.production_task?.id === taskId) ?? null
-				: null;
-			if (byTaskId) return byTaskId;
+			if (taskId) {
+				const byTaskId = items.find((a) => a.production_task?.id === taskId) ?? null;
+				if (byTaskId) return byTaskId;
+			}
 
 			// Strategy 2 – filter by project when task relationship is missing
 			if (projectId) {
@@ -40,18 +43,14 @@ export function useGetTaskAudio(
 					(a) => a.production_task?.production_project?.id !== undefined,
 				);
 				if (hasTaskRef) {
-					return (
-						items.find(
-							(a) => a.production_task?.production_project?.id === projectId,
-						) ?? null
-					);
+					const byProject = items.find(
+						(a) => a.production_task?.production_project?.id === projectId,
+					) ?? null;
+					if (byProject) return byProject;
 				}
-				// Strategy 3 – backend doesn't expose relationship; return null
-				// rather than guessing from [0].  Callers must rely on the
-				// Radio API hd_version / streaming_version instead.
-				return null;
 			}
 
+			// No matching audio found
 			return null;
 		},
 		enabled: !!accountId && (!!projectId || !!taskId),
