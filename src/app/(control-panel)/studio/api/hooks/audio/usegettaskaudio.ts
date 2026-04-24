@@ -7,21 +7,20 @@ import type { AudioFile } from '../../types';
  * useGetTaskAudio
  *
  * Returns the single audio file linked to a specific studio task.
- * This mirrors how Lesson resolves audio — scoped to the exact task
- * that was created for the content item, not the first item in a list.
  *
- * Usage:
- *   const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
- *   const audioSrc = taskAudio?.src ?? null;
- *
- * When `taskId` is undefined/null the query is disabled and returns undefined,
- * so callers safely fall through to their "no audio" state.
+ * @param projectId   - Studio project ID (used as fallback when taskId is missing)
+ * @param taskId      - Studio task ID (primary lookup key)
+ * @param accountIdOverride - Explicit account ID to query. Pass `1` for radio content
+ *                            which is always stored under account 1, regardless of the
+ *                            currently logged-in user's account.
  */
 export function useGetTaskAudio(
 	projectId?: number | null,
 	taskId?: number | null,
+	accountIdOverride?: number,
 ): { data: AudioFile | null | undefined; isLoading: boolean } {
-	const accountId = useCurrentAccountId();
+	const currentAccountId = useCurrentAccountId();
+	const accountId = accountIdOverride ?? currentAccountId;
 
 	return useQuery({
 		queryKey: ['studio', 'task-audio', accountId, projectId ?? null, taskId ?? null],
@@ -43,9 +42,10 @@ export function useGetTaskAudio(
 					(a) => a.production_task?.production_project?.id !== undefined,
 				);
 				if (hasTaskRef) {
-					const byProject = items.find(
-						(a) => a.production_task?.production_project?.id === projectId,
-					) ?? null;
+					const byProject =
+						items.find(
+							(a) => a.production_task?.production_project?.id === projectId,
+						) ?? null;
 					if (byProject) return byProject;
 				}
 			}

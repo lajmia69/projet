@@ -15,14 +15,15 @@ import CircularProgress from '@mui/material/CircularProgress';
 import useUser from '@auth/useUser';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
-// Player wrapper moved to utils (UnifiedAudioPlayer)
 import UnifiedAudioPlayer from '../../../../studio/utils/UnifiedAudioPlayer';
-import { useGetProjectAudios } from '../../../../studio/api/hooks/audio/useGetProjectAudios';
 import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
 import { useLinkedStudioProjectForRadio, useLinkedStudioProjectTasksForRadio } from '../../api/hooks/useLinkedStudioProjectForRadio';
 import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 import { createStudioProjectForContent } from '../../../../studio/api/utils/autoCreateStudioProject';
 import { useQueryClient } from '@tanstack/react-query';
+
+// Radio content is always stored under studio account 1
+const RADIO_STUDIO_ACCOUNT_ID = 1;
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -72,92 +73,52 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		episodeId,
 	);
 
-	console.log('[DEBUG] Episode is_approved_content:', episode?.is_approved_content, 'is_published:', episode?.is_published);
-	console.log('[DEBUG] episodeId:', episodeId, 'account:', account?.id, 'hd_version:', episode?.hd_version, 'streaming_version:', episode?.streaming_version);
-
 	useStudioAuth();
-  const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_episode', Number(episodeId));
-  const queryClient = useQueryClient();
-  const [autoLinked, setAutoLinked] = useState(false);
-  const [linkingInProgress, setLinkingInProgress] = useState(false);
-  async function handleLinkStudio() {
-    if (!episode) return;
-    const token = (account?.token?.access) ?? '';
-    const start = Date.now();
-    // Link with content type radio_episode, episodeId as contentId, episode name as title
-    try {
-      setLinkingInProgress(true);
-      const res = await createStudioProjectForContent(1, token, 'radio_episode', Number(episodeId), episode.name ?? `Radio Episode ${episodeId}`);
-      if (res?.id) {
-        // refresh linked project data
-        queryClient.invalidateQueries({ queryKey: ['studio', 'linked-project-radio', 'radio_episode', Number(episodeId)] });
-      }
-    } catch (e) {
-      // Non-blocking; log for debugging
-      console.error('[Studio] Failed to link Studio project for episode', e);
-    } finally {
-      const elapsed = Date.now() - start;
-      const minVisible = 250;
-      if (elapsed < minVisible) {
-        await new Promise((r) => setTimeout(r, minVisible - elapsed));
-      }
-      setLinkingInProgress(false);
-    }
-  }
 
-  // Auto-link Studio project on first load if not linked yet
-  useEffect(() => {
-    console.log('[DEBUG] EpisodeDetailView auto-link check', {
-      episodeId,
-      episodeLoaded: !!episode,
-      linkedProject,
-      autoLinked,
-      linkingInProgress,
-    });
-    if (episode && !linkedProject && !autoLinked && !linkingInProgress) {
-      handleLinkStudio();
-      setAutoLinked(true);
-    }
-  }, [episode, linkedProject, autoLinked]);
-  const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
-  const taskId = tasks[0]?.id;
-  const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
-  const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id ?? null);
+	// Linked studio project is always in account 1 for radio content
+	const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_episode', Number(episodeId));
+	const queryClient = useQueryClient();
+	const [autoLinked, setAutoLinked] = useState(false);
+	const [linkingInProgress, setLinkingInProgress] = useState(false);
 
-  // Lazy-load per-version audio sources when user opens the card (or hovers a version card)
-  const [lazySrc, setLazySrc] = useState({ streaming: null as string | null, hd: null as string | null, teaser: null as string | null });
+	async function handleLinkStudio() {
+		if (!episode) return;
+		const token = account?.token?.access ?? '';
+		try {
+			setLinkingInProgress(true);
+			const res = await createStudioProjectForContent(
+				RADIO_STUDIO_ACCOUNT_ID,
+				token,
+				'radio_episode',
+				Number(episodeId),
+				episode.name ?? `Radio Episode ${episodeId}`,
+			);
+			if (res?.id) {
+				queryClient.invalidateQueries({
+					queryKey: ['studio', 'linked-project-radio', 'radio_episode', Number(episodeId)],
+				});
+			}
+		} catch (e) {
+			console.error('[Studio] Failed to link Studio project for episode', e);
+		} finally {
+			setLinkingInProgress(false);
+		}
+	}
 
-  async function loadVersionSrc(versionKey: 'streaming' | 'hd' | 'teaser') {
-    // If we already have a source, no need to fetch
-    if ((versionKey === 'streaming' && (episode?.streaming_version?.src || lazySrc.streaming)) ||
-        (versionKey === 'hd' && (episode?.hd_version?.src || lazySrc.hd)) ||
-        (versionKey === 'teaser' && (episode?.teaser_version?.src || lazySrc.teaser))) {
-      return;
-    }
-    try {
-      // Attempt to fetch a version-specific audio URL from the backend
-      const id = episodeId;
-      const token = (account?.token?.access) ?? '';
-      const resp = await fetch(`/api/radio/episodes/${id}/audio/${versionKey}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const src = data?.src ?? data?.url ?? data?.audioUrl;
-      if (src) {
-        setLazySrc((s) => ({ ...s, [versionKey]: src }));
-      }
-    } catch (e) {
-      // Ignore fetch errors to avoid breaking UI; log softly
-      console.debug('[EpisodeDetail] lazy load audio failed for', versionKey, e);
-    }
-  }
+	// Auto-link on first load if not linked yet
+	useEffect(() => {
+		if (episode && !linkedProject && !autoLinked && !linkingInProgress) {
+			handleLinkStudio();
+			setAutoLinked(true);
+		}
+	}, [episode, linkedProject, autoLinked]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	console.log('[DEBUG] Studio - linkedProject:', linkedProject, 'tasks:', tasks, 'taskAudio:', taskAudio);
+	const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
+	const taskId = tasks[0]?.id;
+
+	// ✅ Pass RADIO_STUDIO_ACCOUNT_ID so audio is fetched from account 1,
+	//    not the currently logged-in user's account.
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId, RADIO_STUDIO_ACCOUNT_ID);
 
 	if (!account || accountLoading || episodeLoading) return <FuseLoading />;
 
@@ -209,29 +170,21 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 			}));
 	}
 
-	console.log('[DEBUG] episodeId:', episodeId, 'account:', account?.id, 'hd_version:', episode?.hd_version, 'streaming_version:', episode?.streaming_version);
+	// Prefer audio directly attached to the radio episode; fall back to studio task audio
+	const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
+	const studioAudioSrc = taskAudio?.src ?? null;
+	const finalSrc = radioAudioSrc ?? studioAudioSrc;
 
-  const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
-  const studioAudioSrc = taskAudio?.src ?? null;
-  const studioMatch = (studioAudios ?? []).find(a => a.production_task?.id === taskId) 
-    ?? (studioAudios ?? []).find(a => a.production_task?.production_project?.id === linkedProject?.id) ?? null;
-  const studioSrc = studioMatch?.src ?? null;
-  // Use lazy-loaded sources if available
-  const streamingSrc = episode.streaming_version?.src ?? lazySrc.streaming;
-  const hdSrc = episode.hd_version?.src ?? lazySrc.hd;
-  const teaserSrc = episode.teaser_version?.src ?? lazySrc.teaser;
-  const finalSrc = (radioAudioSrc ?? studioSrc) ?? (streamingSrc ?? hdSrc ?? teaserSrc) ?? null;
+	const radioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
+	const finalTimestamp = radioTimestamp;
 
-  const radioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
-  const radioDuration = episode.streaming_version?.duration ?? episode.hd_version?.duration ?? null;
-  const studioDuration = taskAudio?.duration ?? null;
-  const durationFromStudio = studioDuration ?? '';
-  const audioDuration = (radioDuration ?? durationFromStudio) as string;
-  const finalTimestamp = radioTimestamp !== 0 ? radioTimestamp : 0;
+	const radioDuration = episode.streaming_version?.duration ?? episode.hd_version?.duration ?? null;
+	const studioDuration = taskAudio?.duration ?? null;
+	const audioDuration = (radioDuration ?? studioDuration) as string | null;
 
 	const hasRadioVersions = !!(episode.streaming_version || episode.hd_version || episode.teaser_version);
 
-  return (
+	return (
 		<Root
 			scroll="page"
 			header={
@@ -275,8 +228,8 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 							</Button>
 						</motion.div>
 
-  <div className="flex flex-col gap-4">
-                          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.4 } }} className="flex flex-wrap gap-2">
+						<div className="flex flex-col gap-4">
+							<motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.05, duration: 0.4 } }} className="flex flex-wrap gap-2">
 								{episode.emission_type?.name && (
 									<Chip label={episode.emission_type.name} size="small"
 										sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', height: 22, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.18)', border: '1px solid rgba(244,63,94,0.35)' }}
@@ -297,28 +250,28 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 										sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.15)', border: '1px solid rgba(244,63,94,0.4)' }}
 									/>
 								)}
-                                {episode.is_approved_content && (
+								{episode.is_approved_content && (
 									<Chip label="Approved" size="small"
 										sx={{ height: 22, fontSize: '0.7rem', fontWeight: 700, color: '#fda4af', backgroundColor: 'rgba(244,63,94,0.12)', border: '1px solid rgba(244,63,94,0.3)' }}
 									/>
 								)}
-                          </motion.div>
+							</motion.div>
 
-                          {!linkedProject && (
-                            <div className="flex items-center gap-2 mt-2 p-2 border border-dashed rounded" style={{ borderColor: 'var(--mui-palette-divider)' }}>
-                              <FuseSvgIcon size={16} sx={{ color: 'var(--mui-palette-warning-main)' }}>lucide:alert-circle</FuseSvgIcon>
-                              <Typography variant="caption" color="text.secondary">
-                                Studio project not linked. Audio from Studio can be surfaced once linked.
-                              </Typography>
-                              {linkingInProgress ? (
-                                <><CircularProgress size={20} sx={{ color: 'var(--mui-palette-warning-main)' }} /><Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>Auto-linking...</Typography></>
-                              ) : (
-                                <Button variant="outlined" size="small" onClick={handleLinkStudio} sx={{ textTransform: 'none' }}>
-                                  Link Studio Project
-                                </Button>
-                              )}
-                            </div>
-                          )}
+							{!linkedProject && (
+								<div className="flex items-center gap-2 mt-2 p-2 border border-dashed rounded" style={{ borderColor: 'var(--mui-palette-divider)' }}>
+									<FuseSvgIcon size={16} sx={{ color: 'var(--mui-palette-warning-main)' }}>lucide:alert-circle</FuseSvgIcon>
+									<Typography variant="caption" color="text.secondary">
+										Studio project not linked. Audio from Studio can be surfaced once linked.
+									</Typography>
+									{linkingInProgress ? (
+										<><CircularProgress size={20} sx={{ color: 'var(--mui-palette-warning-main)' }} /><Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>Auto-linking...</Typography></>
+									) : (
+										<Button variant="outlined" size="small" onClick={handleLinkStudio} sx={{ textTransform: 'none' }}>
+											Link Studio Project
+										</Button>
+									)}
+								</div>
+							)}
 
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.45 } }}>
 								<Typography component="h1" dir={langOrientation}
@@ -390,44 +343,50 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						</>
 					)}
 
-                    {finalSrc ? (
-                        <UnifiedAudioPlayer
-                            src={finalSrc}
-                            timestamp={finalTimestamp}
-                            transcription={transcription as any}
-                            steps={getSteps()}
-                        />
-                    ) : (
-                        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
-                          {hasContent && (
-                            <div
-                              dir={langOrientation}
-                              className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
-                              style={{ borderColor: 'rgba(0,0,0,0.12)' }}
-                            >
-                              <Typography
-                                variant="subtitle2"
-                                color="text.secondary"
-                                className="mb-4 font-semibold uppercase tracking-widest"
-                              >
-                                Transcription
-                              </Typography>
-                              {transcription.content.map((item, idx) => (
-                                <p key={idx} className="text-sm leading-relaxed" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-                                  {item.speaker && (
-                                    <span className="mr-2 font-semibold" style={{ color: 'var(--mui-palette-text-primary)' }}>
-                                      {item.speaker}:
-                                    </span>
-                                  )}
-                                  {item.text}
-                                </p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                    )}
+					{finalSrc ? (
+						<UnifiedAudioPlayer
+							src={finalSrc}
+							timestamp={finalTimestamp}
+							transcription={transcription as any}
+							steps={getSteps()}
+						/>
+					) : (
+						<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
+							<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:audio-lines</FuseSvgIcon>
+							<Typography color="text.secondary" variant="h6">No audio available yet</Typography>
+							<Typography color="text.disabled" variant="body2">
+								Audio will appear here once it has been uploaded and linked to this episode.
+							</Typography>
+							{hasContent && (
+								<div
+									dir={langOrientation}
+									className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
+									style={{ borderColor: 'rgba(0,0,0,0.12)' }}
+								>
+									<Typography
+										variant="subtitle2"
+										color="text.secondary"
+										className="mb-4 font-semibold uppercase tracking-widest"
+									>
+										Transcription
+									</Typography>
+									{transcription.content.map((item, idx) => (
+										<p key={idx} className="text-sm leading-relaxed" style={{ color: 'var(--mui-palette-text-secondary)' }}>
+											{item.speaker && (
+												<span className="mr-2 font-semibold" style={{ color: 'var(--mui-palette-text-primary)' }}>
+													{item.speaker}:
+												</span>
+											)}
+											{item.text}
+										</p>
+									))}
+								</div>
+							)}
+						</div>
+					)}
 
 					<Divider className="my-4" />
+
 					<Typography
 						variant="subtitle2"
 						color="text.secondary"
@@ -436,62 +395,56 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						Audio Versions
 					</Typography>
 
-                    {hasRadioVersions && (
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-                            {[
-                                { label: 'Streaming', ver: episode.streaming_version, key: 'streaming' },
-                                { label: 'HD', ver: episode.hd_version, key: 'hd' },
-                                { label: 'Teaser', ver: episode.teaser_version, key: 'teaser' },
-                            ].map(({ label, ver, key }) => (
-                                (ver || (lazySrc as any)[key]) ? (
-                                    <div
-                                        key={label}
-                                        className="flex flex-col gap-1 rounded-xl p-3"
-                                        style={{ border: '1px solid var(--mui-palette-divider)', background: 'var(--mui-palette-background-paper)' }}
-                                        onMouseEnter={() => loadVersionSrc(key as 'streaming'|'hd'|'teaser')}
-                                      >
-                                        <Typography
-                                            variant="caption"
-                                            sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.disabled' }}
-                                        >
-                                            {label}
-                                        </Typography>
-                                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
-                                            {ver?.name ?? ((lazySrc as any)[key] ? 'Loaded' : '—')}
-                                        </Typography>
-                                        <audio
-                                            controls
-                                            src={ver?.src ?? (lazySrc as any)[key] ?? ''}
-                                            style={{ width: '100%' }}
-                                            preload="metadata"
-                                        />
-                                        <div className="flex flex-wrap gap-3 mt-0.5">
-                                            {ver?.duration && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
-                                                    <Typography className="text-xs" color="text.secondary">
-                                                        <DurationDisplay isoDuration={ver.duration} format="short" />
-                                                    </Typography>
-                                                </div>
-                                            )}
-                                            {ver?.format?.name && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <FuseSvgIcon size={13} color="disabled">lucide:file-audio</FuseSvgIcon>
-                                                    <Typography className="text-xs" color="text.secondary">{ver.format.name}</Typography>
-                                                </div>
-                                            )}
-                                            {ver?.format?.bit_rates && (
-                                                <div className="flex items-center gap-1.5">
-                                                    <FuseSvgIcon size={13} color="disabled">lucide:activity</FuseSvgIcon>
-                                                    <Typography className="text-xs" color="text.secondary">{ver.format.bit_rates} kbps</Typography>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                ) : null
-                            ))}
-                        </div>
-                    )}
+					{hasRadioVersions && (
+						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+							{[
+								{ label: 'Streaming', ver: episode.streaming_version },
+								{ label: 'HD', ver: episode.hd_version },
+								{ label: 'Teaser', ver: episode.teaser_version },
+							].map(({ label, ver }) =>
+								ver ? (
+									<div
+										key={label}
+										className="flex flex-col gap-1 rounded-xl p-3"
+										style={{ border: '1px solid var(--mui-palette-divider)', background: 'var(--mui-palette-background-paper)' }}
+									>
+										<Typography
+											variant="caption"
+											sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.disabled' }}
+										>
+											{label}
+										</Typography>
+										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
+											{ver.name || '—'}
+										</Typography>
+										<audio controls src={ver.src ?? ''} style={{ width: '100%' }} preload="metadata" />
+										<div className="flex flex-wrap gap-3 mt-0.5">
+											{ver.duration && (
+												<div className="flex items-center gap-1.5">
+													<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+													<Typography className="text-xs" color="text.secondary">
+														<DurationDisplay isoDuration={ver.duration} format="short" />
+													</Typography>
+												</div>
+											)}
+											{ver.format?.name && (
+												<div className="flex items-center gap-1.5">
+													<FuseSvgIcon size={13} color="disabled">lucide:file-audio</FuseSvgIcon>
+													<Typography className="text-xs" color="text.secondary">{ver.format.name}</Typography>
+												</div>
+											)}
+											{ver.format?.bit_rates && (
+												<div className="flex items-center gap-1.5">
+													<FuseSvgIcon size={13} color="disabled">lucide:activity</FuseSvgIcon>
+													<Typography className="text-xs" color="text.secondary">{ver.format.bit_rates} kbps</Typography>
+												</div>
+											)}
+										</div>
+									</div>
+								) : null,
+							)}
+						</div>
+					)}
 
 					{taskAudio && !hasRadioVersions && (
 						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
@@ -508,25 +461,23 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 								<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
 									{taskAudio.name || '—'}
 								</Typography>
-								<div className="flex flex-wrap gap-3 mt-0.5">
-									{taskAudio.duration && (
-										<div className="flex items-center gap-1.5">
-											<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
-											<Typography className="text-xs" color="text.secondary">
-												<DurationDisplay isoDuration={taskAudio.duration} format="short" />
-											</Typography>
-										</div>
-									)}
-								</div>
+								{taskAudio.duration && (
+									<div className="flex items-center gap-1.5">
+										<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+										<Typography className="text-xs" color="text.secondary">
+											<DurationDisplay isoDuration={taskAudio.duration} format="short" />
+										</Typography>
+									</div>
+								)}
 							</div>
 						</div>
 					)}
 
-                    {!finalSrc && (
-					<Typography color="text.disabled" variant="body2" className="mb-4">
-						No audio versions available.
-					</Typography>
-				)}
+					{!finalSrc && !hasRadioVersions && !taskAudio && (
+						<Typography color="text.disabled" variant="body2" className="mb-4">
+							No audio versions available.
+						</Typography>
+					)}
 
 					{episode.guests && episode.guests.length > 0 && (
 						<>
@@ -554,11 +505,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 													{guest.full_name}
 												</Typography>
 												{guest.guest_type?.name && (
-													<Chip
-														label={guest.guest_type.name}
-														size="small"
-														sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }}
-													/>
+													<Chip label={guest.guest_type.name} size="small" sx={{ height: 18, fontSize: '0.65rem', fontWeight: 700 }} />
 												)}
 											</div>
 											{guest.biography && (
@@ -585,12 +532,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 							</Typography>
 							<div className="flex flex-wrap gap-2">
 								{episode.tags.map((tag) => (
-									<Chip
-										key={tag}
-										label={tag}
-										size="small"
-										sx={{ fontSize: '0.75rem', fontWeight: 500, borderRadius: '8px' }}
-									/>
+									<Chip key={tag} label={tag} size="small" sx={{ fontSize: '0.75rem', fontWeight: 500, borderRadius: '8px' }} />
 								))}
 							</div>
 						</>
