@@ -15,7 +15,7 @@ import { useEpisode } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
 import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
-import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useLinkedStudioProjectForRadio, useLinkedStudioProjectTasksForRadio } from '../../api/hooks/useLinkedStudioProjectForRadio';
 import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 
 function safeTranscription(raw: unknown): {
@@ -66,11 +66,15 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 		episodeId,
 	);
 
+	console.log('[DEBUG] Episode is_approved_content:', episode?.is_approved_content, 'is_published:', episode?.is_published);
+
 	useStudioAuth();
-	const { data: linkedProject } = useLinkedStudioProject('radio_episode', Number(episodeId));
-	const { data: tasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+	const { data: linkedProject } = useLinkedStudioProjectForRadio('radio_episode', Number(episodeId));
+	const { data: tasks = [] } = useLinkedStudioProjectTasksForRadio(linkedProject?.id);
 	const taskId = tasks[0]?.id;
 	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
+
+	console.log('[DEBUG] Studio - linkedProject:', linkedProject, 'tasks:', tasks, 'taskAudio:', taskAudio);
 
 	if (!account || accountLoading || episodeLoading) return <FuseLoading />;
 
@@ -121,6 +125,8 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 				text: c?.text ?? '',
 			}));
 	}
+
+	console.log('[DEBUG] episodeId:', episodeId, 'account:', account?.id, 'hd_version:', episode?.hd_version, 'streaming_version:', episode?.streaming_version);
 
 	const radioAudioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
 	const studioAudioSrc = taskAudio?.src ?? null;

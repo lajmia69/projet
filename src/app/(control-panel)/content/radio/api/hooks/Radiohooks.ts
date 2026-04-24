@@ -181,14 +181,16 @@ export const useSearchEmissions = (id: string, token: string, search: SearchEmis
 export const useEmissions = (id: string, token: string) =>
 	useQuery({ queryKey: emissionsQueryKey(id), queryFn: () => radioApi.getEmissions(id, token), enabled: !!id && !!token });
 
-export const useEmission = (id: string, token: string, emissionId: string) =>
-	useQuery({ queryKey: emissionQueryKey(id, emissionId), queryFn: () => radioApi.getEmission(id, token, emissionId), enabled: !!id && !!token && !!emissionId });
+export const useEmission = (id: string, token: string, emissionId: string) => {
+	const emissionAccountId = '1';
+	return useQuery({ queryKey: emissionQueryKey(emissionAccountId, emissionId), queryFn: () => radioApi.getEmission(emissionAccountId, token, emissionId), enabled: !!token && !!emissionId });
+};
 
 export const useCreateEmission = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: CreateEmissionPayload) => radioApi.createEmission(id, token, data),
-		onSuccess: () => { qc.invalidateQueries({ queryKey: emissionsQueryKey(id) }); enqueueSnackbar('Emission created', { variant: 'success' }); },
+		onSuccess: () => { qc.invalidateQueries({ queryKey: emissionsQueryKey('1') }); enqueueSnackbar('Emission created', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error creating emission', { variant: 'error' }),
 	});
 };
@@ -197,7 +199,7 @@ export const useUpdateEmission = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateEmissionPayload) => radioApi.updateEmission(id, token, data),
-		onSuccess: (_, d) => { qc.invalidateQueries({ queryKey: emissionsQueryKey(id) }); qc.invalidateQueries({ queryKey: emissionQueryKey(id, String(d.id)) }); enqueueSnackbar('Emission updated', { variant: 'success' }); },
+		onSuccess: (_, d) => { qc.invalidateQueries({ queryKey: emissionsQueryKey('1') }); qc.invalidateQueries({ queryKey: emissionQueryKey('1', String(d.id)) }); enqueueSnackbar('Emission updated', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error updating emission', { variant: 'error' }),
 	});
 };
@@ -206,7 +208,7 @@ export const useDeleteEmission = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioApi.deleteEmission(id, token, emissionId),
-		onSuccess: () => { qc.invalidateQueries({ queryKey: emissionsQueryKey(id) }); enqueueSnackbar('Emission deleted', { variant: 'success' }); },
+		onSuccess: () => { qc.invalidateQueries({ queryKey: emissionsQueryKey('1') }); enqueueSnackbar('Emission deleted', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error deleting emission', { variant: 'error' }),
 	});
 };
@@ -216,10 +218,10 @@ export const useValidateEmission = (id: string, token: string) => {
 	return useMutation({
 		mutationFn: ({ id: emissionId }: { id: number; name: string }) => radioApi.validateEmission(id, token, emissionId),
 		onSuccess: (_, { id: emissionId, name }) => {
-			qc.invalidateQueries({ queryKey: emissionsQueryKey(id) });
-			qc.invalidateQueries({ queryKey: emissionQueryKey(id, String(emissionId)) });
+			qc.invalidateQueries({ queryKey: emissionsQueryKey('1') });
+			qc.invalidateQueries({ queryKey: emissionQueryKey('1', String(emissionId)) });
 			enqueueSnackbar('Emission validated', { variant: 'success' });
-			createStudioProjectForContent(Number(id), token, 'radio_emission', emissionId, name);
+			createStudioProjectForContent(1, token, 'radio_emission', emissionId, name);
 		},
 		onError: () => enqueueSnackbar('Error validating emission', { variant: 'error' }),
 	});
@@ -229,7 +231,7 @@ export const usePublishEmission = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (emissionId: number) => radioApi.publishEmission(id, token, emissionId),
-		onSuccess: (_, emissionId) => { qc.invalidateQueries({ queryKey: emissionsQueryKey(id) }); qc.invalidateQueries({ queryKey: emissionQueryKey(id, String(emissionId)) }); enqueueSnackbar('Emission published', { variant: 'success' }); },
+		onSuccess: (_, emissionId) => { qc.invalidateQueries({ queryKey: emissionsQueryKey('1') }); qc.invalidateQueries({ queryKey: emissionQueryKey('1', String(emissionId)) }); enqueueSnackbar('Emission published', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error publishing emission', { variant: 'error' }),
 	});
 };
@@ -271,14 +273,16 @@ export const searchEpisodesQueryKey = (id: string, search: SearchEpisodes) => ['
 export const useSearchEpisodes = (id: string, token: string, search: SearchEpisodes) =>
 	useQuery({ queryKey: searchEpisodesQueryKey(id, search), queryFn: () => radioApi.searchEpisodes(id, token, search), enabled: !!id && !!token });
 
-export const useEpisode = (id: string, token: string, episodeId: string) =>
-	useQuery({ queryKey: episodeQueryKey(id, episodeId), queryFn: () => radioApi.getEpisode(id, token, episodeId), enabled: !!id && !!token && !!episodeId });
+export const useEpisode = (id: string, token: string, episodeId: string) => {
+	const episodeAccountId = '1';
+	return useQuery({ queryKey: episodeQueryKey(episodeAccountId, episodeId), queryFn: () => radioApi.getEpisode(episodeAccountId, token, episodeId), enabled: !!token && !!episodeId });
+};
 
 export const useCreateEpisode = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: CreateEpisodePayload) => radioApi.createEpisode(id, token, data),
-		onSuccess: () => { qc.invalidateQueries({ queryKey: episodesQueryKey(id) }); enqueueSnackbar('Episode created', { variant: 'success' }); },
+		onSuccess: () => { qc.invalidateQueries({ queryKey: episodesQueryKey('1') }); enqueueSnackbar('Episode created', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error creating episode', { variant: 'error' }),
 	});
 };
@@ -287,7 +291,7 @@ export const useUpdateEpisode = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateEpisodePayload) => radioApi.updateEpisode(id, token, data),
-		onSuccess: (_, d) => { qc.invalidateQueries({ queryKey: episodesQueryKey(id) }); qc.invalidateQueries({ queryKey: episodeQueryKey(id, String(d.id)) }); enqueueSnackbar('Episode updated', { variant: 'success' }); },
+		onSuccess: (_, d) => { qc.invalidateQueries({ queryKey: episodesQueryKey('1') }); qc.invalidateQueries({ queryKey: episodeQueryKey('1', String(d.id)) }); enqueueSnackbar('Episode updated', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error updating episode', { variant: 'error' }),
 	});
 };
@@ -296,7 +300,7 @@ export const useDeleteEpisode = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (episodeId: number) => radioApi.deleteEpisode(id, token, episodeId),
-		onSuccess: () => { qc.invalidateQueries({ queryKey: episodesQueryKey(id) }); enqueueSnackbar('Episode deleted', { variant: 'success' }); },
+		onSuccess: () => { qc.invalidateQueries({ queryKey: episodesQueryKey('1') }); enqueueSnackbar('Episode deleted', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error deleting episode', { variant: 'error' }),
 	});
 };
@@ -306,10 +310,10 @@ export const useValidateEpisode = (id: string, token: string) => {
 	return useMutation({
 		mutationFn: ({ id: episodeId }: { id: number; name: string }) => radioApi.validateEpisode(id, token, episodeId),
 		onSuccess: (_, { id: episodeId, name }) => {
-			qc.invalidateQueries({ queryKey: episodesQueryKey(id) });
-			qc.invalidateQueries({ queryKey: episodeQueryKey(id, String(episodeId)) });
+			qc.invalidateQueries({ queryKey: episodesQueryKey('1') });
+			qc.invalidateQueries({ queryKey: episodeQueryKey('1', String(episodeId)) });
 			enqueueSnackbar('Episode validated', { variant: 'success' });
-			createStudioProjectForContent(Number(id), token, 'radio_episode', episodeId, name);
+			createStudioProjectForContent(1, token, 'radio_episode', episodeId, name);
 		},
 		onError: () => enqueueSnackbar('Error validating episode', { variant: 'error' }),
 	});
@@ -319,7 +323,7 @@ export const usePublishEpisode = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (episodeId: number) => radioApi.publishEpisode(id, token, episodeId),
-		onSuccess: (_, episodeId) => { qc.invalidateQueries({ queryKey: episodesQueryKey(id) }); qc.invalidateQueries({ queryKey: episodeQueryKey(id, String(episodeId)) }); enqueueSnackbar('Episode published', { variant: 'success' }); },
+		onSuccess: (_, episodeId) => { qc.invalidateQueries({ queryKey: episodesQueryKey('1') }); qc.invalidateQueries({ queryKey: episodeQueryKey('1', String(episodeId)) }); enqueueSnackbar('Episode published', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error publishing episode', { variant: 'error' }),
 	});
 };
@@ -398,14 +402,16 @@ export const searchReportagesQueryKey = (id: string, search: SearchReportages) =
 export const useSearchReportages = (id: string, token: string, search: SearchReportages) =>
 	useQuery({ queryKey: searchReportagesQueryKey(id, search), queryFn: () => radioApi.searchReportages(id, token, search), enabled: !!id && !!token });
 
-export const useReportage = (id: string, token: string, reportageId: string) =>
-	useQuery({ queryKey: reportageQueryKey(id, reportageId), queryFn: () => radioApi.getReportage(id, token, reportageId), enabled: !!id && !!token && !!reportageId });
+export const useReportage = (id: string, token: string, reportageId: string) => {
+	const reportageAccountId = '1';
+	return useQuery({ queryKey: reportageQueryKey(reportageAccountId, reportageId), queryFn: () => radioApi.getReportage(reportageAccountId, token, reportageId), enabled: !!token && !!reportageId });
+};
 
 export const useCreateReportage = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: CreateReportagePayload) => radioApi.createReportage(id, token, data),
-		onSuccess: () => { qc.invalidateQueries({ queryKey: reportagesQueryKey(id) }); enqueueSnackbar('Reportage created', { variant: 'success' }); },
+		onSuccess: () => { qc.invalidateQueries({ queryKey: reportagesQueryKey('1') }); enqueueSnackbar('Reportage created', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error creating reportage', { variant: 'error' }),
 	});
 };
@@ -414,7 +420,7 @@ export const useUpdateReportage = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (data: UpdateReportagePayload) => radioApi.updateReportage(id, token, data),
-		onSuccess: (_, d) => { qc.invalidateQueries({ queryKey: reportagesQueryKey(id) }); qc.invalidateQueries({ queryKey: reportageQueryKey(id, String(d.id)) }); enqueueSnackbar('Reportage updated', { variant: 'success' }); },
+		onSuccess: (_, d) => { qc.invalidateQueries({ queryKey: reportagesQueryKey('1') }); qc.invalidateQueries({ queryKey: reportageQueryKey('1', String(d.id)) }); enqueueSnackbar('Reportage updated', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error updating reportage', { variant: 'error' }),
 	});
 };
@@ -423,7 +429,7 @@ export const useDeleteReportage = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioApi.deleteReportage(id, token, reportageId),
-		onSuccess: () => { qc.invalidateQueries({ queryKey: reportagesQueryKey(id) }); enqueueSnackbar('Reportage deleted', { variant: 'success' }); },
+		onSuccess: () => { qc.invalidateQueries({ queryKey: reportagesQueryKey('1') }); enqueueSnackbar('Reportage deleted', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error deleting reportage', { variant: 'error' }),
 	});
 };
@@ -432,7 +438,7 @@ export const useValidateReportage = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioApi.validateReportage(id, token, reportageId),
-		onSuccess: (_, reportageId) => { qc.invalidateQueries({ queryKey: reportagesQueryKey(id) }); qc.invalidateQueries({ queryKey: reportageQueryKey(id, String(reportageId)) }); enqueueSnackbar('Reportage validated', { variant: 'success' }); },
+		onSuccess: (_, reportageId) => { qc.invalidateQueries({ queryKey: reportagesQueryKey('1') }); qc.invalidateQueries({ queryKey: reportageQueryKey('1', String(reportageId)) }); enqueueSnackbar('Reportage validated', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error validating reportage', { variant: 'error' }),
 	});
 };
@@ -441,7 +447,7 @@ export const usePublishReportage = (id: string, token: string) => {
 	const qc = useQueryClient(); const { enqueueSnackbar } = useSnackbar();
 	return useMutation({
 		mutationFn: (reportageId: number) => radioApi.publishReportage(id, token, reportageId),
-		onSuccess: (_, reportageId) => { qc.invalidateQueries({ queryKey: reportagesQueryKey(id) }); qc.invalidateQueries({ queryKey: reportageQueryKey(id, String(reportageId)) }); enqueueSnackbar('Reportage published', { variant: 'success' }); },
+		onSuccess: (_, reportageId) => { qc.invalidateQueries({ queryKey: reportagesQueryKey('1') }); qc.invalidateQueries({ queryKey: reportageQueryKey('1', String(reportageId)) }); enqueueSnackbar('Reportage published', { variant: 'success' }); },
 		onError: () => enqueueSnackbar('Error publishing reportage', { variant: 'error' }),
 	});
 };
