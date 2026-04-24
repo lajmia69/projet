@@ -13,6 +13,9 @@ import useUser from '@auth/useUser';
 import { useReportage } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
+import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
+import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -63,6 +66,12 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 		reportageId,
 	);
 
+	useStudioAuth();
+const { data: linkedProject } = useLinkedStudioProject('radio_reportage', Number(reportageId));
+	const { data: tasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+	const taskId = tasks[0]?.id;
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
+
 	if (!account || accountLoading || reportageLoading) return <FuseLoading />;
 	if (!reportage || isError) {
 		return (
@@ -97,8 +106,14 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 			}));
 	}
 
-	const audioSrc = reportage.hd_version?.src || reportage.streaming_version?.src || null;
-	const audioDuration = reportage.streaming_version?.duration || reportage.hd_version?.duration || null;
+	const radioAudioSrc = reportage.hd_version?.src || reportage.streaming_version?.src || null;
+	const studioAudioSrc = taskAudio?.src ?? null;
+	const audioSrc = radioAudioSrc || studioAudioSrc;
+
+	const radioAudioDuration = reportage.streaming_version?.duration || reportage.hd_version?.duration || null;
+	const studioAudioDuration = taskAudio?.duration ?? null;
+	const audioDuration = radioAudioDuration || studioAudioDuration;
+
 	const hasRadioVersions = !!(reportage.streaming_version || reportage.hd_version || reportage.teaser_version);
 
 	return (
@@ -303,7 +318,22 @@ function ReportageDetailView({ reportageId }: ReportageDetailViewProps) {
 							</div>
 						)}
 
-						{!hasRadioVersions && (
+						{taskAudio && (
+							<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid ${VIOLET}33`, background: `${VIOLET}0a` }}>
+								<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: VIOLET }}>
+									{taskAudio.type_label || 'Studio'}
+								</Typography>
+								<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">{taskAudio.name || '—'}</Typography>
+								{taskAudio.duration && (
+									<div className="flex items-center gap-1.5 mt-0.5">
+										<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+										<Typography className="text-xs" color="text.secondary"><DurationDisplay isoDuration={taskAudio.duration} format="short" /></Typography>
+									</div>
+								)}
+							</div>
+						)}
+
+						{!hasRadioVersions && !taskAudio && (
 							<Typography color="text.disabled" variant="body2">
 								No audio versions available.
 							</Typography>

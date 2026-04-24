@@ -13,6 +13,9 @@ import useUser from '@auth/useUser';
 import { useEmission } from '../../api/hooks/Radiohooks';
 import DurationDisplay from '../ui/Durationdisplay';
 import Player from '@/components/Player';
+import { useStudioAuth } from '../../../../studio/api/hooks/useStudioauth';
+import { useLinkedStudioProject, useLinkedStudioProjectTasks } from '../../../../studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '../../../../studio/api/hooks/audio/usegettaskaudio';
 
 function safeTranscription(raw: unknown): {
 	title?: string;
@@ -62,6 +65,12 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 		emissionId,
 	);
 
+	useStudioAuth();
+	const { data: linkedProject } = useLinkedStudioProject('radio_emission', Number(emissionId));
+	const { data: tasks = [] } = useLinkedStudioProjectTasks(linkedProject?.id);
+	const taskId = tasks[0]?.id;
+	const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
+
 	if (!account || accountLoading || emissionLoading) return <FuseLoading />;
 	if (!emission || isError) {
 		return (
@@ -98,8 +107,14 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 			}));
 	}
 
-	const audioSrc = emission.hd_version?.src || emission.streaming_version?.src || null;
-	const audioDuration = emission.streaming_version?.duration || emission.hd_version?.duration || null;
+	const radioAudioSrc = emission.hd_version?.src || emission.streaming_version?.src || null;
+	const studioAudioSrc = taskAudio?.src ?? null;
+	const audioSrc = radioAudioSrc || studioAudioSrc;
+
+	const radioAudioDuration = emission.streaming_version?.duration || emission.hd_version?.duration || null;
+	const studioAudioDuration = taskAudio?.duration ?? null;
+	const audioDuration = radioAudioDuration || studioAudioDuration;
+
 	const hasRadioVersions = !!(emission.streaming_version || emission.hd_version || emission.teaser_version);
 
 	return (
@@ -265,7 +280,7 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 							Audio Versions
 						</Typography>
 
-						{hasRadioVersions && (
+{hasRadioVersions && (
 							<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
 								{emission.streaming_version && (
 									<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid ${AMBER}33`, background: `${AMBER}0a` }}>
@@ -280,8 +295,8 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 									</div>
 								)}
 								{emission.hd_version && (
-									<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid ${AMBER_DEEP}33`, background: `${AMBER_DEEP}0a` }}>
-										<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: AMBER_DEEP }}>HD</Typography>
+									<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid #b4530933`, background: `#b453090a` }}>
+										<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#b45309' }}>HD</Typography>
 										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">{emission.hd_version.name || '—'}</Typography>
 										{emission.hd_version.duration && (
 											<div className="flex items-center gap-1.5 mt-0.5">
@@ -306,7 +321,22 @@ function EmissionDetailView({ emissionId }: EmissionDetailViewProps) {
 							</div>
 						)}
 
-						{!hasRadioVersions && (
+						{taskAudio && !hasRadioVersions && (
+							<div className="flex flex-col gap-1 rounded-xl p-3" style={{ border: `1px solid ${AMBER}33`, background: `${AMBER}0a` }}>
+								<Typography sx={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: AMBER }}>
+									{taskAudio.type_label || 'Studio'}
+								</Typography>
+								<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">{taskAudio.name || '—'}</Typography>
+								{taskAudio.duration && (
+									<div className="flex items-center gap-1.5 mt-0.5">
+										<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+										<Typography className="text-xs" color="text.secondary"><DurationDisplay isoDuration={taskAudio.duration} format="short" /></Typography>
+									</div>
+								)}
+							</div>
+						)}
+
+						{!hasRadioVersions && !taskAudio && (
 							<Typography color="text.disabled" variant="body2">
 								No audio versions available.
 							</Typography>

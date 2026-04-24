@@ -1,0 +1,1 @@
+export { useReportage, useReportages, useSearchReportages } from '@/app/(control-panel)/content/radio/api/hooks/Radiohooks';

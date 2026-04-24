@@ -114,7 +114,9 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 	}
 
 	const audioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
+	const audioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
 	const audioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
+
 	const hasRadioVersions = !!(episode.streaming_version || episode.hd_version || episode.teaser_version);
 
 	return (
@@ -265,7 +267,7 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 							steps={getSteps()}
 							playlist={[{
 								src: audioSrc,
-								timestamp: episode.hd_version?.timestamp ?? 0,
+								timestamp: audioTimestamp,
 							}]}
 							transcription={transcription as any}
 						/>
@@ -360,15 +362,15 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 										</div>
 									</div>
 								) : null
-							)}
-						</div>
-					)}
+						)}
+					</div>
+				)}
 
-					{!hasRadioVersions && (
-						<Typography color="text.disabled" variant="body2" className="mb-4">
-							No audio versions available.
-						</Typography>
-					)}
+				{!audioSrc && (
+					<Typography color="text.disabled" variant="body2" className="mb-4">
+						No audio versions available.
+					</Typography>
+				)}
 
 					{episode.guests && episode.guests.length > 0 && (
 						<>
