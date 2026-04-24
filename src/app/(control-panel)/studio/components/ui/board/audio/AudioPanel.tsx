@@ -125,11 +125,11 @@ function AudioPlayer({ src, title }: { src: string; title: string }) {
 // ─── Single Audio Row ─────────────────────────────────────────────────────────
 
 function AudioRow({
-	audio,
-	onDelete
+    audio,
+    onDelete
 }: {
-	audio: AudioFile;
-	onDelete: (audio: AudioFile) => void;
+    audio: AudioFile;
+    onDelete: (audio: AudioFile) => void;
 }) {
 	const [expanded, setExpanded] = useState(false);
 	const [editing, setEditing] = useState(false);
@@ -152,8 +152,11 @@ function AudioRow({
 		setEditing(false);
 	}
 
-	// Use `src` directly — it's the full URL returned by the backend
-	const src = audio.src;
+    // Determine playback URL via proxy when possible
+    const accountId = useCurrentAccountId();
+    const proxiedSrc = audio.id && accountId > 0
+        ? `/api/studio/audio/play/${accountId}/${audio.id}`
+        : audio.src;
 
 	return (
 		<div
@@ -243,12 +246,12 @@ function AudioRow({
 								<FuseSvgIcon size={16}>lucide:pencil</FuseSvgIcon>
 							</IconButton>
 						</Tooltip>
-						{src && (
+                {(proxiedSrc || audio.src) && (
 							<Tooltip title="Download">
 								<IconButton
 									size="small"
 									component="a"
-									href={src}
+                                href={audio.src}
 									download={audio.name}
 									target="_blank"
 								>
@@ -273,9 +276,9 @@ function AudioRow({
 							{audio.description}
 						</Typography>
 					)}
-					{src ? (
-						<AudioPlayer src={src} title={audio.name} />
-					) : (
+                    {proxiedSrc ? (
+                        <AudioPlayer src={proxiedSrc} title={audio.name} />
+                    ) : (
 						<Typography variant="caption" color="error">No playback URL available</Typography>
 					)}
 					{audio.format && (
