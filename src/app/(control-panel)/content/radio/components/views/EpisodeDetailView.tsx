@@ -124,6 +124,39 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
   const { data: taskAudio } = useGetTaskAudio(linkedProject?.id, taskId);
   const { data: studioAudios = [] } = useGetProjectAudios(linkedProject?.id ?? null);
 
+  // Lazy-load per-version audio sources when user opens the card (or hovers a version card)
+  const [lazySrc, setLazySrc] = useState({ streaming: null as string | null, hd: null as string | null, teaser: null as string | null });
+
+  async function loadVersionSrc(versionKey: 'streaming' | 'hd' | 'teaser') {
+    // If we already have a source, no need to fetch
+    if ((versionKey === 'streaming' && (episode?.streaming_version?.src || lazySrc.streaming)) ||
+        (versionKey === 'hd' && (episode?.hd_version?.src || lazySrc.hd)) ||
+        (versionKey === 'teaser' && (episode?.teaser_version?.src || lazySrc.teaser))) {
+      return;
+    }
+    try {
+      // Attempt to fetch a version-specific audio URL from the backend
+      const id = episodeId;
+      const token = (account?.token?.access) ?? '';
+      const resp = await fetch(`/api/radio/episodes/${id}/audio/${versionKey}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const src = data?.src ?? data?.url ?? data?.audioUrl;
+      if (src) {
+        setLazySrc((s) => ({ ...s, [versionKey]: src }));
+      }
+    } catch (e) {
+      // Ignore fetch errors to avoid breaking UI; log softly
+      console.debug('[EpisodeDetail] lazy load audio failed for', versionKey, e);
+    }
+  }
+
 	console.log('[DEBUG] Studio - linkedProject:', linkedProject, 'tasks:', tasks, 'taskAudio:', taskAudio);
 
 	if (!account || accountLoading || episodeLoading) return <FuseLoading />;
@@ -183,7 +216,11 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
   const studioMatch = (studioAudios ?? []).find(a => a.production_task?.id === taskId) 
     ?? (studioAudios ?? []).find(a => a.production_task?.production_project?.id === linkedProject?.id) ?? null;
   const studioSrc = studioMatch?.src ?? null;
-  const finalSrc = (radioAudioSrc ?? studioSrc) ?? null;
+  // Use lazy-loaded sources if available
+  const streamingSrc = episode.streaming_version?.src ?? lazySrc.streaming;
+  const hdSrc = episode.hd_version?.src ?? lazySrc.hd;
+  const teaserSrc = episode.teaser_version?.src ?? lazySrc.teaser;
+  const finalSrc = (radioAudioSrc ?? studioSrc) ?? (streamingSrc ?? hdSrc ?? teaserSrc) ?? null;
 
   const radioTimestamp = episode.hd_version?.timestamp ?? episode.streaming_version?.timestamp ?? 0;
   const radioDuration = episode.streaming_version?.duration ?? episode.hd_version?.duration ?? null;
@@ -361,40 +398,34 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
                             steps={getSteps()}
                         />
                     ) : (
-						<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
-							<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:audio-lines</FuseSvgIcon>
-							<Typography color="text.secondary" variant="h6">No audio available yet</Typography>
-							<Typography color="text.disabled" variant="body2">
-								Audio will appear here once it has been uploaded and processed.
-							</Typography>
-
-							{hasContent && (
-								<div
-									dir={langOrientation}
-									className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
-									style={{ borderColor: 'rgba(0,0,0,0.12)' }}
-								>
-									<Typography
-										variant="subtitle2"
-										color="text.secondary"
-										className="mb-4 font-semibold uppercase tracking-widest"
-									>
-										Transcription
-									</Typography>
-									{transcription.content.map((item, idx) => (
-										<p key={idx} className="text-sm leading-relaxed" style={{ color: 'var(--mui-palette-text-secondary)' }}>
-											{item.speaker && (
-												<span className="mr-2 font-semibold" style={{ color: 'var(--mui-palette-text-primary)' }}>
-													{item.speaker}:
-												</span>
-											)}
-											{item.text}
-										</p>
-									))}
-								</div>
-							)}
-						</div>
-					)}
+                        <div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
+                          {hasContent && (
+                            <div
+                              dir={langOrientation}
+                              className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
+                              style={{ borderColor: 'rgba(0,0,0,0.12)' }}
+                            >
+                              <Typography
+                                variant="subtitle2"
+                                color="text.secondary"
+                                className="mb-4 font-semibold uppercase tracking-widest"
+                              >
+                                Transcription
+                              </Typography>
+                              {transcription.content.map((item, idx) => (
+                                <p key={idx} className="text-sm leading-relaxed" style={{ color: 'var(--mui-palette-text-secondary)' }}>
+                                  {item.speaker && (
+                                    <span className="mr-2 font-semibold" style={{ color: 'var(--mui-palette-text-primary)' }}>
+                                      {item.speaker}:
+                                    </span>
+                                  )}
+                                  {item.text}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                    )}
 
 					<Divider className="my-4" />
 					<Typography
@@ -405,55 +436,62 @@ function EpisodeDetailView({ episodeId }: EpisodeDetailViewProps) {
 						Audio Versions
 					</Typography>
 
-{hasRadioVersions && (
-						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
-							{[
-								{ label: 'Streaming', audio: episode.streaming_version },
-								{ label: 'HD', audio: episode.hd_version },
-								{ label: 'Teaser', audio: episode.teaser_version },
-							].map(({ label, audio }) =>
-								audio ? (
-									<div
-										key={label}
-										className="flex flex-col gap-1 rounded-xl p-3"
-										style={{ border: '1px solid var(--mui-palette-divider)', background: 'var(--mui-palette-background-paper)' }}
-									>
-										<Typography
-											variant="caption"
-											sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.disabled' }}
-										>
-											{label}
-										</Typography>
-										<Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
-											{audio.name || '—'}
-										</Typography>
-										<div className="flex flex-wrap gap-3 mt-0.5">
-											{audio.duration && (
-												<div className="flex items-center gap-1.5">
-													<FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
-													<Typography className="text-xs" color="text.secondary">
-														<DurationDisplay isoDuration={audio.duration} format="short" />
-													</Typography>
-												</div>
-											)}
-											{audio.format?.name && (
-												<div className="flex items-center gap-1.5">
-													<FuseSvgIcon size={13} color="disabled">lucide:file-audio</FuseSvgIcon>
-													<Typography className="text-xs" color="text.secondary">{audio.format.name}</Typography>
-												</div>
-											)}
-											{audio.format?.bit_rates && (
-												<div className="flex items-center gap-1.5">
-													<FuseSvgIcon size={13} color="disabled">lucide:activity</FuseSvgIcon>
-													<Typography className="text-xs" color="text.secondary">{audio.format.bit_rates} kbps</Typography>
-												</div>
-											)}
-										</div>
-									</div>
-								) : null
-							)}
-						</div>
-					)}
+                    {hasRadioVersions && (
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+                            {[
+                                { label: 'Streaming', ver: episode.streaming_version, key: 'streaming' },
+                                { label: 'HD', ver: episode.hd_version, key: 'hd' },
+                                { label: 'Teaser', ver: episode.teaser_version, key: 'teaser' },
+                            ].map(({ label, ver, key }) => (
+                                (ver || (lazySrc as any)[key]) ? (
+                                    <div
+                                        key={label}
+                                        className="flex flex-col gap-1 rounded-xl p-3"
+                                        style={{ border: '1px solid var(--mui-palette-divider)', background: 'var(--mui-palette-background-paper)' }}
+                                        onMouseEnter={() => loadVersionSrc(key as 'streaming'|'hd'|'teaser')}
+                                      >
+                                        <Typography
+                                            variant="caption"
+                                            sx={{ fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'text.disabled' }}
+                                        >
+                                            {label}
+                                        </Typography>
+                                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }} color="text.primary">
+                                            {ver?.name ?? ((lazySrc as any)[key] ? 'Loaded' : '—')}
+                                        </Typography>
+                                        <audio
+                                            controls
+                                            src={ver?.src ?? (lazySrc as any)[key] ?? ''}
+                                            style={{ width: '100%' }}
+                                            preload="metadata"
+                                        />
+                                        <div className="flex flex-wrap gap-3 mt-0.5">
+                                            {ver?.duration && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <FuseSvgIcon size={13} color="disabled">lucide:clock</FuseSvgIcon>
+                                                    <Typography className="text-xs" color="text.secondary">
+                                                        <DurationDisplay isoDuration={ver.duration} format="short" />
+                                                    </Typography>
+                                                </div>
+                                            )}
+                                            {ver?.format?.name && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <FuseSvgIcon size={13} color="disabled">lucide:file-audio</FuseSvgIcon>
+                                                    <Typography className="text-xs" color="text.secondary">{ver.format.name}</Typography>
+                                                </div>
+                                            )}
+                                            {ver?.format?.bit_rates && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <FuseSvgIcon size={13} color="disabled">lucide:activity</FuseSvgIcon>
+                                                    <Typography className="text-xs" color="text.secondary">{ver.format.bit_rates} kbps</Typography>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ) : null
+                            ))}
+                        </div>
+                    )}
 
 					{taskAudio && !hasRadioVersions && (
 						<div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 mb-4">
