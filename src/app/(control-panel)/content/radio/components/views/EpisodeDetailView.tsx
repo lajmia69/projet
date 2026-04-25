@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import { styled } from '@mui/material/styles';
@@ -14,6 +14,8 @@ import DurationDisplay from '../ui/Durationdisplay';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import { useLinkedStudioProject } from '@/app/(control-panel)/studio/api/hooks/useLinkedStudioProject';
 import { useGetTaskAudio } from '@/app/(control-panel)/studio/api/hooks/audio/usegettaskaudio';
+import { useState } from 'react';
+import Button from '@mui/material/Button';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -43,8 +45,8 @@ function safeTranscription(raw: unknown) {
 type Props = { episodeId: string };
 
 function EpisodeDetailView({ episodeId }: Props) {
-	const { data: account } = useUser();
-	const accessToken = account?.token?.access ?? '';
+    const { data: account } = useUser();
+    const accessToken = account?.token?.access ?? '';
 
 	const { data: episode, isLoading } = useEpisode(
 		account?.id ?? '',
@@ -64,7 +66,39 @@ function EpisodeDetailView({ episodeId }: Props) {
 		1, // radio content is always under account 1
 	);
 
-	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+    const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
+
+    // ── Text-to-Speech (TTS) for transcripts (radio parity with Lesson) ──
+    const [ttsReading, setTtsReading] = useState(false);
+    const speakTranscript = () => {
+        if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+        const synth = (window as any).speechSynthesis as SpeechSynthesis;
+        if (!synth) return;
+        // If already reading, stop
+        if (ttsReading) {
+            synth.cancel();
+            setTtsReading(false);
+            return;
+        }
+        // Build transcript text from available transcription content
+        const transcriptionContent = transcription?.content ?? [];
+        const parts = transcriptionContent.map((c: any) => {
+            const speaker = c?.speaker ? `${c.speaker}: ` : '';
+            return `${speaker}${c?.text ?? ''}`;
+        });
+        const text = parts.join(' ');
+        if (!text) return;
+        const utter = new SpeechSynthesisUtterance(text);
+        // Try to pick an English voice if available
+        const voices = synth.getVoices();
+        if (voices && voices.length > 0) {
+            const enVoice = voices.find((v: any) => typeof v.lang === 'string' && v.lang.startsWith('en'));
+            if (enVoice) utter.voice = enVoice;
+        }
+        utter.onend = () => setTtsReading(false);
+        synth.speak(utter);
+        setTtsReading(true);
+    };
 
 	if (!account || isLoading || studioProjectLoading || studioAudioLoading) return <FuseLoading />;
 
@@ -200,13 +234,22 @@ function EpisodeDetailView({ episodeId }: Props) {
 						</>
 					)}
 
-					{audioSrc ? (
-						<Player
-							steps={getSteps()}
-							playlist={[{ src: audioSrc, timestamp: audioTimestamp }]}
-							transcription={transcription as any}
-						/>
-					) : (
+                    {audioSrc ? (
+                        <>
+                            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12 }}>
+                                {transcription?.content?.length > 0 && (
+                                    <Button variant="outlined" size="small" onClick={speakTranscript}>
+                                        {ttsReading ? 'Stop Reading' : 'Read Transcript'}
+                                    </Button>
+                                )}
+                            </div>
+                            <Player
+                                steps={getSteps()}
+                                playlist={[{ src: audioSrc, timestamp: audioTimestamp }]}
+                                transcription={transcription as any}
+                            />
+                        </>
+                    ) : (
 						<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
 							<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>lucide:audio-lines</FuseSvgIcon>
 							<Typography color="text.secondary" variant="h6">No audio available yet</Typography>
