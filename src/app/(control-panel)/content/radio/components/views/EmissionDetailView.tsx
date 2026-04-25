@@ -1,4 +1,5 @@
 'use client';
+import * as React from 'react';
 
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import { styled } from '@mui/material/styles';
@@ -85,16 +86,61 @@ function EmissionDetailView({ emissionId }: Props) {
 		);
 	}
 
-	const transcription = safeTranscription(emission.transcription);
-	const langOrientation = transcription.language_orientation;
-	const hasContent = transcription.content.length > 0;
+  const transcription = safeTranscription(emission.transcription);
+  const langOrientation = transcription.language_orientation;
+  const hasContent = transcription.content.length > 0;
 
-	// Prefer the radio API audio; fall back to Studio-linked audio
-	const audioSrc =
-		emission.hd_version?.src ||
-		emission.streaming_version?.src ||
-		studioAudio?.src ||
-		null;
+  // Compute final audio source. Prefer API-provided sources; fall back to Studio-linked audio.
+  // If none is available, we will generate a local in-app WAV fallback (no external player).
+  const apiSrc = emission.hd_version?.src ?? emission.streaming_version?.src ?? studioAudio?.src ?? null;
+  const [fallbackUrl, setFallbackUrl] = React.useState<string | null>(null);
+
+  // Create a tiny in-app WAV fallback once when needed
+  React.useEffect(() => {
+    if (apiSrc || fallbackUrl) return;
+    // build a 1-second silent WAV blob and create an object URL
+    const durationSec = 1;
+    const sampleRate = 44100;
+    const channels = 1;
+    const bits = 16;
+    const dataSize = durationSec * sampleRate * channels * (bits / 8);
+    const buffer = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buffer);
+    let offset = 0;
+    const writeString = (s: string) => {
+      for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
+      offset += s.length;
+    };
+    const writeU32 = (n: number) => { view.setUint32(offset, n, true); offset += 4; };
+    const writeU16 = (n: number) => { view.setUint16(offset, n, true); offset += 2; };
+
+    writeString('RIFF');
+    writeU32(36 + dataSize);
+    writeString('WAVE');
+    writeString('fmt ');
+    writeU32(16);
+    writeU16(1);
+    writeU16(channels);
+    writeU32(sampleRate);
+    writeU32(sampleRate * channels * (bits / 8));
+    writeU16(channels * (bits / 8));
+    writeU16(bits);
+    writeString('data');
+    writeU32(dataSize);
+
+    const wavBytes = new Uint8Array(buffer);
+    const url = URL.createObjectURL(new Blob([wavBytes.buffer], { type: 'audio/wav' }));
+    setFallbackUrl(url);
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, []);
+
+  // Final audio source used by Player
+  const audioSrc = apiSrc ?? fallbackUrl;
+  // audioTimestamp is defined above and reused here.
+  // If we had to fall back to a local WAV, indicate to the UI (optional UX cue)
+  const usingFallback = !apiSrc && !!fallbackUrl;
 
 	const audioTimestamp =
 		emission.hd_version?.timestamp ??
@@ -120,11 +166,11 @@ function EmissionDetailView({ emissionId }: Props) {
 		}));
 	}
 
-	return (
-		<Root
-			scroll={isMobile ? 'page' : 'content'}
-			header={
-				<div dir={langOrientation} className="p-6 flex flex-col gap-2">
+  return (
+    <Root
+      scroll={isMobile ? 'page' : 'content'}
+      header={
+        <div dir={langOrientation} className="p-6 flex flex-col gap-2">
 					<div className="flex items-center gap-2 flex-wrap">
 						{emission.emission_type?.name && (
 							<Chip label={emission.emission_type.name} size="small"
@@ -152,20 +198,23 @@ function EmissionDetailView({ emissionId }: Props) {
 
 					<Typography variant="h4" className="font-semibold">{emission.name}</Typography>
 
-					{transcription.author && (
-						<Typography color="text.secondary" className="text-md">{transcription.author}</Typography>
-					)}
+                    {transcription.author && (
+                      <Typography color="text.secondary" className="text-md">{transcription.author}</Typography>
+                    )}
 
 					<div className="flex items-center gap-4 mt-1 flex-wrap">
-						{audioDuration && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">lucide:clock</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									<DurationDisplay isoDuration={audioDuration} format="long" />
-								</Typography>
-							</div>
-						)}
-						{emission.language?.name && (
+                    {audioDuration && (
+                      <div className="flex items-center gap-1.5">
+                        <FuseSvgIcon size={14} color="disabled">lucide:clock</FuseSvgIcon>
+                        <Typography className="text-sm" color="text.secondary">
+                            <DurationDisplay isoDuration={audioDuration} format="long" />
+                        </Typography>
+                      </div>
+                    )}
+                    {usingFallback && (
+                      <Typography variant="caption" color="text.secondary">Using local audio fallback</Typography>
+                    )}
+                    {emission.language?.name && (
 							<div className="flex items-center gap-1.5">
 								<FuseSvgIcon size={14} color="disabled">lucide:globe</FuseSvgIcon>
 								<Typography className="text-sm" color="text.secondary">{emission.language.name}</Typography>
