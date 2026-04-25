@@ -182,8 +182,7 @@ export const useEmissions = (id: string, token: string) =>
 	useQuery({ queryKey: emissionsQueryKey(id), queryFn: () => radioApi.getEmissions(id, token), enabled: !!id && !!token });
 
 export const useEmission = (id: string, token: string, emissionId: string) => {
-	const emissionAccountId = '1';
-	return useQuery({ queryKey: emissionQueryKey(emissionAccountId, emissionId), queryFn: () => radioApi.getEmission(emissionAccountId, token, emissionId), enabled: !!token && !!emissionId });
+	return useQuery({ queryKey: emissionQueryKey(id, emissionId), queryFn: () => radioApi.getEmission(id, token, emissionId), enabled: !!id && !!token && !!emissionId });
 };
 
 export const useCreateEmission = (id: string, token: string) => {
@@ -273,8 +272,7 @@ export const useSearchEpisodes = (id: string, token: string, search: SearchEpiso
 	useQuery({ queryKey: searchEpisodesQueryKey(id, search), queryFn: () => radioApi.searchEpisodes(id, token, search), enabled: !!id && !!token });
 
 export const useEpisode = (id: string, token: string, episodeId: string) => {
-	const episodeAccountId = '1';
-	return useQuery({ queryKey: episodeQueryKey(episodeAccountId, episodeId), queryFn: () => radioApi.getEpisode(episodeAccountId, token, episodeId), enabled: !!token && !!episodeId });
+	return useQuery({ queryKey: episodeQueryKey(id, episodeId), queryFn: () => radioApi.getEpisode(id, token, episodeId), enabled: !!id && !!token && !!episodeId });
 };
 
 export const useCreateEpisode = (id: string, token: string) => {
@@ -401,8 +399,7 @@ export const useSearchReportages = (id: string, token: string, search: SearchRep
 	useQuery({ queryKey: searchReportagesQueryKey(id, search), queryFn: () => radioApi.searchReportages(id, token, search), enabled: !!id && !!token });
 
 export const useReportage = (id: string, token: string, reportageId: string) => {
-	const reportageAccountId = '1';
-	return useQuery({ queryKey: reportageQueryKey(reportageAccountId, reportageId), queryFn: () => radioApi.getReportage(reportageAccountId, token, reportageId), enabled: !!token && !!reportageId });
+	return useQuery({ queryKey: reportageQueryKey(id, reportageId), queryFn: () => radioApi.getReportage(id, token, reportageId), enabled: !!id && !!token && !!reportageId });
 };
 
 export const useCreateReportage = (id: string, token: string) => {

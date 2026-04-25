@@ -134,6 +134,9 @@ function ReportageDetailView({ reportageId }: Props) {
 								})}
 							/>
 						)}
+						{reportage.season?.name && (
+							<Chip label={reportage.season.name} size="small" />
+						)}
 						{reportage.is_published && (
 							<Chip label="On Air" size="small" color="success"
 								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }} />
