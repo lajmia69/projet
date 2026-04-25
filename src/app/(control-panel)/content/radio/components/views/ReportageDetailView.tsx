@@ -12,6 +12,8 @@ import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/Durationdisplay';
 import { useReportage } from '../../api/hooks/Radiohooks';
+import { useLinkedStudioProject } from '@/app/(control-panel)/studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '@/app/(control-panel)/studio/api/hooks/audio/usegettaskaudio';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -50,9 +52,21 @@ function ReportageDetailView({ reportageId }: Props) {
 		reportageId,
 	);
 
+	// ── Studio audio fallback ─────────────────────────────────────────────────
+	const reportageIdNum = Number(reportageId);
+	const { data: studioProject, isLoading: studioProjectLoading } = useLinkedStudioProject(
+		'radio_reportage',
+		reportageIdNum,
+	);
+	const { data: studioAudio, isLoading: studioAudioLoading } = useGetTaskAudio(
+		studioProject?.id ?? null,
+		null,
+		1, // radio content is always under account 1
+	);
+
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
-	if (!account || isLoading) return <FuseLoading />;
+	if (!account || isLoading || studioProjectLoading || studioAudioLoading) return <FuseLoading />;
 
 	if (!reportage) {
 		return (
@@ -72,8 +86,23 @@ function ReportageDetailView({ reportageId }: Props) {
 	const langOrientation = transcription.language_orientation;
 	const hasContent = transcription.content.length > 0;
 
-	const audioSrc = reportage.hd_version?.src || reportage.streaming_version?.src || null;
-	const audioDuration = reportage.streaming_version?.duration || reportage.hd_version?.duration || null;
+	// Prefer the radio API audio; fall back to Studio-linked audio
+	const audioSrc =
+		reportage.hd_version?.src ||
+		reportage.streaming_version?.src ||
+		studioAudio?.src ||
+		null;
+
+	const audioTimestamp =
+		reportage.hd_version?.timestamp ??
+		reportage.streaming_version?.timestamp ??
+		0;
+
+	const audioDuration =
+		reportage.streaming_version?.duration ||
+		reportage.hd_version?.duration ||
+		studioAudio?.duration ||
+		null;
 
 	function getSteps() {
 		const content = reportage?.transcription?.content;
@@ -157,7 +186,7 @@ function ReportageDetailView({ reportageId }: Props) {
 					{audioSrc ? (
 						<Player
 							steps={getSteps()}
-							playlist={[{ src: audioSrc, timestamp: reportage.hd_version?.timestamp ?? 0 }]}
+							playlist={[{ src: audioSrc, timestamp: audioTimestamp }]}
 							transcription={transcription as any}
 						/>
 					) : (

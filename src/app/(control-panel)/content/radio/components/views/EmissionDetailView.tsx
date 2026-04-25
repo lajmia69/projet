@@ -12,6 +12,8 @@ import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/Durationdisplay';
 import { useEmission } from '../../api/hooks/Radiohooks';
+import { useLinkedStudioProject } from '@/app/(control-panel)/studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '@/app/(control-panel)/studio/api/hooks/audio/usegettaskaudio';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -50,9 +52,24 @@ function EmissionDetailView({ emissionId }: Props) {
 		emissionId,
 	);
 
+	// ── Studio audio fallback ─────────────────────────────────────────────────
+	// Radio content lives under account 1; find the linked production project
+	// and pull whatever audio file is attached to it.
+	const emissionIdNum = Number(emissionId);
+	const { data: studioProject, isLoading: studioProjectLoading } = useLinkedStudioProject(
+		'radio_emission',
+		emissionIdNum,
+	);
+	const { data: studioAudio, isLoading: studioAudioLoading } = useGetTaskAudio(
+		studioProject?.id ?? null,
+		null,
+		1, // radio content is always under account 1
+	);
+
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
-	if (!account || isLoading) return <FuseLoading />;
+	// Wait for both the emission record and (briefly) the Studio lookup
+	if (!account || isLoading || studioProjectLoading || studioAudioLoading) return <FuseLoading />;
 
 	if (!emission) {
 		return (
@@ -72,8 +89,23 @@ function EmissionDetailView({ emissionId }: Props) {
 	const langOrientation = transcription.language_orientation;
 	const hasContent = transcription.content.length > 0;
 
-	const audioSrc = emission.hd_version?.src || emission.streaming_version?.src || null;
-	const audioDuration = emission.streaming_version?.duration || emission.hd_version?.duration || null;
+	// Prefer the radio API audio; fall back to Studio-linked audio
+	const audioSrc =
+		emission.hd_version?.src ||
+		emission.streaming_version?.src ||
+		studioAudio?.src ||
+		null;
+
+	const audioTimestamp =
+		emission.hd_version?.timestamp ??
+		emission.streaming_version?.timestamp ??
+		0;
+
+	const audioDuration =
+		emission.streaming_version?.duration ||
+		emission.hd_version?.duration ||
+		studioAudio?.duration ||
+		null;
 
 	function getSteps() {
 		const content = emission?.transcription?.content;
@@ -160,7 +192,7 @@ function EmissionDetailView({ emissionId }: Props) {
 					{audioSrc ? (
 						<Player
 							steps={getSteps()}
-							playlist={[{ src: audioSrc, timestamp: emission.hd_version?.timestamp ?? 0 }]}
+							playlist={[{ src: audioSrc, timestamp: audioTimestamp }]}
 							transcription={transcription as any}
 						/>
 					) : (

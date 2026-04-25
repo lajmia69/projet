@@ -12,6 +12,8 @@ import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/Durationdisplay';
 import { useEpisode } from '../../api/hooks/Radiohooks';
+import { useLinkedStudioProject } from '@/app/(control-panel)/studio/api/hooks/useLinkedStudioProject';
+import { useGetTaskAudio } from '@/app/(control-panel)/studio/api/hooks/audio/usegettaskaudio';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -50,9 +52,21 @@ function EpisodeDetailView({ episodeId }: Props) {
 		episodeId,
 	);
 
+	// ── Studio audio fallback ─────────────────────────────────────────────────
+	const episodeIdNum = Number(episodeId);
+	const { data: studioProject, isLoading: studioProjectLoading } = useLinkedStudioProject(
+		'radio_episode',
+		episodeIdNum,
+	);
+	const { data: studioAudio, isLoading: studioAudioLoading } = useGetTaskAudio(
+		studioProject?.id ?? null,
+		null,
+		1, // radio content is always under account 1
+	);
+
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
-	if (!account || isLoading) return <FuseLoading />;
+	if (!account || isLoading || studioProjectLoading || studioAudioLoading) return <FuseLoading />;
 
 	if (!episode) {
 		return (
@@ -72,8 +86,23 @@ function EpisodeDetailView({ episodeId }: Props) {
 	const langOrientation = transcription.language_orientation;
 	const hasContent = transcription.content.length > 0;
 
-	const audioSrc = episode.hd_version?.src || episode.streaming_version?.src || null;
-	const audioDuration = episode.streaming_version?.duration || episode.hd_version?.duration || null;
+	// Prefer the radio API audio; fall back to Studio-linked audio
+	const audioSrc =
+		episode.hd_version?.src ||
+		episode.streaming_version?.src ||
+		studioAudio?.src ||
+		null;
+
+	const audioTimestamp =
+		episode.hd_version?.timestamp ??
+		episode.streaming_version?.timestamp ??
+		0;
+
+	const audioDuration =
+		episode.streaming_version?.duration ||
+		episode.hd_version?.duration ||
+		studioAudio?.duration ||
+		null;
 
 	function getSteps() {
 		const content = episode?.transcription?.content;
@@ -174,7 +203,7 @@ function EpisodeDetailView({ episodeId }: Props) {
 					{audioSrc ? (
 						<Player
 							steps={getSteps()}
-							playlist={[{ src: audioSrc, timestamp: episode.hd_version?.timestamp ?? 0 }]}
+							playlist={[{ src: audioSrc, timestamp: audioTimestamp }]}
 							transcription={transcription as any}
 						/>
 					) : (
