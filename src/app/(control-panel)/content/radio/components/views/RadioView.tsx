@@ -12,6 +12,8 @@ import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/Durationdisplay';
+// Palette: #112468 Deep navy | #1764C0 Royal blue | #0EA8B0 Ocean teal
+//          #1DC98A Seafoam   | #2AE88E Mint green | #0D1A47 Midnight navy
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -113,90 +115,7 @@ function RadioView({ radioId }: RadioViewProps) {
 	return (
 		<Root
 			scroll={isMobile ? 'page' : 'content'}
-			header={
-				<div
-					dir={langOrientation}
-					className="p-6 flex flex-col gap-2"
-				>
-					<div className="flex items-center gap-2 flex-wrap">
-						{radio.category?.name && (
-							<Chip
-								label={radio.category.name}
-								size="small"
-								sx={(theme) => ({
-									fontSize: '0.68rem',
-									fontWeight: 700,
-									letterSpacing: '0.04em',
-									textTransform: 'uppercase',
-									height: 20,
-									color: theme.palette.mode === 'dark' ? '#fcd34d' : '#92400e',
-									backgroundColor:
-										theme.palette.mode === 'dark'
-											? 'rgba(245,158,11,0.18)'
-											: 'rgba(245,158,11,0.15)',
-									border:
-										theme.palette.mode === 'dark'
-											? '1px solid rgba(245,158,11,0.3)'
-											: '1px solid rgba(245,158,11,0.35)',
-								})}
-							/>
-						)}
-						{radio.is_published && (
-							<Chip
-								label="On Air"
-								size="small"
-								color="warning"
-								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
-							/>
-						)}
-						{radio.is_approved_content && (
-							<Chip
-								label="Approved"
-								size="small"
-								color="info"
-								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
-							/>
-						)}
-					</div>
 
-					<Typography variant="h4" className="font-semibold">
-						{radio.name}
-					</Typography>
-
-					<div className="flex items-center gap-4 mt-1 flex-wrap">
-						{audioDuration && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">
-									lucide:clock
-								</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									<DurationDisplay isoDuration={audioDuration} format="long" />
-								</Typography>
-							</div>
-						)}
-						{radio.language?.name && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">
-									lucide:globe
-								</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{radio.language.name}
-								</Typography>
-							</div>
-						)}
-						{radio.created_by?.full_name && (
-							<div className="flex items-center gap-1.5">
-								<FuseSvgIcon size={14} color="disabled">
-									lucide:radio
-								</FuseSvgIcon>
-								<Typography className="text-sm" color="text.secondary">
-									{radio.created_by.full_name}
-								</Typography>
-							</div>
-						)}
-					</div>
-				</div>
-			}
 			content={
 				<div className="mx-auto flex w-full flex-1 flex-col p-4">
 					{radio.description && (
@@ -211,7 +130,9 @@ function RadioView({ radioId }: RadioViewProps) {
 					{audioSrc ? (
 						<Player
 							steps={getSteps()}
-							playlist={[{ src: radio.hd_version?.src || radio.streaming_version?.src, timestamp: radio.hd_version?.timestamp ?? 0 }]}
+							playlist={[
+								{ src: radio.hd_version?.src || radio.streaming_version?.src, timestamp: radio.hd_version?.timestamp ?? 0 },
+							]}
 							transcription={transcription as any}
 						/>
 					) : (
@@ -230,23 +151,26 @@ function RadioView({ radioId }: RadioViewProps) {
 								<div
 									dir={langOrientation}
 									className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
-									style={{ borderColor: 'rgba(0,0,0,0.12)' }}
+									style={{ borderColor: 'rgba(23,100,192,0.2)' }}
 								>
+									{/* Accent top stripe */}
+									<div style={{ height: 3, width: '60px', background: 'linear-gradient(90deg, #0EA8B0, #1DC98A)', borderRadius: '2px', marginBottom: '12px' }} />
 									<Typography
 										variant="subtitle2"
 										color="text.secondary"
 										className="mb-4 font-semibold uppercase tracking-widest"
+										sx={{ color: '#1764C0' }}
 									>
 										Transcription
 									</Typography>
-									{transcription.content.map((item, idx) => (
+									{transcription.content.map((item: any, idx: number) => (
 										<p
 											key={idx}
 											className="text-sm leading-relaxed"
 											style={{ color: 'var(--mui-palette-text-secondary)' }}
 										>
 											{item.speaker && (
-												<span className="mr-2 font-semibold" style={{ color: 'var(--mui-palette-text-primary)' }}>
+												<span className="mr-2 font-semibold" style={{ color: '#112468' }}>
 													{item.speaker}:
 												</span>
 											)}

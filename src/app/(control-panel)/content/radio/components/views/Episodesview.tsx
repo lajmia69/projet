@@ -29,6 +29,9 @@ import { useSearchEpisodes, useEmissionTypes, useSeasons, useDeleteEpisode } fro
 import { Episode, SearchEpisodes } from '../../api/types';
 import DurationDisplay from '../ui/Durationdisplay';
 
+// Palette: #112468 Deep navy | #1764C0 Royal blue | #0EA8B0 Ocean teal
+//          #1DC98A Seafoam   | #2AE88E Mint green | #0D1A47 Midnight navy
+
 const Root = styled(FusePageSimple)(() => ({
 	'& .FusePageSimple-header': { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
 	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
@@ -50,130 +53,127 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 				sx={(theme) => ({
 					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
 					height: '100%', position: 'relative',
-					border: theme.palette.mode === 'dark' ? '1px solid rgba(99,202,183,0.18)' : '1px solid rgba(20,184,166,0.18)',
-                    background: theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))'
-                        : 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))',
+					border: theme.palette.mode === 'dark' ? '1px solid rgba(29,201,138,0.22)' : '1px solid rgba(29,201,138,0.2)',
+					background: theme.palette.mode === 'dark'
+						? 'linear-gradient(145deg, #0D1A47 0%, #112468 100%)'
+						: 'linear-gradient(145deg, #112468 0%, #1764C0 100%)',
 					boxShadow: theme.palette.mode === 'dark'
-						? '0 0 0 1px rgba(99,202,183,0.08), 0 4px 24px rgba(20,184,166,0.1)'
-						: '0 0 0 1px rgba(20,184,166,0.07), 0 4px 20px rgba(20,184,166,0.07)',
+						? '0 0 0 1px rgba(29,201,138,0.1), 0 4px 24px rgba(13,26,71,0.4)'
+						: '0 0 0 1px rgba(29,201,138,0.08), 0 4px 20px rgba(17,36,104,0.3)',
 					transition: 'transform 0.25s ease, box-shadow 0.25s ease',
 					'&:hover': {
 						transform: 'translateY(-5px)',
-						borderColor: theme.palette.mode === 'dark' ? 'rgba(99,202,183,0.4)' : 'rgba(20,184,166,0.4)',
+						borderColor: theme.palette.mode === 'dark' ? 'rgba(42,232,142,0.45)' : 'rgba(29,201,138,0.5)',
 						boxShadow: theme.palette.mode === 'dark'
-							? '0 0 0 1px rgba(99,202,183,0.2), 0 8px 40px rgba(20,184,166,0.25)'
-							: '0 0 0 1px rgba(20,184,166,0.18), 0 8px 40px rgba(20,184,166,0.18)',
+							? '0 0 0 1px rgba(42,232,142,0.2), 0 8px 40px rgba(29,201,138,0.3)'
+							: '0 0 0 1px rgba(29,201,138,0.22), 0 8px 40px rgba(17,36,104,0.45)',
 					},
 				})}
 			>
-                <div style={{ height: 3, width: '100%', background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))' }} />
-
-				
+				{/* Top accent bar — Seafoam → Mint */}
+				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #1DC98A, #2AE88E)' }} />
 
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
 					{/* Chips */}
 					<div className="flex flex-wrap gap-1.5 pr-10">
-                    {episode.emission_type?.name && (
-                        <Chip
-                            label={episode.emission_type.name}
-                            size="small"
-                            sx={(theme) => ({
-                                fontSize: '0.72rem',
-                                fontWeight: 700,
-                                letterSpacing: '0.04em',
-                                textTransform: 'uppercase',
-                                height: 22,
-                                color: '#fff',
-                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.28)' : 'rgba(59,130,246,0.22)',
-                                border: theme.palette.mode === 'dark' ? '1px solid rgba(99,179,237,0.5)' : '1px solid rgba(59,130,246,0.4)',
-                                boxShadow: theme.palette.mode === 'dark' ? '0 1px 4px rgba(0,0,0,0.3)' : '0 2px 6px rgba(37,99,235,0.25)',
-                                '& .MuiChip-label': { color: '#fff' }
-                            })}
-                        />
-                    )}
+						{episode.emission_type?.name && (
+							<Chip
+								label={episode.emission_type.name}
+								size="small"
+								sx={() => ({
+									fontSize: '0.72rem',
+									fontWeight: 700,
+									letterSpacing: '0.04em',
+									textTransform: 'uppercase',
+									height: 22,
+									color: '#fff',
+									backgroundColor: 'rgba(42,232,142,0.18)',
+									border: '1px solid rgba(42,232,142,0.4)',
+									boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+									'& .MuiChip-label': { color: '#fff' }
+								})}
+							/>
+						)}
 						{episode.season?.name && (
-							<Chip label={episode.season.name} size="small" sx={(theme) => ({
+							<Chip label={episode.season.name} size="small" sx={() => ({
 								fontSize: '0.68rem', fontWeight: 600, height: 20,
-								color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-								border: '1px solid rgba(0,0,0,0.08)',
+								color: 'rgba(255,255,255,0.55)',
+								backgroundColor: 'rgba(255,255,255,0.08)',
+								border: '1px solid rgba(255,255,255,0.14)',
 							})} />
 						)}
 						{episode.episode_number != null && (
-							<Chip label={`Ep. ${episode.episode_number}`} size="small" sx={(theme) => ({
+							<Chip label={`Ep. ${episode.episode_number}`} size="small" sx={() => ({
 								fontSize: '0.68rem', fontWeight: 700, height: 20,
-								color: theme.palette.mode === 'dark' ? '#5eead4' : '#0f766e',
-								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(20,184,166,0.12)' : 'rgba(20,184,166,0.08)',
-								border: '1px solid rgba(20,184,166,0.25)',
+								color: '#2AE88E',
+								backgroundColor: 'rgba(42,232,142,0.12)',
+								border: '1px solid rgba(42,232,142,0.3)',
 							})} />
 						)}
 					</div>
 
-                    {/* Title */}
-                    <Typography className="font-semibold line-clamp-2 leading-snug"
-                        dir={episode.transcription?.language_orientation}
-                        sx={() => ({ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 })}>
-                        {episode.name}
-                    </Typography>
+					{/* Title */}
+					<Typography className="font-semibold line-clamp-2 leading-snug"
+						dir={episode.transcription?.language_orientation}
+						sx={() => ({ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 })}>
+						{episode.name}
+					</Typography>
 
-                    {episode.transcription?.author && (
-                        <Typography className="line-clamp-1" dir={episode.transcription?.language_orientation}
-                            sx={(theme) => ({ color: theme.palette.mode === 'dark' ? '#fff' : 'rgba(0,0,0,0.6)', fontSize: '0.82rem' })}>
-                            {episode.transcription.author}
-                        </Typography>
-                    )}
-
-                    
+					{episode.transcription?.author && (
+						<Typography className="line-clamp-1" dir={episode.transcription?.language_orientation}
+							sx={() => ({ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem' })}>
+							{episode.transcription.author}
+						</Typography>
+					)}
 
 					<div className="flex-1" />
-					<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.3), transparent)' }} />
+					<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(42,232,142,0.4), transparent)' }} />
 
 					{/* Meta */}
 					<div className="flex items-center gap-3 flex-wrap">
 						{(episode.streaming_version?.duration || episode.hd_version?.duration) && (
 							<div className="flex items-center gap-1">
-								<FuseSvgIcon size={12} sx={{ color: '#14b8a6' }}>lucide:clock</FuseSvgIcon>
-								<Typography className="text-xs font-medium" sx={{ color: '#14b8a6' }}>
+								<FuseSvgIcon size={12} sx={{ color: '#1DC98A' }}>lucide:clock</FuseSvgIcon>
+								<Typography className="text-xs font-medium" sx={{ color: '#1DC98A' }}>
 									<DurationDisplay isoDuration={episode.streaming_version?.duration || episode.hd_version?.duration} format="short" />
 								</Typography>
 							</div>
 						)}
 						{episode.language?.name && (
 							<div className="flex items-center gap-1">
-								<FuseSvgIcon size={12} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' })}>lucide:globe</FuseSvgIcon>
-								<Typography className="text-xs" sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' })}>
+								<FuseSvgIcon size={12} sx={{ color: 'rgba(255,255,255,0.4)' }}>lucide:globe</FuseSvgIcon>
+								<Typography className="text-xs" sx={{ color: 'rgba(255,255,255,0.45)' }}>
 									{episode.language.name}
 								</Typography>
 							</div>
 						)}
-                        {episode.is_published && (
-                        <Chip label="On Air" size="small" sx={(t) => ({
-                                ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
-                                color: '#fff',
-                                backgroundColor: t.palette.mode === 'dark' ? 'rgba(20,184,166,0.42)' : 'rgba(20,184,166,0.28)',
-                                border: '1px solid rgba(20,184,166,0.6)',
-                            })} />
-                        )}
+						{episode.is_published && (
+							<Chip label="On Air" size="small" sx={() => ({
+								ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
+								color: '#fff',
+								backgroundColor: 'rgba(29,201,138,0.35)',
+								border: '1px solid rgba(42,232,142,0.55)',
+							})} />
+						)}
 					</div>
 
 					{/* Creator + CTA */}
 					<div className="flex items-center justify-between gap-2 pt-0.5">
 						{episode.created_by?.full_name && (
 							<div className="flex items-center gap-1.5 min-w-0">
-								<FuseSvgIcon size={13} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', flexShrink: 0 })}>lucide:mic-2</FuseSvgIcon>
-								<Typography className="text-xs truncate" sx={(t) => ({ fontWeight: 500, color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)' })}>
+								<FuseSvgIcon size={13} sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>lucide:mic-2</FuseSvgIcon>
+								<Typography className="text-xs truncate" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.38)' }}>
 									{episode.created_by.full_name}
 								</Typography>
 							</div>
 						)}
 						<Button component={Link} to={`/content/radio/episodes/${episode.id}`} size="small" variant="contained"
-							sx={(t) => ({
+							sx={() => ({
 								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
 								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
-                                background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))', color: '#fff',
-								boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(20,184,166,0.45)' : '0 0 12px rgba(20,184,166,0.3)',
-								'&:hover': { background: 'linear-gradient(135deg, #0f766e, #0d9488)', transform: 'scale(1.04)' },
+								background: 'linear-gradient(135deg, #1DC98A, #2AE88E)', color: '#0D1A47',
+								boxShadow: '0 0 14px rgba(29,201,138,0.45)',
+								'&:hover': { background: 'linear-gradient(135deg, #2AE88E, #1DC98A)', transform: 'scale(1.04)', boxShadow: '0 0 20px rgba(42,232,142,0.55)' },
 							})}
 							endIcon={<FuseSvgIcon size={13}>{episode.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Listen
@@ -248,30 +248,36 @@ function EpisodesView() {
 			scroll="page"
 			header={
 				<div style={{
-	           position: 'relative', width: '100%', overflow: 'hidden',
-                    background: 'linear-gradient(135deg, var(--color-ocean-teal), var(--color-seafoam), var(--color-mint))',
-                    paddingTop: '56px', paddingBottom: '64px',
-                    opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
-                    pointerEvents: 'none', willChange: 'opacity, transform',
-                }}>
-					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(20,184,166,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.045) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
-					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,0.18) 0%, transparent 65%)' }} />
+					position: 'relative', width: '100%', overflow: 'hidden',
+					background: 'linear-gradient(135deg, #0D1A47 0%, #112468 40%, #0EA8B0 80%, #1DC98A 100%)',
+					paddingTop: '56px', paddingBottom: '64px',
+					opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
+					pointerEvents: 'none', willChange: 'opacity, transform',
+				}}>
+					{/* Grid overlay */}
+					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(29,201,138,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,201,138,0.06) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
+					{/* Radial glow — navy left */}
+					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(23,100,192,0.22) 0%, transparent 65%)' }} />
+					{/* Mint accent orb — right */}
+					<div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '360px', height: '360px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(42,232,142,0.18) 0%, transparent 65%)' }} />
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
-							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#ccfbf1', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
+							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#e8fff5', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
 								Radio Episodes
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
-							<Typography sx={{ fontSize: '0.975rem', color: 'rgba(153,246,228,0.65)', lineHeight: 1.75 }}>
+							<Typography sx={{ fontSize: '0.975rem', color: 'rgba(42,232,142,0.72)', lineHeight: 1.75 }}>
 								Browse all radio episodes — one story at a time.
 							</Typography>
 						</motion.div>
 						{episodes?.count != null && (
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
-								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(20,184,166,0.25)', backgroundColor: 'rgba(20,184,166,0.08)' }}>
-									<FuseSvgIcon size={13} sx={{ color: 'rgba(153,246,228,0.55)' }}>lucide:mic-2</FuseSvgIcon>
-
+								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(42,232,142,0.3)', backgroundColor: 'rgba(42,232,142,0.1)' }}>
+									<FuseSvgIcon size={13} sx={{ color: 'rgba(42,232,142,0.65)' }}>lucide:mic-2</FuseSvgIcon>
+									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(42,232,142,0.75)' }}>
+										{episodes.count} episode{episodes.count !== 1 ? 's' : ''}
+									</Typography>
 								</div>
 							</motion.div>
 						)}

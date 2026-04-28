@@ -247,11 +247,17 @@ a[role=button] {
 
 /* Glass navbar */
 .glass-navbar {
-    background: var(--glass-bg);
+    background: linear-gradient(to right, #1a6fd4, #0ec4c4);
     backdrop-filter: var(--frosted-glass-heavy);
     -webkit-backdrop-filter: var(--frosted-glass-heavy);
     border-bottom: 1px solid var(--glass-border);
     box-shadow: var(--shadow-card);
+}
+
+/* Navbar panels gradient */
+#fuse-navbar-panel,
+#fuse-navbar-side-panel {
+    background: linear-gradient(to right, #1a6fd4, #0ec4c4) !important;
 }
 
 /* Glass sidebar */

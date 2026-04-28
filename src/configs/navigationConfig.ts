@@ -51,12 +51,10 @@ const navigationConfig: FuseNavItemType[] = [
 			{
 				id: 'platform-podcast',
 				title: 'Podcast',
-				type: 'collapse',
+				type: 'item',
 				icon: 'heroicons-outline:microphone',
 				auth: authRoles.member,
-				children: [
-					{ id: 'platform-podcast-courses', title: 'Episodes', auth: authRoles.member, type: 'item', url: '/content/podcast' }
-				]
+				url : '/content/podcast/courses'
 			}
 		]
 	},

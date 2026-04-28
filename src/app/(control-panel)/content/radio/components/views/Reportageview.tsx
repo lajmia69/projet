@@ -29,6 +29,9 @@ import { useSearchReportages, useReportageTypes, useSeasons, useDeleteReportage 
 import { Reportage, SearchReportages } from '../../api/types';
 import DurationDisplay from '../ui/Durationdisplay';
 
+// Palette: #112468 Deep navy | #1764C0 Royal blue | #0EA8B0 Ocean teal
+//          #1DC98A Seafoam   | #2AE88E Mint green | #0D1A47 Midnight navy
+
 const Root = styled(FusePageSimple)(() => ({
 	'& .FusePageSimple-header': { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
 	'& .FusePageSimple-contentWrapper': { overflow: 'visible !important' },
@@ -50,44 +53,50 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 				sx={(theme) => ({
 					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
 					height: '100%', position: 'relative',
-					border: theme.palette.mode === 'dark' ? '1px solid rgba(167,139,250,0.18)' : '1px solid rgba(139,92,246,0.18)',
+					border: theme.palette.mode === 'dark' ? '1px solid rgba(23,100,192,0.25)' : '1px solid rgba(23,100,192,0.22)',
 					background: theme.palette.mode === 'dark'
-						? 'linear-gradient(145deg, rgba(10,8,20,0.98) 0%, rgba(18,12,35,0.98) 100%)'
-						: 'linear-gradient(145deg, #ffffff 0%, #faf5ff 100%)',
+						? 'linear-gradient(145deg, #0D1A47 0%, #112468 100%)'
+						: 'linear-gradient(145deg, #112468 0%, #1764C0 100%)',
 					boxShadow: theme.palette.mode === 'dark'
-						? '0 0 0 1px rgba(167,139,250,0.08), 0 4px 24px rgba(139,92,246,0.1)'
-						: '0 0 0 1px rgba(139,92,246,0.07), 0 4px 20px rgba(139,92,246,0.07)',
+						? '0 0 0 1px rgba(23,100,192,0.1), 0 4px 24px rgba(13,26,71,0.4)'
+						: '0 0 0 1px rgba(23,100,192,0.1), 0 4px 20px rgba(17,36,104,0.3)',
 					transition: 'transform 0.25s ease, box-shadow 0.25s ease',
 					'&:hover': {
 						transform: 'translateY(-5px)',
-						borderColor: theme.palette.mode === 'dark' ? 'rgba(167,139,250,0.4)' : 'rgba(139,92,246,0.4)',
+						borderColor: theme.palette.mode === 'dark' ? 'rgba(23,100,192,0.5)' : 'rgba(23,100,192,0.5)',
 						boxShadow: theme.palette.mode === 'dark'
-							? '0 0 0 1px rgba(167,139,250,0.2), 0 8px 40px rgba(139,92,246,0.25)'
-							: '0 0 0 1px rgba(139,92,246,0.18), 0 8px 40px rgba(139,92,246,0.18)',
+							? '0 0 0 1px rgba(23,100,192,0.22), 0 8px 40px rgba(17,36,104,0.4)'
+							: '0 0 0 1px rgba(23,100,192,0.22), 0 8px 40px rgba(17,36,104,0.45)',
 					},
 				})}
 			>
-                <div style={{ height: 3, width: '100%', background: 'linear-gradient(135deg, var(--color-mint), var(--color-seafoam))' }} />
-
-				
+				{/* Top accent bar — Seafoam → Mint */}
+				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #1DC98A, #2AE88E)' }} />
 
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
 					{/* Chips */}
 					<div className="flex flex-wrap gap-1.5 pr-10">
 						{reportage.reportage_type?.name && (
-							<Chip label={reportage.reportage_type.name} size="small" sx={(theme) => ({
-								fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', height: 20,
-								color: theme.palette.mode === 'dark' ? '#c4b5fd' : '#4c1d95',
-								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(139,92,246,0.18)' : 'rgba(139,92,246,0.12)',
-								border: '1px solid rgba(139,92,246,0.3)',
-							})} />
+							<Chip
+								label={reportage.reportage_type.name}
+								size="small"
+								sx={() => ({
+									fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+									textTransform: 'uppercase', height: 22,
+									color: '#fff',
+									backgroundColor: 'rgba(23,100,192,0.28)',
+									border: '1px solid rgba(23,100,192,0.55)',
+									boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+									'& .MuiChip-label': { color: '#fff' },
+								})}
+							/>
 						)}
 						{reportage.season?.name && (
-							<Chip label={reportage.season.name} size="small" sx={(theme) => ({
+							<Chip label={reportage.season.name} size="small" sx={() => ({
 								fontSize: '0.68rem', fontWeight: 600, height: 20,
-								color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)',
-								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
-								border: '1px solid rgba(0,0,0,0.08)',
+								color: 'rgba(255,255,255,0.55)',
+								backgroundColor: 'rgba(255,255,255,0.08)',
+								border: '1px solid rgba(255,255,255,0.14)',
 							})} />
 						)}
 					</div>
@@ -95,44 +104,44 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 					{/* Title */}
 					<Typography className="font-semibold line-clamp-2 leading-snug"
 						dir={reportage.transcription?.language_orientation}
-						sx={(theme) => ({ fontSize: '0.975rem', color: theme.palette.mode === 'dark' ? '#ede9fe' : '#1a1025', lineHeight: 1.45 })}>
+						sx={() => ({ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 })}>
 						{reportage.name}
 					</Typography>
 
 					{reportage.transcription?.author && (
 						<Typography className="line-clamp-1" dir={reportage.transcription?.language_orientation}
-							sx={(theme) => ({ color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)', fontSize: '0.82rem' })}>
+							sx={() => ({ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem' })}>
 							{reportage.transcription.author}
 						</Typography>
 					)}
 
 					<div className="flex-1" />
-					<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent)' }} />
+					<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(23,100,192,0.45), transparent)' }} />
 
 					{/* Meta */}
 					<div className="flex items-center gap-3 flex-wrap">
 						{(reportage.streaming_version?.duration || reportage.hd_version?.duration) && (
 							<div className="flex items-center gap-1">
-								<FuseSvgIcon size={12} sx={{ color: '#8b5cf6' }}>lucide:clock</FuseSvgIcon>
-								<Typography className="text-xs font-medium" sx={{ color: '#8b5cf6' }}>
+								<FuseSvgIcon size={12} sx={{ color: '#93c5fd' }}>lucide:clock</FuseSvgIcon>
+								<Typography className="text-xs font-medium" sx={{ color: '#93c5fd' }}>
 									<DurationDisplay isoDuration={reportage.streaming_version?.duration || reportage.hd_version?.duration} format="short" />
 								</Typography>
 							</div>
 						)}
 						{reportage.language?.name && (
 							<div className="flex items-center gap-1">
-								<FuseSvgIcon size={12} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)' })}>lucide:globe</FuseSvgIcon>
-								<Typography className="text-xs" sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)' })}>
+								<FuseSvgIcon size={12} sx={{ color: 'rgba(255,255,255,0.4)' }}>lucide:globe</FuseSvgIcon>
+								<Typography className="text-xs" sx={{ color: 'rgba(255,255,255,0.45)' }}>
 									{reportage.language.name}
 								</Typography>
 							</div>
 						)}
 						{reportage.is_published && (
-							<Chip label="On Air" size="small" sx={(t) => ({
+							<Chip label="On Air" size="small" sx={() => ({
 								ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
-								color: t.palette.mode === 'dark' ? '#c4b5fd' : '#4c1d95',
-								backgroundColor: t.palette.mode === 'dark' ? 'rgba(139,92,246,0.12)' : 'rgba(139,92,246,0.15)',
-								border: '1px solid rgba(139,92,246,0.35)',
+								color: '#fff',
+								backgroundColor: 'rgba(23,100,192,0.4)',
+								border: '1px solid rgba(23,100,192,0.65)',
 							})} />
 						)}
 					</div>
@@ -141,22 +150,22 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 					<div className="flex items-center justify-between gap-2 pt-0.5">
 						{reportage.created_by?.full_name && (
 							<div className="flex items-center gap-1.5 min-w-0">
-								<FuseSvgIcon size={13} sx={(t) => ({ color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.35)', flexShrink: 0 })}>lucide:newspaper</FuseSvgIcon>
-								<Typography className="text-xs truncate" sx={(t) => ({ fontWeight: 500, color: t.palette.mode === 'dark' ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.4)' })}>
+								<FuseSvgIcon size={13} sx={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }}>lucide:newspaper</FuseSvgIcon>
+								<Typography className="text-xs truncate" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.38)' }}>
 									{reportage.created_by.full_name}
 								</Typography>
 							</div>
 						)}
-                        <Button component={Link} to={`/content/radio/reportages/${reportage.id}`} size="small" variant="contained"
-							sx={(t) => ({
+						<Button component={Link} to={`/content/radio/reportages/${reportage.id}`} size="small" variant="contained"
+							sx={() => ({
 								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
 								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
-                                background: 'linear-gradient(135deg, var(--palette-reportages-deep), var(--palette-reportages-accent))', color: '#fff',
-								boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(139,92,246,0.45)' : '0 0 12px rgba(139,92,246,0.3)',
-                                '&:hover': { background: 'linear-gradient(135deg, #3a1a75, #6d28d9)', transform: 'scale(1.04)' },
+								background: 'linear-gradient(135deg, #1764C0, #1DC98A)', color: '#fff',
+								boxShadow: '0 0 14px rgba(23,100,192,0.5)',
+								'&:hover': { background: 'linear-gradient(135deg, #0D1A47, #1764C0)', transform: 'scale(1.04)', boxShadow: '0 0 20px rgba(23,100,192,0.65)' },
 							})}
 							endIcon={<FuseSvgIcon size={13}>{reportage.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
-							Watch
+							Listen
 						</Button>
 					</div>
 				</div>
@@ -226,30 +235,39 @@ function ReportageView() {
 	return (
 		<Root
 			scroll="page"
-            header={
-                <div style={{
-                    position: 'relative', width: '100%', overflow: 'hidden',
-                    background: 'linear-gradient(135deg, var(--color-ocean-teal), var(--color-seafoam), var(--color-mint))',
-                    paddingTop: '56px', paddingBottom: '64px',
-                    opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
-                    pointerEvents: 'none', willChange: 'opacity, transform',
-                }}>
-					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(139,92,246,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.045) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
-					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(109,40,217,0.18) 0%, transparent 65%)' }} />
+			header={
+				<div style={{
+					position: 'relative', width: '100%', overflow: 'hidden',
+					background: 'linear-gradient(135deg, #0D1A47 0%, #112468 40%, #0EA8B0 80%, #1DC98A 100%)',
+					paddingTop: '56px', paddingBottom: '64px',
+					opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
+					pointerEvents: 'none', willChange: 'opacity, transform',
+				}}>
+					{/* Grid overlay */}
+					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(29,201,138,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,201,138,0.06) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
+					{/* Radial glow — navy left */}
+					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(23,100,192,0.22) 0%, transparent 65%)' }} />
+					{/* Mint accent orb — right */}
+					<div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '360px', height: '360px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(42,232,142,0.18) 0%, transparent 65%)' }} />
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
-							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#ccfbf1', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
+							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#e8fff5', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
 								Radio Reportages
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
-							<Typography sx={{ fontSize: '0.975rem', color: 'rgba(221,214,254,0.65)', lineHeight: 1.75 }}>
+							<Typography sx={{ fontSize: '0.975rem', color: 'rgba(42,232,142,0.72)', lineHeight: 1.75 }}>
 								Browse all reportages — in-depth stories from the field.
 							</Typography>
 						</motion.div>
 						{reportages?.count != null && (
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
-							
+								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(23,100,192,0.35)', backgroundColor: 'rgba(23,100,192,0.12)' }}>
+									<FuseSvgIcon size={13} sx={{ color: 'rgba(147,197,253,0.75)' }}>lucide:newspaper</FuseSvgIcon>
+									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(147,197,253,0.85)' }}>
+										{reportages.count} reportage{reportages.count !== 1 ? 's' : ''}
+									</Typography>
+								</div>
 							</motion.div>
 						)}
 					</div>
