@@ -15,8 +15,8 @@ type RadioCardProps = {
 
 function RadioCard({ radio }: RadioCardProps) {
 	return (
-		<Card
-			sx={(theme) => ({
+            <Card
+                sx={(theme) => ({
 				display: 'flex',
 				flexDirection: 'column',
 				borderRadius: '18px',
@@ -27,10 +27,10 @@ function RadioCard({ radio }: RadioCardProps) {
                     theme.palette.mode === 'dark'
                         ? '1px solid rgba(var(--color-midnight-navy-rgb),0.6)'
                         : '1px solid rgba(var(--color-royal-blue-rgb),0.25)',
-				background:
-					theme.palette.mode === 'dark'
-						? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)'
-						: 'linear-gradient(145deg, #ffffff 0%, #f0f6ff 100%)',
+                background:
+                    theme.palette.mode === 'dark'
+                        ? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)'
+                        : 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(240,246,255,1) 100%)',
 				boxShadow:
 					theme.palette.mode === 'dark'
 						? '0 0 0 1px rgba(99,179,237,0.08), 0 4px 24px rgba(59,130,246,0.12), 0 1px 4px rgba(0,0,0,0.4)'

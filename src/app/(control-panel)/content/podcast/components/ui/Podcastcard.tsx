@@ -101,15 +101,15 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 		<>
 			<Card sx={(theme) => ({
 				display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden', height: '100%', position: 'relative',
-				border: theme.palette.mode === 'dark' ? '1px solid rgba(99,179,237,0.18)' : '1px solid rgba(59,130,246,0.14)',
-				background: theme.palette.mode === 'dark' ? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)' : 'linear-gradient(145deg, #ffffff 0%, #f0f6ff 100%)',
+                border: theme.palette.mode === 'dark' ? '1px solid rgba(var(--color-midnight-navy-rgb),0.6)' : '1px solid rgba(var(--color-royal-blue-rgb),0.25)',
+                background: theme.palette.mode === 'dark' ? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)' : 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(240,246,255,1) 100%)',
 				boxShadow: theme.palette.mode === 'dark' ? '0 0 0 1px rgba(99,179,237,0.08), 0 4px 24px rgba(59,130,246,0.12), 0 1px 4px rgba(0,0,0,0.4)' : '0 0 0 1px rgba(59,130,246,0.06), 0 4px 20px rgba(59,130,246,0.08), 0 1px 4px rgba(0,0,0,0.04)',
 				transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
 				'&:hover': { transform: 'translateY(-5px)', borderColor: theme.palette.mode === 'dark' ? 'rgba(99,179,237,0.4)' : 'rgba(59,130,246,0.35)', boxShadow: theme.palette.mode === 'dark' ? '0 0 0 1px rgba(99,179,237,0.2), 0 8px 40px rgba(59,130,246,0.28)' : '0 0 0 1px rgba(59,130,246,0.18), 0 8px 40px rgba(59,130,246,0.18)' },
 				'&::before': { content: '""', position: 'absolute', top: '-30px', right: '-30px', width: '120px', height: '120px', borderRadius: '50%', background: theme.palette.mode === 'dark' ? 'radial-gradient(circle, rgba(59,130,246,0.18) 0%, transparent 70%)' : 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }
 			})}>
 				{/* Accent bar */}
-				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #1d4ed8, #60a5fa, #93c5fd)', position: 'relative', zIndex: 1 }} />
+                <div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, var(--color-deep-navy), var(--color-royal-blue), var(--color-ocean-teal))', position: 'relative', zIndex: 1 }} />
 
 				{/* Body */}
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
