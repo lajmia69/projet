@@ -67,7 +67,7 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 					},
 				})}
 			>
-				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #6d28d9, #8b5cf6, #c4b5fd)' }} />
+                <div style={{ height: 3, width: '100%', background: 'linear-gradient(135deg, var(--color-mint), var(--color-seafoam))' }} />
 
 				
 
@@ -147,13 +147,13 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 								</Typography>
 							</div>
 						)}
-						<Button component={Link} to={`/content/radio/reportages/${reportage.id}`} size="small" variant="contained"
+                        <Button component={Link} to={`/content/radio/reportages/${reportage.id}`} size="small" variant="contained"
 							sx={(t) => ({
 								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
 								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
-								background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)', color: '#fff',
+                                background: 'linear-gradient(135deg, var(--palette-reportages-deep), var(--palette-reportages-accent))', color: '#fff',
 								boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(139,92,246,0.45)' : '0 0 12px rgba(139,92,246,0.3)',
-								'&:hover': { background: 'linear-gradient(135deg, #5b21b6, #6d28d9)', transform: 'scale(1.04)' },
+                                '&:hover': { background: 'linear-gradient(135deg, #3a1a75, #6d28d9)', transform: 'scale(1.04)' },
 							})}
 							endIcon={<FuseSvgIcon size={13}>{reportage.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Watch
@@ -226,20 +226,20 @@ function ReportageView() {
 	return (
 		<Root
 			scroll="page"
-			header={
-				<div style={{
-					position: 'relative', width: '100%', overflow: 'hidden',
-					background: 'linear-gradient(160deg, #0d0a1a 0%, #1a0e35 50%, #100a20 100%)',
-					paddingTop: '56px', paddingBottom: '64px',
-					opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
-					pointerEvents: 'none', willChange: 'opacity, transform',
-				}}>
+            header={
+                <div style={{
+                    position: 'relative', width: '100%', overflow: 'hidden',
+                    background: 'linear-gradient(135deg, var(--color-ocean-teal), var(--color-seafoam), var(--color-mint))',
+                    paddingTop: '56px', paddingBottom: '64px',
+                    opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
+                    pointerEvents: 'none', willChange: 'opacity, transform',
+                }}>
 					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(139,92,246,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.045) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
 					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(109,40,217,0.18) 0%, transparent 65%)' }} />
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
-							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#ede9fe', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
-								Reportage
+							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#ccfbf1', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
+								Radio Reportages
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
@@ -249,12 +249,7 @@ function ReportageView() {
 						</motion.div>
 						{reportages?.count != null && (
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
-								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(139,92,246,0.25)', backgroundColor: 'rgba(139,92,246,0.08)' }}>
-									<FuseSvgIcon size={13} sx={{ color: 'rgba(221,214,254,0.55)' }}>lucide:newspaper</FuseSvgIcon>
-									<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(221,214,254,0.6)' }}>
-										{reportages.count} reportages available
-									</Typography>
-								</div>
+							
 							</motion.div>
 						)}
 					</div>

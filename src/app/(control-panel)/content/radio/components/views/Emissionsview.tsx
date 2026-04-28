@@ -46,28 +46,28 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 
 	return (
 		<>
-			<Card
-				sx={(theme) => ({
-					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
-					height: '100%', position: 'relative',
-					border: theme.palette.mode === 'dark' ? '1px solid rgba(251,191,36,0.18)' : '1px solid rgba(245,158,11,0.18)',
-					background: theme.palette.mode === 'dark'
-						? 'linear-gradient(145deg, rgba(15,12,5,0.98) 0%, rgba(28,20,5,0.98) 100%)'
-						: 'linear-gradient(145deg, #ffffff 0%, #fffbf0 100%)',
-					boxShadow: theme.palette.mode === 'dark'
-						? '0 0 0 1px rgba(251,191,36,0.08), 0 4px 24px rgba(245,158,11,0.1)'
-						: '0 0 0 1px rgba(245,158,11,0.07), 0 4px 20px rgba(245,158,11,0.07)',
-					transition: 'transform 0.25s ease, box-shadow 0.25s ease',
-					'&:hover': {
-						transform: 'translateY(-5px)',
-						borderColor: theme.palette.mode === 'dark' ? 'rgba(251,191,36,0.4)' : 'rgba(245,158,11,0.4)',
-						boxShadow: theme.palette.mode === 'dark'
-							? '0 0 0 1px rgba(251,191,36,0.2), 0 8px 40px rgba(245,158,11,0.25)'
-							: '0 0 0 1px rgba(245,158,11,0.18), 0 8px 40px rgba(245,158,11,0.18)',
-					},
-				})}
-			>
-				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #b45309, #f59e0b, #fcd34d)' }} />
+            <Card
+                sx={(theme) => ({
+                    display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
+                    height: '100%', position: 'relative',
+                    border: theme.palette.mode === 'dark' ? '1px solid rgba(17,36,104,0.28)' : '1px solid rgba(139,92,246,0.18)',
+                    background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(145deg, rgba(var(--color-mint-rgb),0.95) 0%, rgba(var(--color-seafoam-rgb),0.95) 100%)'
+                        : 'linear-gradient(135deg, var(--color-mint), var(--color-seafoam))',
+                    boxShadow: theme.palette.mode === 'dark'
+                        ? '0 0 0 1px rgba(251,191,36,0.08), 0 4px 24px rgba(245,158,11,0.1)'
+                        : '0 0 0 1px rgba(245,158,11,0.07), 0 4px 20px rgba(245,158,11,0.07)',
+                    transition: 'transform 0.25s ease, box-shadow 0.25s ease',
+                    '&:hover': {
+                        transform: 'translateY(-5px)',
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(17,36,104,0.4)' : 'rgba(245,158,11,0.4)',
+                        boxShadow: theme.palette.mode === 'dark'
+                            ? '0 0 0 1px rgba(17,36,104,0.2), 0 8px 40px rgba(23,100,192,0.25)'
+                            : '0 0 0 1px rgba(245,158,11,0.18), 0 8px 40px rgba(245,158,11,0.18)',
+                    },
+                })}
+            >
+                <div style={{ height: 3, width: '100%', background: 'linear-gradient(135deg, var(--color-mint), var(--color-seafoam))' }} />
 
 				
 
@@ -147,14 +147,14 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 								</Typography>
 							</div>
 						)}
-						<Button component={Link} to={`/content/radio/emissions/${emission.id}`} size="small" variant="contained"
-							sx={(t) => ({
-								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
-								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
-								background: 'linear-gradient(135deg, #b45309, #f59e0b)', color: '#fff',
-								boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(245,158,11,0.45)' : '0 0 12px rgba(245,158,11,0.3)',
-								'&:hover': { background: 'linear-gradient(135deg, #92400e, #b45309)', transform: 'scale(1.04)' },
-							})}
+                                <Button component={Link} to={`/content/radio/emissions/${emission.id}`} size="small" variant="contained"
+ 						sx={(t) => ({
+ 							borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
+ 							paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
+ 							background: 'linear-gradient(135deg, var(--palette-emissions-deep), var(--palette-emissions-accent))', color: '#fff',
+ 							boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(23,100,192,0.45)' : '0 0 12px rgba(23,100,192,0.3)',
+ 							'&:hover': { background: 'linear-gradient(135deg, var(--palette-emissions-accent), var(--palette-emissions-deep))', transform: 'scale(1.04)' },
+ 						})}
 							endIcon={<FuseSvgIcon size={13}>{emission.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Listen
 						</Button>
@@ -226,19 +226,19 @@ function EmissionsView() {
 	return (
 		<Root
 			scroll="page"
-			header={
-				<div style={{
-					position: 'relative', width: '100%', overflow: 'hidden',
-					background: 'linear-gradient(160deg, #1c1a0f 0%, #2d2408 50%, #1a1505 100%)',
-					paddingTop: '56px', paddingBottom: '64px',
-					opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
-					pointerEvents: 'none', willChange: 'opacity, transform',
-				}}>
+            header={
+                <div style={{
+                    position: 'relative', width: '100%', overflow: 'hidden',
+                    background: 'linear-gradient(135deg, var(--color-ocean-teal), var(--color-seafoam), var(--color-mint))',
+                    paddingTop: '56px', paddingBottom: '64px',
+                    opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
+                    pointerEvents: 'none', willChange: 'opacity, transform',
+                }}>
 					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(245,158,11,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(245,158,11,0.045) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
 					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(180,83,9,0.18) 0%, transparent 65%)' }} />
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
-							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#fef3c7', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
+							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#ccfbf1', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
 								Radio Emissions
 							</Typography>
 						</motion.div>
@@ -249,12 +249,8 @@ function EmissionsView() {
 						</motion.div>
 						{emissions?.count != null && (
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
-								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(245,158,11,0.25)', backgroundColor: 'rgba(245,158,11,0.08)' }}>
-									<FuseSvgIcon size={13} sx={{ color: 'rgba(253,230,138,0.55)' }}>lucide:radio</FuseSvgIcon>
-									<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(253,230,138,0.6)' }}>
-										{emissions.count} emissions available
-									</Typography>
-								</div>
+								
+							
 							</motion.div>
 						)}
 					</div>

@@ -102,7 +102,7 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 			<Card sx={(theme) => ({
 				display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden', height: '100%', position: 'relative',
                 border: theme.palette.mode === 'dark' ? '1px solid rgba(var(--color-midnight-navy-rgb),0.6)' : '1px solid rgba(var(--color-royal-blue-rgb),0.25)',
-                background: theme.palette.mode === 'dark' ? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)' : 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(240,246,255,1) 100%)',
+                background: theme.palette.mode === 'dark' ? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)' : 'linear-gradient(145deg, var(--color-deep-navy), var(--color-royal-blue), var(--color-ocean-teal))',
 				boxShadow: theme.palette.mode === 'dark' ? '0 0 0 1px rgba(99,179,237,0.08), 0 4px 24px rgba(59,130,246,0.12), 0 1px 4px rgba(0,0,0,0.4)' : '0 0 0 1px rgba(59,130,246,0.06), 0 4px 20px rgba(59,130,246,0.08), 0 1px 4px rgba(0,0,0,0.04)',
 				transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
 				'&:hover': { transform: 'translateY(-5px)', borderColor: theme.palette.mode === 'dark' ? 'rgba(99,179,237,0.4)' : 'rgba(59,130,246,0.35)', boxShadow: theme.palette.mode === 'dark' ? '0 0 0 1px rgba(99,179,237,0.2), 0 8px 40px rgba(59,130,246,0.28)' : '0 0 0 1px rgba(59,130,246,0.18), 0 8px 40px rgba(59,130,246,0.18)' },
@@ -177,7 +177,7 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 							</div>
 						)}
                         <Button component={Link} to={`/content/podcast/courses/${podcast.id}`} size="small" variant="contained"
-                            sx={(theme) => ({ borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none', paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em', background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))', color: '#fff', boxShadow: theme.palette.mode === 'dark' ? '0 0 14px rgba(59,130,246,0.5)' : '0 0 12px rgba(59,130,246,0.35)', transition: 'box-shadow 0.2s ease, transform 0.15s ease', '&:hover': { background: 'linear-gradient(135deg, var(--color-midnight-navy), var(--color-royal-blue))', transform: 'scale(1.04)' } })}
+                            sx={(theme) => ({ borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none', paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em', background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue), var(--color-ocean-teal))', color: '#fff', boxShadow: theme.palette.mode === 'dark' ? '0 0 14px rgba(59,130,246,0.5)' : '0 0 12px rgba(59,130,246,0.35)', transition: 'box-shadow 0.2s ease, transform 0.15s ease', '&:hover': { background: 'linear-gradient(135deg, var(--color-midnight-navy), var(--color-royal-blue))', transform: 'scale(1.04)' } })}
 							endIcon={<FuseSvgIcon size={13}>{podcast.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Listen
 						</Button>

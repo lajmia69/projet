@@ -30,7 +30,7 @@ function RadioCard({ radio }: RadioCardProps) {
                 background:
                     theme.palette.mode === 'dark'
                         ? 'linear-gradient(145deg, rgba(15,23,42,0.98) 0%, rgba(23,37,64,0.98) 100%)'
-                        : 'linear-gradient(145deg, rgba(255,255,255,0.95) 0%, rgba(240,246,255,1) 100%)',
+                        : 'linear-gradient(145deg, var(--color-deep-navy), var(--color-royal-blue), var(--color-ocean-teal))',
 				boxShadow:
 					theme.palette.mode === 'dark'
 						? '0 0 0 1px rgba(99,179,237,0.08), 0 4px 24px rgba(59,130,246,0.12), 0 1px 4px rgba(0,0,0,0.4)'

@@ -51,9 +51,9 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
 					height: '100%', position: 'relative',
 					border: theme.palette.mode === 'dark' ? '1px solid rgba(99,202,183,0.18)' : '1px solid rgba(20,184,166,0.18)',
-					background: theme.palette.mode === 'dark'
-						? 'linear-gradient(145deg, rgba(5,15,14,0.98) 0%, rgba(5,25,22,0.98) 100%)'
-						: 'linear-gradient(145deg, #ffffff 0%, #f0fdfb 100%)',
+                    background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))'
+                        : 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))',
 					boxShadow: theme.palette.mode === 'dark'
 						? '0 0 0 1px rgba(99,202,183,0.08), 0 4px 24px rgba(20,184,166,0.1)'
 						: '0 0 0 1px rgba(20,184,166,0.07), 0 4px 20px rgba(20,184,166,0.07)',
@@ -67,21 +67,31 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 					},
 				})}
 			>
-				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #0d9488, #14b8a6, #5eead4)' }} />
+                <div style={{ height: 3, width: '100%', background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))' }} />
 
 				
 
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
 					{/* Chips */}
 					<div className="flex flex-wrap gap-1.5 pr-10">
-						{episode.emission_type?.name && (
-							<Chip label={episode.emission_type.name} size="small" sx={(theme) => ({
-								fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', height: 20,
-								color: theme.palette.mode === 'dark' ? '#5eead4' : '#134e4a',
-								backgroundColor: theme.palette.mode === 'dark' ? 'rgba(20,184,166,0.18)' : 'rgba(20,184,166,0.12)',
-								border: '1px solid rgba(20,184,166,0.3)',
-							})} />
-						)}
+                    {episode.emission_type?.name && (
+                        <Chip
+                            label={episode.emission_type.name}
+                            size="small"
+                            sx={(theme) => ({
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                letterSpacing: '0.04em',
+                                textTransform: 'uppercase',
+                                height: 22,
+                                color: '#fff',
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.28)' : 'rgba(59,130,246,0.22)',
+                                border: theme.palette.mode === 'dark' ? '1px solid rgba(99,179,237,0.5)' : '1px solid rgba(59,130,246,0.4)',
+                                boxShadow: theme.palette.mode === 'dark' ? '0 1px 4px rgba(0,0,0,0.3)' : '0 2px 6px rgba(37,99,235,0.25)',
+                                '& .MuiChip-label': { color: '#fff' }
+                            })}
+                        />
+                    )}
 						{episode.season?.name && (
 							<Chip label={episode.season.name} size="small" sx={(theme) => ({
 								fontSize: '0.68rem', fontWeight: 600, height: 20,
@@ -100,19 +110,21 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 						)}
 					</div>
 
-					{/* Title */}
-					<Typography className="font-semibold line-clamp-2 leading-snug"
-						dir={episode.transcription?.language_orientation}
-						sx={(theme) => ({ fontSize: '0.975rem', color: theme.palette.mode === 'dark' ? '#ccfbf1' : '#0f1a19', lineHeight: 1.45 })}>
-						{episode.name}
-					</Typography>
+                    {/* Title */}
+                    <Typography className="font-semibold line-clamp-2 leading-snug"
+                        dir={episode.transcription?.language_orientation}
+                        sx={() => ({ fontSize: '1.05rem', fontWeight: 800, color: '#ffffff', lineHeight: 1.25 })}>
+                        {episode.name}
+                    </Typography>
 
-					{episode.transcription?.author && (
-						<Typography className="line-clamp-1" dir={episode.transcription?.language_orientation}
-							sx={(theme) => ({ color: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.45)', fontSize: '0.82rem' })}>
-							{episode.transcription.author}
-						</Typography>
-					)}
+                    {episode.transcription?.author && (
+                        <Typography className="line-clamp-1" dir={episode.transcription?.language_orientation}
+                            sx={(theme) => ({ color: theme.palette.mode === 'dark' ? '#fff' : 'rgba(0,0,0,0.6)', fontSize: '0.82rem' })}>
+                            {episode.transcription.author}
+                        </Typography>
+                    )}
+
+                    
 
 					<div className="flex-1" />
 					<div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(20,184,166,0.3), transparent)' }} />
@@ -135,14 +147,14 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 								</Typography>
 							</div>
 						)}
-						{episode.is_published && (
-							<Chip label="On Air" size="small" sx={(t) => ({
-								ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
-								color: t.palette.mode === 'dark' ? '#5eead4' : '#134e4a',
-								backgroundColor: t.palette.mode === 'dark' ? 'rgba(20,184,166,0.12)' : 'rgba(20,184,166,0.15)',
-								border: '1px solid rgba(20,184,166,0.35)',
-							})} />
-						)}
+                        {episode.is_published && (
+                        <Chip label="On Air" size="small" sx={(t) => ({
+                                ml: 'auto', height: 18, fontSize: '0.65rem', fontWeight: 700,
+                                color: '#fff',
+                                backgroundColor: t.palette.mode === 'dark' ? 'rgba(20,184,166,0.42)' : 'rgba(20,184,166,0.28)',
+                                border: '1px solid rgba(20,184,166,0.6)',
+                            })} />
+                        )}
 					</div>
 
 					{/* Creator + CTA */}
@@ -159,7 +171,7 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 							sx={(t) => ({
 								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
 								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset',
-								background: 'linear-gradient(135deg, #0d9488, #14b8a6)', color: '#fff',
+                                background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))', color: '#fff',
 								boxShadow: t.palette.mode === 'dark' ? '0 0 14px rgba(20,184,166,0.45)' : '0 0 12px rgba(20,184,166,0.3)',
 								'&:hover': { background: 'linear-gradient(135deg, #0f766e, #0d9488)', transform: 'scale(1.04)' },
 							})}
@@ -236,12 +248,12 @@ function EpisodesView() {
 			scroll="page"
 			header={
 				<div style={{
-					position: 'relative', width: '100%', overflow: 'hidden',
-					background: 'linear-gradient(160deg, #0a1512 0%, #082b25 50%, #071a16 100%)',
-					paddingTop: '56px', paddingBottom: '64px',
-					opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
-					pointerEvents: 'none', willChange: 'opacity, transform',
-				}}>
+	           position: 'relative', width: '100%', overflow: 'hidden',
+                    background: 'linear-gradient(135deg, var(--color-ocean-teal), var(--color-seafoam), var(--color-mint))',
+                    paddingTop: '56px', paddingBottom: '64px',
+                    opacity: 1 - progress, transform: `translateY(${-(progress * 24)}px)`,
+                    pointerEvents: 'none', willChange: 'opacity, transform',
+                }}>
 					<div style={{ position: 'absolute', inset: 0, backgroundImage: `linear-gradient(rgba(20,184,166,0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(20,184,166,0.045) 1px, transparent 1px)`, backgroundSize: '52px 52px' }} />
 					<div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(13,148,136,0.18) 0%, transparent 65%)' }} />
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
@@ -259,9 +271,7 @@ function EpisodesView() {
 							<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
 								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(20,184,166,0.25)', backgroundColor: 'rgba(20,184,166,0.08)' }}>
 									<FuseSvgIcon size={13} sx={{ color: 'rgba(153,246,228,0.55)' }}>lucide:mic-2</FuseSvgIcon>
-									<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(153,246,228,0.6)' }}>
-										{episodes.count} episodes available
-									</Typography>
+
 								</div>
 							</motion.div>
 						)}

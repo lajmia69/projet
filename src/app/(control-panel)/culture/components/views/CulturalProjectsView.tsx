@@ -282,12 +282,12 @@ export default function CulturalProjectsView() {
 				scroll="page"
                 header={
                     <div
-                        style={{
+                    style={{
                             position: 'relative',
                             width: '100%',
                             overflow: 'hidden',
                             // Use shared palette for hero background
-                            background: 'linear-gradient(160deg, var(--color-deep-navy) 0%, var(--color-royal-blue) 50%, var(--color-ocean-teal) 100%)',
+                            background: 'linear-gradient(135deg, var(--color-ocean-teal), var(--color-seafoam), var(--color-mint))',
                             paddingTop: '56px',
                             paddingBottom: '64px',
 							opacity: heroOpacity,
