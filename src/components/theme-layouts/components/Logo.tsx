@@ -31,13 +31,10 @@ function Logo(props: LogoProps) {
 		<Root className={clsx('flex flex-shrink-0 flex-grow items-center gap-3', className)}>
 			<div className="flex flex-1 flex-col items-center gap-2">
 				<img
-					className="logo-icon h-30 w-30"
+					className="logo-icon h-48 w-48"
 					src="/assets/images/logo/logo.png"
 					alt="logo"
 				/>
-				<Typography className="tracking-light text-lg leading-none font-semibold text-center">
-					EDUVOICE
-				</Typography>
 			</div>
 			<MainProjectSelection />
 		</Root>

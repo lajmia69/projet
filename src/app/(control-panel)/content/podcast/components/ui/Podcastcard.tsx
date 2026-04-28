@@ -176,8 +176,8 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 								</Typography>
 							</div>
 						)}
-						<Button component={Link} to={`/content/podcast/courses/${podcast.id}`} size="small" variant="contained"
-							sx={(theme) => ({ borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none', paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em', background: 'linear-gradient(135deg, #2563eb, #3b82f6)', color: '#fff', boxShadow: theme.palette.mode === 'dark' ? '0 0 14px rgba(59,130,246,0.5)' : '0 0 12px rgba(59,130,246,0.35)', transition: 'box-shadow 0.2s ease, transform 0.15s ease', '&:hover': { background: 'linear-gradient(135deg, #1d4ed8, #2563eb)', transform: 'scale(1.04)' } })}
+                        <Button component={Link} to={`/content/podcast/courses/${podcast.id}`} size="small" variant="contained"
+                            sx={(theme) => ({ borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none', paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em', background: 'linear-gradient(135deg, var(--color-deep-navy), var(--color-royal-blue))', color: '#fff', boxShadow: theme.palette.mode === 'dark' ? '0 0 14px rgba(59,130,246,0.5)' : '0 0 12px rgba(59,130,246,0.35)', transition: 'box-shadow 0.2s ease, transform 0.15s ease', '&:hover': { background: 'linear-gradient(135deg, var(--color-midnight-navy), var(--color-royal-blue))', transform: 'scale(1.04)' } })}
 							endIcon={<FuseSvgIcon size={13}>{podcast.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Listen
 						</Button>

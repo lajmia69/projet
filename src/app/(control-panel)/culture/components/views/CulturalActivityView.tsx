@@ -281,8 +281,8 @@ export default function CulturalActivityView() {
 							<Typography color="text.secondary">{activity.description || '—'}</Typography>
 						</Paper>
 
-						<Paper sx={{ p: 3, borderRadius: '14px' }}>
-							<Typography variant="h6" className="font-bold mb-2">Details</Typography>
+                        <Paper sx={{ p: 3, borderRadius: '14px' }}>
+                            <Typography variant="h6" className="font-bold mb-2" sx={{ color: 'var(--accent-purple)' }}>Details</Typography>
 							<InfoRow icon="lucide:layers"        label="Type"       value={activity.cultural_activity_type?.name || '—'} />
 							<InfoRow icon="lucide:globe"         label="Language"   value={activity.language?.name || '—'} />
 							<InfoRow icon="lucide:calendar"      label="Date"       value={safeFormat(activity.date)} />

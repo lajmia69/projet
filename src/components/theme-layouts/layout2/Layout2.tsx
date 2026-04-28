@@ -82,9 +82,7 @@ function Layout2(props: Layout2Props) {
 
 					<div className="relative z-10 flex min-h-0 flex-auto flex-col">{children}</div>
 
-					{config.footer.display && (
-						<FooterLayout2 className={config.footer.style === 'fixed' ? 'sticky bottom-0' : ''} />
-					)}
+                    
 				</main>
 			</div>
 

@@ -137,8 +137,8 @@ export const themesConfig: FuseThemesType = {
 			...neutralsLightTheme,
 			primary: { main: '#0D9488', light: '#14B8A6', dark: '#0F766E', contrastText: '#FFFFFF' },
 			secondary: { main: '#8B5CF6', light: '#A78BFA', dark: '#7C3AED', contrastText: '#FFFFFF' },
-			text: { primary: '#4C1D95', secondary: '#5B21B6', disabled: '#6D28D9' },
-			background: { default: '#06B6D4', paper: '#FFFFFF' },
+            text: { primary: '#FFFFFF', secondary: '#FFFFFF', disabled: '#D6D3D1' },
+            background: { default: '#0EA8B0', paper: '#FFFFFF' },
 			divider: '#06B6D4',
 			action: {
 				active: '#57534E',

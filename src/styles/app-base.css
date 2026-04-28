@@ -62,6 +62,20 @@
     --accent-purple-light: #A78BFA;
     --accent-gold: #F59E0B;
     --accent-rose: #F43F5E;
+
+    /* Palette (shared project colors) */
+    --color-deep-navy: #112468;            /* Deep navy */
+    --color-deep-navy-rgb: 17,36,104;       
+    --color-royal-blue: #1764C0;             /* Royal blue */
+    --color-royal-blue-rgb: 23,100,192;      
+    --color-ocean-teal: #0EA8B0;             /* Ocean teal */
+    --color-ocean-teal-rgb: 14,168,176;      
+    --color-seafoam: #1DC98A;                /* Seafoam */
+    --color-seafoam-rgb: 29,201,138;         
+    --color-mint: #2AE88E;                   /* Mint green */
+    --color-mint-rgb: 42,232,142;            
+    --color-midnight-navy: #0D1A47;           /* Midnight navy */
+    --color-midnight-navy-rgb: 13,26,71;      
 }
 
 .dark {
@@ -84,6 +98,9 @@ body {
     font-size: 0.8125rem;
     overflow-x: hidden;
     font-feature-settings: "salt";
+    /* Page background uses shared color palette */
+    background: linear-gradient(135deg, var(--color-deep-navy, #112468) 0%, var(--color-royal-blue, #1764C0) 40%, var(--color-ocean-teal, #0EA8B0) 100%);
+    background-attachment: fixed;
 }
 
 html, body {
@@ -507,4 +524,15 @@ body.no-animate *::after {
 
 .dark ::selection {
     background: rgba(102, 126, 234, 0.5);
+}
+/* Navbar items titles centered and larger */
+.navigation .fuse-list-item-title {
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.fuse-navbar .fuse-list-item-title {
+  text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
 }

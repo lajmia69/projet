@@ -104,13 +104,13 @@ function LessonsView() {
 
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
-							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#dde6f0', textShadow: '0 2px 32px rgba(0,0,0,0.45)' }}>
-								What do you want to learn today?
+							<Typography component="h1" sx={{ fontSize: { xs: '2rem', sm: '3rem', md: '3.6rem' }, fontWeight: 800, color: '#dde6f0', textShadow: '0 3px 40px rgba(0,0,0,0.45)' }}>
+								Explore Lessons
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
-							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(148,163,184,0.7)', lineHeight: 1.75 }}>
-								Browse our lessons — step through real content, one session at a time.
+							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.95rem' }, color: 'rgba(255,255,255,0.95)', lineHeight: 1.75 }}>
+								Browse our lessons — explore content, one session at a time.
 							</Typography>
 						</motion.div>
 					</div>

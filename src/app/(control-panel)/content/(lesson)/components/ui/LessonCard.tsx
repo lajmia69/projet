@@ -56,8 +56,8 @@ function LessonCard({ lesson }: LessonCardProps) {
 				},
 			})}
 		>
-			{/* Top accent bar */}
-			<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #1d4ed8, #60a5fa, #93c5fd)', position: 'relative', zIndex: 1 }} />
+            {/* Top accent bar */}
+            <div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, var(--color-deep-navy), var(--color-royal-blue), var(--color-ocean-teal))', position: 'relative', zIndex: 1 }} />
 
 			{/* Card body */}
 			<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>

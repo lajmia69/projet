@@ -56,8 +56,20 @@ type NavbarStyle2ContentProps = { className?: string };
 /**
  * The navbar style 3 content.
  */
-function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
+	function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 	const { className = '' } = props;
+	const [logoOpacity, setLogoOpacity] = useState<number>(1);
+	useEffect(() => {
+		const onScroll = () => {
+			const t = window.scrollY || window.pageYOffset;
+			const max = 200;
+			const op = Math.max(0, 1 - t / max);
+			setLogoOpacity(op);
+		};
+		onScroll();
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	}, []);
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 	const { data: navigation } = useNavigationItems();
 	const { closeMobileNavbar } = useNavbarContext();
@@ -111,9 +123,14 @@ function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 					id="fuse-navbar-side-panel"
 					className="flex h-full shrink-0 flex-col items-center justify-center"
 				>
-				<div className="flex flex-col items-center gap-2 mb-4">
-					<img className="h-30 w-30 mt-8" src="/assets/images/logo/logo.png" alt="logo" />
-				</div>
+					<div className="flex flex-col items-center gap-2 mb-4">
+					<img
+						className="h-48 w-48 mt-8"
+						style={{ opacity: logoOpacity, position: 'relative', top: '6px', transition: 'opacity 0.25s ease-out' }}
+						src="/assets/images/logo/logo.png"
+						alt="logo"
+					/>
+					</div>
 
 					<FuseScrollbars
 						className="flex min-h-0 w-full flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto"

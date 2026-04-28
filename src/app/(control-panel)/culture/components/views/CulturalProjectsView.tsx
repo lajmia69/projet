@@ -280,15 +280,16 @@ export default function CulturalProjectsView() {
 		<>
 			<Root
 				scroll="page"
-				header={
-					<div
-						style={{
-							position: 'relative',
-							width: '100%',
-							overflow: 'hidden',
-							background: 'linear-gradient(160deg, #1c2537 0%, #1e2d45 50%, #192132 100%)',
-							paddingTop: '56px',
-							paddingBottom: '64px',
+                header={
+                    <div
+                        style={{
+                            position: 'relative',
+                            width: '100%',
+                            overflow: 'hidden',
+                            // Use shared palette for hero background
+                            background: 'linear-gradient(160deg, var(--color-deep-navy) 0%, var(--color-royal-blue) 50%, var(--color-ocean-teal) 100%)',
+                            paddingTop: '56px',
+                            paddingBottom: '64px',
 							opacity: heroOpacity,
 							transform: `translateY(${heroTranslateY}px)`,
 							pointerEvents: 'none',

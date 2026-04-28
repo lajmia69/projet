@@ -16,6 +16,7 @@ const navigationConfig: FuseNavItemType[] = [
 		type: 'group',
 		title: 'Platform',
 		auth: authRoles.member,
+		color: '#0EA8B0',
 		translate: 'PLATFORM',
 		children: [
 			{
@@ -66,6 +67,7 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'culture',
 		type: 'group',
 		auth: authRoles.cultureContentCreator,
+		color: '#0EA8B0',
 		title: 'Culture',
 		children: [
 			{
@@ -126,6 +128,7 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'administration',
 		type: 'group',
 		auth: authRoles.admins,
+		color: '#0EA8B0',
 		title: 'Administration',
 		translate: 'ADMINISTRATION',
 		children: [
@@ -158,6 +161,7 @@ const navigationConfig: FuseNavItemType[] = [
 				type: 'collapse',
 				icon: 'heroicons-outline:radio',
 				auth: authRoles.radioContentCreator,
+				color: '#0EA8B0',
 				translate: 'RADIO',
 				children: [
 					{ id: 'radio-emissions',     title: 'Emissions',       auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/emissions' },
@@ -170,24 +174,26 @@ const navigationConfig: FuseNavItemType[] = [
 					{ id: 'radio-reportagetype', title: 'Reportage Types', auth: authRoles.radioContentCreator, type: 'item', url: '/administration/radio/reportage-types' }
 				]
 			},
-			{
-				id: 'administration-podcast',
-				title: 'Podcast',
-				type: 'collapse',
-				icon: 'heroicons-outline:microphone',
-				auth: authRoles.podcastContentCreator,
-				children: [
+				{
+					id: 'administration-podcast',
+					title: 'Podcast',
+					type: 'collapse',
+					icon: 'heroicons-outline:microphone',
+					auth: authRoles.podcastContentCreator,
+					color: '#1764C0',
+					children: [
 					{ id: 'administration-podcast-courses',    title: 'Episodes',   auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcasts' },
 					{ id: 'administration-podcast-categories', title: 'Categories', auth: authRoles.podcastContentCreator, type: 'item', url: '/administration/podcasts/categories' }
 				]
 			},
-			{
-				id: 'administration-lessons',
-				title: 'Lessons',
-				type: 'collapse',
-				icon: 'heroicons-outline:academic-cap',
-				auth: authRoles.lessonContentCreator,
-				children: [
+				{
+					id: 'administration-lessons',
+					title: 'Lessons',
+					type: 'collapse',
+					icon: 'heroicons-outline:academic-cap',
+					auth: authRoles.lessonContentCreator,
+					color: '#1DC98A',
+					children: [
 					{ id: 'administration-lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/administration/lessons' }
 				]
 			}
@@ -199,6 +205,7 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'content',
 		type: 'group',
 		auth: authRoles.contentAdmin,
+		color: '#0EA8B0',
 		title: 'Content',
 		children: [
 			{
@@ -242,6 +249,7 @@ const navigationConfig: FuseNavItemType[] = [
 		type: 'group',
 		title: 'Studio',
 		auth: authRoles.studioStaff,
+		color: '#0EA8B0',
 		translate: 'STUDIO',
 		icon: 'heroicons-outline:color-swatch',
 		children: [
