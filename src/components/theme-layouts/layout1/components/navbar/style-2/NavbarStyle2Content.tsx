@@ -111,10 +111,9 @@ function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 					id="fuse-navbar-side-panel"
 					className="flex h-full shrink-0 flex-col items-center justify-center"
 				>
-					<div className="flex flex-col items-center gap-2 mb-4">
-						<img className="h-30 w-30" src="/assets/images/logo/logo.png" alt="logo" />
-						<Typography className="text-white text-center font-semibold text-lg">EDUVOICE</Typography>
-					</div>
+				<div className="flex flex-col items-center gap-2 mb-4">
+					<img className="h-30 w-30 mt-8" src="/assets/images/logo/logo.png" alt="logo" />
+				</div>
 
 					<FuseScrollbars
 						className="flex min-h-0 w-full flex-1 flex-col justify-start overflow-x-hidden overflow-y-auto"
