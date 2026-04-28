@@ -55,7 +55,7 @@ function AccountView() {
 			<Box
 				className="relative w-full"
 				style={{
-					background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 40%, #0A2472 100%)',
+					background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 40%, #134E4A 100%)',
 					minHeight: 110
 				}}
 			>
@@ -89,7 +89,7 @@ function AccountView() {
 							height: 88,
 							fontSize: 32,
 							fontWeight: 700,
-							background: 'linear-gradient(135deg, #1565C0, #0A2472)',
+							background: 'linear-gradient(135deg, #0D9488, #134E4A)',
 							color: '#fff'
 						}}
 					>
@@ -105,7 +105,7 @@ function AccountView() {
 						to={`/administration/accounts/${accountId}/edit`}
 						startIcon={<FuseSvgIcon size={16}>lucide:square-pen</FuseSvgIcon>}
 						style={{
-							background: 'linear-gradient(135deg, #1565C0, #0D47A1)',
+							background: 'linear-gradient(135deg, #0D9488, #0F766E)',
 							color: '#fff',
 							fontWeight: 600,
 							textTransform: 'none',

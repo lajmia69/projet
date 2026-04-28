@@ -243,6 +243,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Studio',
 		auth: authRoles.studioStaff,
 		translate: 'STUDIO',
+		icon: 'heroicons-outline:color-swatch',
 		children: [
 			// ✅ ADDED: Boards entry — was completely missing, causing /studio/boards to be unreachable from the nav
 			{
@@ -250,7 +251,7 @@ const navigationConfig: FuseNavItemType[] = [
 				title: 'Boards',
 				type: 'item',
 				auth: authRoles.studioStaff,
-				icon: 'heroicons-outline:view-boards',
+				icon: 'lucide:layout-grid',
 				url: '/studio/boards'
 			},
 			{

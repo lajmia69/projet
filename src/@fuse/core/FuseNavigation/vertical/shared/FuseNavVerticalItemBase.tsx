@@ -154,7 +154,10 @@ function FuseNavVerticalItemBase(props: FuseNavVerticalBaseProps) {
 									primaryTitleProps?.className
 								),
 								...(isGroup && {
-									color: 'secondary'
+									sx: { color: '#FFFFFF !important' }
+								}),
+								...(!isGroup && {
+									sx: { color: 'rgba(255, 255, 255, 0.95) !important' }
 								})
 							}}
 						>
@@ -164,11 +167,13 @@ function FuseNavVerticalItemBase(props: FuseNavVerticalBaseProps) {
 					{item.subtitle && (
 						<Typography
 							{...{
-								color: 'text.secondary',
+								color: isGroup ? 'inherit' : 'text.secondary',
 								...subtitleProps,
 								className: clsx(
 									'fuse-list-item-subtitle',
 									'text-sm leading-none truncate max-w-full',
+									isGroup && 'opacity-75',
+									!isGroup && 'text-white/95',
 									subtitleProps?.className
 								)
 							}}

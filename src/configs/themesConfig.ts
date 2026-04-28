@@ -1,5 +1,3 @@
-import { fuseDark, skyBlue } from '@fuse/colors';
-import { blueGrey } from '@mui/material/colors';
 import { FuseThemesType } from '@fuse/core/FuseSettings/FuseSettings';
 
 /**
@@ -22,56 +20,56 @@ export const darkPaletteText = {
 
 /**
  * Shared neutral ramp & status colours
- * Light theme
+ * Light theme - Warm Stone
  */
 const neutralsLightTheme = {
 	grey: {
-		50: '#F9FAFB',
-		100: '#F3F4F6',
-		200: '#E5E7EB',
-		300: '#D1D5DB',
-		400: '#9CA3AF',
-		500: '#6B7280',
-		600: '#4B5563',
-		700: '#374151',
-		800: '#272F3C',
-		900: '#1F232B',
-		A100: '#F3F4F6',
-		A200: '#E5E7EB',
-		A400: '#6B7280',
-		A700: '#374151'
+		50: '#FAF9F7',
+		100: '#F0EDE8',
+		200: '#E2DCD2',
+		300: '#D4C9B8',
+		400: '#BEB7A3',
+		500: '#A69884',
+		600: '#8A7D66',
+		700: '#6E6149',
+		800: '#524A36',
+		900: '#3D3629',
+		A100: '#F0EDE8',
+		A200: '#E2DCD2',
+		A400: '#A69884',
+		A700: '#6E6149'
 	},
-	success: { main: '#22C55E', light: '#4ADE80', dark: '#15803D', contrastText: '#1F232B' },
-	info: { main: '#3B82F6', light: '#60A5FA', dark: '#1D4ED8', contrastText: '#FFFFFF' },
+	success: { main: '#059669', light: '#34D399', dark: '#047857', contrastText: '#FFFFFF' },
+	info: { main: '#06B6D4', light: '#22D3EE', dark: '#0891B2', contrastText: '#FFFFFF' },
 	warning: { main: '#F59E0B', light: '#FBBF24', dark: '#B45309', contrastText: '#1F232B' },
 	error: { main: '#EF4444', light: '#F87171', dark: '#B91C1C', contrastText: '#FFFFFF' }
 };
 
 /**
  * Shared neutral ramp & status colours
- * Dark theme
+ * Dark theme - Deep Slate
  */
 const neutralsDarkTheme = {
 	grey: {
-		50: '#101214',
-		100: '#16181D',
-		200: '#1E2026',
-		300: '#25282F',
-		400: '#2D3139',
+		50: '#0D0E10',
+		100: '#12131A',
+		200: '#181A22',
+		300: '#1F2130',
+		400: '#2A2D3F',
 		500: '#6B7280',
 		600: '#8A8F99',
 		700: '#A5ABB5',
 		800: '#CDD1D9',
 		900: '#E5E7EB',
-		A100: '#16181D',
-		A200: '#1E2026',
-		A400: '#2D3139',
+		A100: '#12131A',
+		A200: '#181A22',
+		A400: '#2A2D3F',
 		A700: '#6B7280'
 	},
-	success: { main: '#22C55E', light: '#4ADE80', dark: '#15803D', contrastText: '#0F1115' },
-	info: { main: '#3B82F6', light: '#60A5FA', dark: '#1D4ED8', contrastText: '#FFFFFF' },
-	warning: { main: '#F59E0B', light: '#FBBF24', dark: '#B45309', contrastText: '#0F1115' },
-	error: { main: '#EF4444', light: '#F87171', dark: '#B91C1C', contrastText: '#FFFFFF' }
+	success: { main: '#34D399', light: '#6EE7B7', dark: '#10B981', contrastText: '#022F22' },
+	info: { main: '#22D3EE', light: '#67E8F9', dark: '#06B6D4', contrastText: '#042F2E' },
+	warning: { main: '#FBBF24', light: '#FDE68A', dark: '#D97706', contrastText: '#422006' },
+	error: { main: '#F87171', light: '#FECACA', dark: '#B91C1C', contrastText: '#FFFFFF' }
 };
 
 /**
@@ -81,19 +79,19 @@ export const themesConfig: FuseThemesType = {
 	default: {
 		palette: {
 			mode: 'light',
-			primary: { main: '#1F232B', light: '#363B44', dark: '#0F1115', contrastText: '#FFFFFF' },
-			secondary: { main: '#1565C0', light: '#3C83D6', dark: '#0E4B90', contrastText: '#FFFFFF' },
+			primary: { main: '#0D9488', light: '#14B8A6', dark: '#0F766E', contrastText: '#FFFFFF' },
+			secondary: { main: '#8B5CF6', light: '#A78BFA', dark: '#7C3AED', contrastText: '#FFFFFF' },
 			...neutralsLightTheme,
-			text: { primary: '#1F232B', secondary: '#4B5563', disabled: '#9CA3AF' },
-			background: { default: '#F6F7F8', paper: '#FFFFFF' },
-			divider: '#E5E7EB',
+			text: { primary: '#292524', secondary: '#57534E', disabled: '#A8A29E' },
+			background: { default: '#FAF9F7', paper: '#FFFFFF' },
+			divider: '#E7E5E4',
 			action: {
-				active: '#4B5563',
-				hover: '#E5E7EB',
-				selected: '#D1D5DB',
-				disabled: '#BFC4CC',
-				disabledBackground: '#F6F7F8',
-				focus: '#D1D5DB'
+				active: '#57534E',
+				hover: 'rgba(13, 148, 136, 0.08)',
+				selected: 'rgba(13, 148, 136, 0.16)',
+				disabled: '#D6D3D1',
+				disabledBackground: '#F5F5F4',
+				focus: 'rgba(13, 148, 136, 0.12)'
 			}
 		}
 	},
@@ -101,35 +99,35 @@ export const themesConfig: FuseThemesType = {
 		palette: {
 			mode: 'dark',
 			primary: {
-				main: '#2B2F38',
-				light: '#414652',
-				dark: '#16191E',
-				contrastText: '#FFFFFF'
+				main: '#14B8A6',
+				light: '#2DD4BF',
+				dark: '#0D9488',
+				contrastText: '#042F2E'
 			},
 			secondary: {
-				main: '#3C83D6',
-				light: '#5A9AF0',
-				dark: '#1D5EB0',
-				contrastText: '#FFFFFF'
+				main: '#A78BFA',
+				light: '#C4B5FD',
+				dark: '#8B5CF6',
+				contrastText: '#1E1B4B'
 			},
 			...neutralsDarkTheme,
 			text: {
-				primary: '#E5E7EB',
-				secondary: '#A5ABB5',
-				disabled: '#6B7280'
+				primary: '#F5F5F4',
+				secondary: '#D6D3D1',
+				disabled: '#78716C'
 			},
 			background: {
-				default: '#0F1115',
-				paper: '#1A1D22'
+				default: '#0C0A09',
+				paper: '#1C1917'
 			},
-			divider: '#2D3139',
+			divider: '#292524',
 			action: {
-				active: '#CDD1D9',
-				hover: 'rgba(255,255,255,0.08)',
-				selected: 'rgba(255,255,255,0.16)',
-				disabled: 'rgba(255,255,255,0.3)',
-				disabledBackground: 'rgba(255,255,255,0.12)',
-				focus: 'rgba(255,255,255,0.12)'
+				active: '#2DD4BF',
+				hover: 'rgba(20, 184, 166, 0.12)',
+				selected: 'rgba(20, 184, 166, 0.24)',
+				disabled: 'rgba(20, 184, 166, 0.3)',
+				disabledBackground: 'rgba(20, 184, 166, 0.12)',
+				focus: 'rgba(20, 184, 166, 0.24)'
 			}
 		}
 	},
@@ -137,18 +135,18 @@ export const themesConfig: FuseThemesType = {
 		palette: {
 			mode: 'light',
 			...neutralsLightTheme,
-			primary: { main: '#1F232B', light: '#363B44', dark: '#0F1115', contrastText: '#FFFFFF' },
-			secondary: { main: '#1565C0', light: '#3C83D6', dark: '#0E4B90', contrastText: '#FFFFFF' },
-			text: { primary: '#1F232B', secondary: '#4B5563', disabled: '#9CA3AF' },
-			background: { default: '#E5E7EB', paper: '#FFFFFF' },
-			divider: '#E5E7EB',
+			primary: { main: '#0D9488', light: '#14B8A6', dark: '#0F766E', contrastText: '#FFFFFF' },
+			secondary: { main: '#8B5CF6', light: '#A78BFA', dark: '#7C3AED', contrastText: '#FFFFFF' },
+			text: { primary: '#4C1D95', secondary: '#5B21B6', disabled: '#6D28D9' },
+			background: { default: '#06B6D4', paper: '#FFFFFF' },
+			divider: '#06B6D4',
 			action: {
-				active: '#4B5563',
-				hover: '#E5E7EB',
-				selected: '#D1D5DB',
-				disabled: '#BFC4CC',
-				disabledBackground: '#F6F7F8',
-				focus: '#D1D5DB'
+				active: '#57534E',
+				hover: '#E7E5E4',
+				selected: '#D6D3D1',
+				disabled: '#A8A29E',
+				disabledBackground: '#F5F5F4',
+				focus: '#D6D3D1'
 			}
 		}
 	},
@@ -630,38 +628,38 @@ export const themesConfig: FuseThemesType = {
 			divider: '#424242'
 		}
 	},
-	legacy: {
-		palette: {
-			mode: 'light',
-			divider: '#e2e8f0',
-			text: lightPaletteText,
-			common: {
-				black: 'rgb(17, 24, 39)',
-				white: 'rgb(255, 255, 255)'
-			},
-			primary: {
-				light: fuseDark[200],
-				main: fuseDark[500],
-				dark: fuseDark[800],
-				contrastText: darkPaletteText.primary
-			},
-			secondary: {
-				light: skyBlue[100],
-				main: skyBlue[500],
-				dark: skyBlue[900],
-				contrastText: lightPaletteText.primary
-			},
-			background: {
-				paper: '#FFFFFF',
-				default: '#f6f7f9'
-			},
-			error: {
-				light: '#ffcdd2',
-				main: '#f44336',
-				dark: '#b71c1c'
-			}
-		}
+legacy: {
+palette: {
+	mode: 'light',
+	divider: '#e2e8f0',
+	text: lightPaletteText,
+	common: {
+		black: 'rgb(17, 24, 39)',
+		white: 'rgb(255, 255, 255)'
 	},
+	primary: {
+		main: '#059669',
+		light: '#34D399',
+		dark: '#047857',
+		contrastText: '#FFFFFF'
+	},
+	secondary: {
+		main: '#F59E0B',
+		light: '#FBBF24',
+		dark: '#D97706',
+		contrastText: '#1F232B'
+	},
+	background: {
+		paper: '#FFFFFF',
+		default: '#FEF3C7'
+	},
+	error: {
+		light: '#FECACA',
+		main: '#EF4444',
+		dark: '#B91C1C'
+	}
+}
+},
 	light1: {
 		palette: {
 			mode: 'light',
@@ -998,31 +996,337 @@ export const themesConfig: FuseThemesType = {
 			}
 		}
 	},
-	greyDark: {
+greyDark: {
+	palette: {
+		mode: 'dark',
+		divider: 'rgba(241,245,249,.12)',
+		text: darkPaletteText,
+		primary: {
+			main: '#F97316',
+			light: '#FB923C',
+			dark: '#EA580C',
+			contrastText: '#FFFFFF'
+		},
+		secondary: {
+			main: '#22D3EE',
+			light: '#67E8F9',
+			dark: '#06B6D4',
+			contrastText: '#042F2E'
+		},
+		background: {
+			paper: '#1C1917',
+			default: '#0C0A09'
+		},
+		error: {
+			light: '#ffcdd2',
+			main: '#F43F5E',
+			dark: '#BE123C'
+		}
+	}
+},
+	auroraViolet: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#7C3AED', light: '#A78BFA', dark: '#5B21B6', contrastText: '#FFFFFF' },
+			secondary: { main: '#06B6D4', light: '#22D3EE', dark: '#0891B2', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#1E1B4B', secondary: '#4B5563', disabled: '#9CA3AF' },
+			background: { default: '#F8FAFC', paper: '#FFFFFF' },
+			divider: '#E2E8F0',
+			action: {
+				active: '#4B5563',
+				hover: 'rgba(124, 58, 237, 0.08)',
+				selected: 'rgba(124, 58, 237, 0.16)',
+				disabled: '#BFC4CC',
+				disabledBackground: '#F6F7F8',
+				focus: 'rgba(124, 58, 237, 0.12)'
+			}
+		}
+	},
+	auroraVioletDark: {
 		palette: {
 			mode: 'dark',
-			divider: 'rgba(241,245,249,.12)',
-			text: darkPaletteText,
-			primary: {
-				light: fuseDark[200],
-				main: fuseDark[700],
-				dark: fuseDark[800],
-				contrastText: darkPaletteText.primary
-			},
-			secondary: {
-				light: skyBlue[100],
-				main: skyBlue[500],
-				dark: skyBlue[900],
-				contrastText: lightPaletteText.primary
-			},
-			background: {
-				paper: blueGrey[700],
-				default: blueGrey[900]
-			},
-			error: {
-				light: '#ffcdd2',
-				main: '#f44336',
-				dark: '#b71c1c'
+			primary: { main: '#A78BFA', light: '#C4B5FD', dark: '#7C3AED', contrastText: '#1E1B4B' },
+			secondary: { main: '#22D3EE', light: '#67E8F9', dark: '#06B6D4', contrastText: '#1E1B4B' },
+			...neutralsDarkTheme,
+			text: { primary: '#F1F5F9', secondary: '#94A3B8', disabled: '#64748B' },
+			background: { default: '#0F0E1A', paper: '#1A1729' },
+			divider: '#2D2A3E',
+			action: {
+				active: '#C4B5FD',
+				hover: 'rgba(167, 139, 250, 0.12)',
+				selected: 'rgba(167, 139, 250, 0.24)',
+				disabled: 'rgba(167, 139, 250, 0.3)',
+				disabledBackground: 'rgba(167, 139, 250, 0.12)',
+				focus: 'rgba(167, 139, 250, 0.24)'
+			}
+		}
+	},
+	midnightEmerald: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#059669', light: '#34D399', dark: '#047857', contrastText: '#FFFFFF' },
+			secondary: { main: '#8B5CF6', light: '#A78BFA', dark: '#7C3AED', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#064E3B', secondary: '#374151', disabled: '#9CA3AF' },
+			background: { default: '#F0FDF4', paper: '#FFFFFF' },
+			divider: '#D1FAE5',
+			action: {
+				active: '#059669',
+				hover: 'rgba(5, 150, 105, 0.08)',
+				selected: 'rgba(5, 150, 105, 0.16)',
+				disabled: '#BFC4CC',
+				disabledBackground: '#F0FDF4',
+				focus: 'rgba(5, 150, 105, 0.12)'
+			}
+		}
+	},
+	midnightEmeraldDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#34D399', light: '#6EE7B7', dark: '#059669', contrastText: '#022F22' },
+			secondary: { main: '#A78BFA', light: '#C4B5FD', dark: '#8B5CF6', contrastText: '#1E1B4B' },
+			...neutralsDarkTheme,
+			text: { primary: '#ECFDF5', secondary: '#A7F3D0', disabled: '#6EE7B7' },
+			background: { default: '#031712', paper: '#052B1F' },
+			divider: '#064E3B',
+			action: {
+				active: '#34D399',
+				hover: 'rgba(52, 211, 153, 0.12)',
+				selected: 'rgba(52, 211, 153, 0.24)',
+				disabled: 'rgba(52, 211, 153, 0.3)',
+				disabledBackground: 'rgba(52, 211, 153, 0.12)',
+				focus: 'rgba(52, 211, 153, 0.24)'
+			}
+		}
+	},
+	cosmicCoral: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#EC4899', light: '#F472B6', dark: '#DB2777', contrastText: '#FFFFFF' },
+			secondary: { main: '#F59E0B', light: '#FBBF24', dark: '#D97706', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#831843', secondary: '#4B5563', disabled: '#9CA3AF' },
+			background: { default: '#FDF2F8', paper: '#FFFFFF' },
+			divider: '#FCE7F3',
+			action: {
+				active: '#EC4899',
+				hover: 'rgba(236, 72, 153, 0.08)',
+				selected: 'rgba(236, 72, 153, 0.16)',
+				disabled: '#BFC4CC',
+				disabledBackground: '#FDF2F8',
+				focus: 'rgba(236, 72, 153, 0.12)'
+			}
+		}
+	},
+	cosmicCoralDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#F472B6', light: '#F9A8D4', dark: '#EC4899', contrastText: '#831843' },
+			secondary: { main: '#FBBF24', light: '#FDE68A', dark: '#F59E0B', contrastText: '#78350F' },
+			...neutralsDarkTheme,
+			text: { primary: '#FDF2F8', secondary: '#FCE7F3', disabled: '#F9A8D4' },
+			background: { default: '#1F0918', paper: '#361328' },
+			divider: '#831843',
+			action: {
+				active: '#F472B6',
+				hover: 'rgba(244, 114, 182, 0.12)',
+				selected: 'rgba(244, 114, 182, 0.24)',
+				disabled: 'rgba(244, 114, 182, 0.3)',
+				disabledBackground: 'rgba(244, 114, 182, 0.12)',
+				focus: 'rgba(244, 114, 182, 0.24)'
+			}
+}
+	},
+
+	royalAmethyst: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#6366F1', light: '#818CF8', dark: '#4F46E5', contrastText: '#FFFFFF' },
+			secondary: { main: '#14B8A6', light: '#2DD4BF', dark: '#0D9488', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#312E81', secondary: '#4B5563', disabled: '#9CA3AF' },
+			background: { default: '#EEF2FF', paper: '#FFFFFF' },
+			divider: '#E0E7FF',
+			action: {
+				active: '#6366F1',
+				hover: 'rgba(99, 102, 241, 0.08)',
+				selected: 'rgba(99, 102, 241, 0.16)',
+				disabled: '#BFC4CC',
+				disabledBackground: '#EEF2FF',
+				focus: 'rgba(99, 102, 241, 0.12)'
+			}
+		}
+},
+
+	royalAmethystDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#818CF8', light: '#A5B4FC', dark: '#6366F1', contrastText: '#312E81' },
+			secondary: { main: '#2DD4BF', light: '#5EEAD4', dark: '#14B8A6', contrastText: '#042F2E' },
+			...neutralsDarkTheme,
+			text: { primary: '#E0E7FF', secondary: '#C7D2FE', disabled: '#A5B4FC' },
+			background: { default: '#0B0A1F', paper: '#151328' },
+			divider: '#312E81',
+			action: {
+				active: '#818CF8',
+				hover: 'rgba(129, 140, 248, 0.12)',
+				selected: 'rgba(129, 140, 248, 0.24)',
+				disabled: 'rgba(129, 140, 248, 0.3)',
+				disabledBackground: 'rgba(129, 140, 248, 0.12)',
+				focus: 'rgba(129, 140, 248, 0.24)'
+			}
+		}
+	},
+	frostedOnyx: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#1E293B', light: '#334155', dark: '#0F172A', contrastText: '#FFFFFF' },
+			secondary: { main: '#0EA5E9', light: '#38BDF8', dark: '#0284C7', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#0F172A', secondary: '#475569', disabled: '#94A3B8' },
+			background: { default: '#F8FAFC', paper: '#FFFFFF' },
+			divider: '#E2E8F0',
+			action: {
+				active: '#1E293B',
+				hover: 'rgba(30, 41, 59, 0.08)',
+				selected: 'rgba(30, 41, 59, 0.16)',
+				disabled: '#CBD5E1',
+				disabledBackground: '#F1F5F9',
+				focus: 'rgba(30, 41, 59, 0.12)'
+			}
+		}
+	},
+	frostedOnyxDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#334155', light: '#475569', dark: '#1E293B', contrastText: '#F8FAFC' },
+			secondary: { main: '#38BDF8', light: '#7DD3FC', dark: '#0EA5E9', contrastText: '#0C1929' },
+			...neutralsDarkTheme,
+			text: { primary: '#F1F5F9', secondary: '#CBD5E1', disabled: '#64748B' },
+			background: { default: '#030712', paper: '#0A1628' },
+			divider: '#1E3A5F',
+			action: {
+				active: '#38BDF8',
+				hover: 'rgba(56, 189, 248, 0.12)',
+				selected: 'rgba(56, 189, 248, 0.24)',
+				disabled: 'rgba(56, 189, 248, 0.3)',
+				disabledBackground: 'rgba(56, 189, 248, 0.12)',
+				focus: 'rgba(56, 189, 248, 0.24)'
+			}
+		}
+	},
+	neonMint: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#10B981', light: '#34D399', dark: '#059669', contrastText: '#FFFFFF' },
+			secondary: { main: '#F43F5E', light: '#FB7185', dark: '#E11D48', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#064E3B', secondary: '#374151', disabled: '#9CA3AF' },
+			background: { default: '#ECFDF5', paper: '#FFFFFF' },
+			divider: '#D1FAE5',
+			action: {
+				active: '#10B981',
+				hover: 'rgba(16, 185, 129, 0.08)',
+				selected: 'rgba(16, 185, 129, 0.16)',
+				disabled: '#BFC4CC',
+				disabledBackground: '#ECFDF5',
+				focus: 'rgba(16, 185, 129, 0.12)'
+			}
+		}
+	},
+	neonMintDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#34D399', light: '#6EE7B7', dark: '#10B981', contrastText: '#022F22' },
+			secondary: { main: '#FB7185', light: '#FDA4AF', dark: '#F43F5E', contrastText: '#881337' },
+			...neutralsDarkTheme,
+			text: { primary: '#ECFDF5', secondary: '#A7F3D0', disabled: '#6EE7B7' },
+			background: { default: '#031A12', paper: '#052B1C' },
+			divider: '#065F46',
+			action: {
+				active: '#34D399',
+				hover: 'rgba(52, 211, 153, 0.12)',
+				selected: 'rgba(52, 211, 153, 0.24)',
+				disabled: 'rgba(52, 211, 153, 0.3)',
+				disabledBackground: 'rgba(52, 211, 153, 0.12)',
+				focus: 'rgba(52, 211, 153, 0.24)'
+			}
+		}
+	},
+	obsidianRose: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#18181B', light: '#3F3F46', dark: '#09090B', contrastText: '#FFFFFF' },
+			secondary: { main: '#E11D48', light: '#FB7185', dark: '#BE123C', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#09090B', secondary: '#52525B', disabled: '#A1A1AA' },
+			background: { default: '#FAFAFA', paper: '#FFFFFF' },
+			divider: '#E4E4E7',
+			action: {
+				active: '#18181B',
+				hover: 'rgba(24, 24, 27, 0.06)',
+				selected: 'rgba(24, 24, 27, 0.12)',
+				disabled: '#D4D4D8',
+				disabledBackground: '#FAFAFA',
+				focus: 'rgba(24, 24, 27, 0.08)'
+			}
+		}
+	},
+	obsidianRoseDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#52525B', light: '#71717A', dark: '#3F3F46', contrastText: '#FAFAFA' },
+			secondary: { main: '#FB7185', light: '#FDA4AF', dark: '#E11D48', contrastText: '#881337' },
+			...neutralsDarkTheme,
+			text: { primary: '#FAFAFA', secondary: '#E4E4E7', disabled: '#A1A1AA' },
+			background: { default: '#09090B', paper: '#18181B' },
+			divider: '#27272A',
+			action: {
+				active: '#FB7185',
+				hover: 'rgba(251, 113, 133, 0.12)',
+				selected: 'rgba(251, 113, 133, 0.24)',
+				disabled: 'rgba(251, 113, 133, 0.3)',
+				disabledBackground: 'rgba(251, 113, 133, 0.12)',
+				focus: 'rgba(251, 113, 133, 0.24)'
+			}
+		}
+	},
+	gradientPro: {
+		palette: {
+			mode: 'light',
+			primary: { main: '#8B5CF6', light: '#A78BFA', dark: '#7C3AED', contrastText: '#FFFFFF' },
+			secondary: { main: '#F97316', light: '#FB923C', dark: '#EA580C', contrastText: '#FFFFFF' },
+			...neutralsLightTheme,
+			text: { primary: '#1E1B4B', secondary: '#4B5563', disabled: '#9CA3AF' },
+			background: { default: '#FAF5FF', paper: '#FFFFFF' },
+			divider: '#EDE9FE',
+			action: {
+				active: '#8B5CF6',
+				hover: 'rgba(139, 92, 246, 0.08)',
+				selected: 'rgba(139, 92, 246, 0.16)',
+				disabled: '#BFC4CC',
+				disabledBackground: '#FAF5FF',
+				focus: 'rgba(139, 92, 246, 0.12)'
+			}
+		}
+	},
+	gradientProDark: {
+		palette: {
+			mode: 'dark',
+			primary: { main: '#A78BFA', light: '#C4B5FD', dark: '#8B5CF6', contrastText: '#1E1B4B' },
+			secondary: { main: '#FB923C', light: '#FDBA74', dark: '#F97316', contrastText: '#7C2D12' },
+			...neutralsDarkTheme,
+			text: { primary: '#F5F3FF', secondary: '#DDD6FE', disabled: '#A78BFA' },
+			background: { default: '#130D24', paper: '#1F1833' },
+			divider: '#3B2975',
+			action: {
+				active: '#A78BFA',
+				hover: 'rgba(167, 139, 250, 0.12)',
+				selected: 'rgba(167, 139, 250, 0.24)',
+				disabled: 'rgba(167, 139, 250, 0.3)',
+				disabledBackground: 'rgba(167, 139, 250, 0.12)',
+				focus: 'rgba(167, 139, 250, 0.24)'
 			}
 		}
 	}

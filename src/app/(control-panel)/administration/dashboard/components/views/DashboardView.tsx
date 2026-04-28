@@ -35,14 +35,14 @@ import { useSearchLessons } from '../../../../content/(lesson)/api/hooks/lessons
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const ACCENT_BLUE = '#1565C0';
+const ACCENT_TEAL = '#0D9488';
 
 const PALETTE: Array<{ color: string; bg: string }> = [
-	{ color: ACCENT_BLUE, bg: '#eff6ff' },
-	{ color: '#0284c7',   bg: '#e0f2fe' },
-	{ color: '#7c3aed',   bg: '#f5f3ff' },
-	{ color: '#db2777',   bg: '#fdf2f8' },
-	{ color: '#059669',   bg: '#ecfdf5' }
+	{ color: ACCENT_TEAL, bg: '#ccfbf1' },
+	{ color: '#8B5CF6',   bg: '#EDE9FE' },
+	{ color: '#F59E0B', bg: '#FEF3C7' },
+	{ color: '#F43F5E',   bg: '#FFF1F2' },
+	{ color: '#059669',   bg: '#ECFDF5' }
 ];
 
 const FADE_START = 20;
@@ -301,7 +301,7 @@ function DashboardHeader() {
 				sx={{
 					position: 'relative',
 					px: 6, py: 5,
-					background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 45%, #0A2472 100%)',
+					background: `linear-gradient(135deg, ${ACCENT_TEAL}, #0F766E)`,
 					overflow: 'hidden'
 				}}
 			>
@@ -549,7 +549,7 @@ export default function DashboardView() {
 														src={acc.avatar_url}
 														sx={{
 															width: 34, height: 34, fontSize: '0.8rem', fontWeight: 700,
-															background: `linear-gradient(135deg, ${ACCENT_BLUE}, #0A2472)`, color: '#fff'
+															background: `linear-gradient(135deg, ${ACCENT_TEAL}, #0F766E)`, color: '#fff'
 														}}
 													>
 														{initials(acc.full_name || acc.username)}

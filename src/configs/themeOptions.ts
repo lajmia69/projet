@@ -198,6 +198,150 @@ const themeOptions = [
 			toolbar: themesConfig.coolGreyPinkDark,
 			footer: themesConfig.coolGreyPinkDark
 		}
+	},
+	{
+		id: 'Aurora Violet',
+		section: {
+			main: themesConfig.auroraViolet,
+			navbar: themesConfig.auroraViolet,
+			toolbar: themesConfig.auroraViolet,
+			footer: themesConfig.auroraViolet
+		}
+	},
+	{
+		id: 'Aurora Violet Dark',
+		section: {
+			main: themesConfig.auroraVioletDark,
+			navbar: themesConfig.auroraVioletDark,
+			toolbar: themesConfig.auroraVioletDark,
+			footer: themesConfig.auroraVioletDark
+		}
+	},
+	{
+		id: 'Midnight Emerald',
+		section: {
+			main: themesConfig.midnightEmerald,
+			navbar: themesConfig.midnightEmerald,
+			toolbar: themesConfig.midnightEmerald,
+			footer: themesConfig.midnightEmerald
+		}
+	},
+	{
+		id: 'Midnight Emerald Dark',
+		section: {
+			main: themesConfig.midnightEmeraldDark,
+			navbar: themesConfig.midnightEmeraldDark,
+			toolbar: themesConfig.midnightEmeraldDark,
+			footer: themesConfig.midnightEmeraldDark
+		}
+	},
+	{
+		id: 'Cosmic Coral',
+		section: {
+			main: themesConfig.cosmicCoral,
+			navbar: themesConfig.cosmicCoral,
+			toolbar: themesConfig.cosmicCoral,
+			footer: themesConfig.cosmicCoral
+		}
+	},
+	{
+		id: 'Cosmic Coral Dark',
+		section: {
+			main: themesConfig.cosmicCoralDark,
+			navbar: themesConfig.cosmicCoralDark,
+			toolbar: themesConfig.cosmicCoralDark,
+			footer: themesConfig.cosmicCoralDark
+		}
+	},
+	{
+		id: 'Royal Amethyst',
+		section: {
+			main: themesConfig.royalAmethyst,
+			navbar: themesConfig.royalAmethyst,
+			toolbar: themesConfig.royalAmethyst,
+			footer: themesConfig.royalAmethyst
+		}
+	},
+	{
+		id: 'Royal Amethyst Dark',
+		section: {
+			main: themesConfig.royalAmethystDark,
+			navbar: themesConfig.royalAmethystDark,
+			toolbar: themesConfig.royalAmethystDark,
+			footer: themesConfig.royalAmethystDark
+		}
+	},
+	{
+		id: 'Frosted Onyx',
+		section: {
+			main: themesConfig.frostedOnyx,
+			navbar: themesConfig.frostedOnyx,
+			toolbar: themesConfig.frostedOnyx,
+			footer: themesConfig.frostedOnyx
+		}
+	},
+	{
+		id: 'Frosted Onyx Dark',
+		section: {
+			main: themesConfig.frostedOnyxDark,
+			navbar: themesConfig.frostedOnyxDark,
+			toolbar: themesConfig.frostedOnyxDark,
+			footer: themesConfig.frostedOnyxDark
+		}
+	},
+	{
+		id: 'Neon Mint',
+		section: {
+			main: themesConfig.neonMint,
+			navbar: themesConfig.neonMint,
+			toolbar: themesConfig.neonMint,
+			footer: themesConfig.neonMint
+		}
+	},
+	{
+		id: 'Neon Mint Dark',
+		section: {
+			main: themesConfig.neonMintDark,
+			navbar: themesConfig.neonMintDark,
+			toolbar: themesConfig.neonMintDark,
+			footer: themesConfig.neonMintDark
+		}
+	},
+	{
+		id: 'Obsidian Rose',
+		section: {
+			main: themesConfig.obsidianRose,
+			navbar: themesConfig.obsidianRose,
+			toolbar: themesConfig.obsidianRose,
+			footer: themesConfig.obsidianRose
+		}
+	},
+	{
+		id: 'Obsidian Rose Dark',
+		section: {
+			main: themesConfig.obsidianRoseDark,
+			navbar: themesConfig.obsidianRoseDark,
+			toolbar: themesConfig.obsidianRoseDark,
+			footer: themesConfig.obsidianRoseDark
+		}
+	},
+	{
+		id: 'Gradient Pro',
+		section: {
+			main: themesConfig.gradientPro,
+			navbar: themesConfig.gradientPro,
+			toolbar: themesConfig.gradientPro,
+			footer: themesConfig.gradientPro
+		}
+	},
+	{
+		id: 'Gradient Pro Dark',
+		section: {
+			main: themesConfig.gradientProDark,
+			navbar: themesConfig.gradientProDark,
+			toolbar: themesConfig.gradientProDark,
+			footer: themesConfig.gradientProDark
+		}
 	}
 ];
 

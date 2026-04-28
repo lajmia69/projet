@@ -29,21 +29,15 @@ function Logo(props: LogoProps) {
 	const { className = '' } = props;
 	return (
 		<Root className={clsx('flex flex-shrink-0 flex-grow items-center gap-3', className)}>
-			<div className="flex flex-1 items-center gap-2">
+			<div className="flex flex-1 flex-col items-center gap-2">
 				<img
-					className="logo-icon h-6 w-6"
-					src="/assets/images/logo/logo.svg"
+					className="logo-icon h-30 w-30"
+					src="/assets/images/logo/logo.png"
 					alt="logo"
 				/>
-				<div className="logo-text flex flex-auto flex-col gap-0.5">
-					<Typography className="tracking-light text-lg leading-none font-semibold">FUSE</Typography>
-					<Typography
-						className="tracking-light text-[12px] leading-none font-semibold"
-						color="text.secondary"
-					>
-						React
-					</Typography>
-				</div>
+				<Typography className="tracking-light text-lg leading-none font-semibold text-center">
+					EDUVOICE
+				</Typography>
 			</div>
 			<MainProjectSelection />
 		</Root>

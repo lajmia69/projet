@@ -25,11 +25,11 @@ function AccountsHeader() {
 				<PageBreadcrumb className="text-sm" />
 			</div>
 
-			{/* Blue gradient banner */}
+			{/* Teal gradient banner */}
 			<Box
 				className="relative flex w-full items-center px-6 py-5 md:px-8"
 				sx={{
-					background: 'linear-gradient(135deg, #1565C0 0%, #0D47A1 40%, #0A2472 100%)'
+					background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 40%, #134E4A 100%)'
 				}}
 			>
 				{/* Left: icon + title */}
@@ -137,7 +137,7 @@ function AccountsHeader() {
 							startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}
 							sx={{
 								backgroundColor: 'white',
-								color: '#1565C0',
+								color: '#0D9488',
 								fontWeight: 700,
 								'&:hover': {
 									backgroundColor: 'rgba(255,255,255,0.9)'
