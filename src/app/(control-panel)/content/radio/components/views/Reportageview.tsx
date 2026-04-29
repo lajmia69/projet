@@ -63,10 +63,10 @@ function ReportageCard({ reportage, onDelete }: { reportage: Reportage; onDelete
 					transition: 'transform 0.25s ease, box-shadow 0.25s ease',
 					'&:hover': {
 						transform: 'translateY(-5px)',
-						borderColor: theme.palette.mode === 'dark' ? 'rgba(23,100,192,0.5)' : 'rgba(23,100,192,0.5)',
+						borderColor: theme.palette.mode === 'dark' ? 'rgba(29,201,138,0.6)' : 'rgba(29,201,138,0.6)',
 						boxShadow: theme.palette.mode === 'dark'
-							? '0 0 0 1px rgba(23,100,192,0.22), 0 8px 40px rgba(17,36,104,0.4)'
-							: '0 0 0 1px rgba(23,100,192,0.22), 0 8px 40px rgba(17,36,104,0.45)',
+							? '0 0 0 1px rgba(29,201,138,0.3), 0 8px 40px rgba(17,36,104,0.4), 0 0 30px rgba(23,100,192,0.3), 0 0 60px rgba(29,201,138,0.15)'
+							: '0 0 0 1px rgba(29,201,138,0.3), 0 8px 40px rgba(17,36,104,0.45), 0 0 30px rgba(23,100,192,0.3), 0 0 60px rgba(29,201,138,0.15)',
 					},
 				})}
 			>

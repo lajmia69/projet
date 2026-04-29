@@ -7,7 +7,6 @@ import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import AdjustFontSize from '../../components/AdjustFontSize';
 import FullScreenToggle from '../../components/FullScreenToggle';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
-import NavigationShortcuts from '../../components/navigation/NavigationShortcuts';
 import NavigationSearch from '../../components/navigation/NavigationSearch';
 import UserMenu from '../../components/UserMenu';
 import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggleButton';
@@ -39,8 +38,6 @@ function ToolbarLayout2(props: ToolbarLayout2Props) {
 				<Toolbar className="container min-h-12 p-0 md:min-h-16 lg:px-8">
 					<div className="flex flex-1 gap-2">
 						{config.navbar.display && isMobile && <NavbarToggleButton className="h-9 w-9 p-0" />}
-
-						{!isMobile && <NavigationShortcuts />}
 					</div>
 
 					<div className="flex items-center overflow-x-auto px-2 py-2 md:px-4">

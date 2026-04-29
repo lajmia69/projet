@@ -48,6 +48,18 @@ const navigationConfig: FuseNavItemType[] = [
 					{ id: 'platform-radio-reportage', title: 'Reportage', auth: authRoles.member, type: 'item', url: '/content/radio/reportages' }
 				]
 			},
+						{
+				id: 'platform-culture',
+				title: 'Culture',
+				type: 'collapse',
+				icon: 'heroicons-outline:folder-open',
+				auth: authRoles.member,
+				children: [
+					{ id: 'platform-culture-activities', title: 'Cultural Activities', auth: authRoles.member, type: 'item', url: '/culture/activities' },
+					{ id: 'platform-culture-projects',  title: 'Cultural Projects',  auth: authRoles.member, type: 'item', url: '/culture/projects' },
+				]
+			},
+			
 			{
 				id: 'platform-podcast',
 				title: 'Podcast',
@@ -60,65 +72,64 @@ const navigationConfig: FuseNavItemType[] = [
 	},
 
 	// ── Culture ──────────────────────────────────────────────────────────────
-	{
-		id: 'culture',
-		type: 'group',
-		auth: authRoles.cultureContentCreator,
-        // color removed to comply with FuseNavItemType definitions
-		title: 'Culture',
-		children: [
-			{
-				id: 'culture-projects',
-				title: 'Cultural Projects',
-				type: 'collapse',
-				auth: authRoles.cultureContentCreator,
-				icon: 'heroicons-outline:folder-open',
-				children: [
-					{
-						id: 'culture-projects-list',
-						title: 'All Projects',
-						type: 'item',
-						auth: authRoles.cultureContentCreator,
-						icon: 'heroicons-outline:view-grid',
-						url: '/culture/projects'
-					},
-					{
-						id: 'culture-project-types',
-						title: 'Project Types',
-						type: 'item',
-						auth: authRoles.cultureContentCreator,
-						icon: 'heroicons-outline:tag',
-						url: '/culture/project-types'
-					}
-				]
-			},
-			{
-				id: 'culture-activities',
-				title: 'Cultural Activities',
-				type: 'collapse',
-				auth: authRoles.cultureContentCreator,
-				icon: 'heroicons-outline:sparkles',
-				children: [
-					{
-						id: 'culture-activities-list',
-						title: 'All Activities',
-						type: 'item',
-						auth: authRoles.cultureContentCreator,
-						icon: 'heroicons-outline:view-grid',
-						url: '/culture/activities'
-					},
-					{
-						id: 'culture-activity-types',
-						title: 'Activity Types',
-						type: 'item',
-						auth: authRoles.cultureContentCreator,
-						icon: 'heroicons-outline:tag',
-						url: '/culture/activity-types'
-					}
-				]
-			}
-		]
-	},
+//	{
+//		id: 'culture',
+//		type: 'group',
+//		auth: authRoles.cultureContentCreator,
+	//	title: 'Culture',
+		//children: [
+		//	{
+		//		id: 'culture-projects',
+		//		title: 'Cultural Projects',
+		//		type: 'collapse',
+		//		auth: authRoles.cultureContentCreator,
+		//		icon: 'heroicons-outline:folder-open',
+		//		children: [
+		//			{
+		//				id: 'culture-projects-list',
+		//				title: 'All Projects',
+		//				type: 'item',
+		//				auth: authRoles.cultureContentCreator,
+		//				icon: 'heroicons-outline:view-grid',
+		//				url: '/culture/projects'
+		//			},
+		//			{
+		//				id: 'culture-project-types',
+		//				title: 'Project Types',
+		//				type: 'item',
+		//				auth: authRoles.cultureContentCreator,
+		//				icon: 'heroicons-outline:tag',
+		//				url: '/culture/project-types'
+		//			}
+		//		]
+		//	},
+		//	{
+			//	id: 'culture-activities',
+		////		title: 'Cultural Activities',
+		//		type: 'collapse',
+		//		auth: authRoles.cultureContentCreator,
+		//		icon: 'heroicons-outline:sparkles',
+		//		children: [
+		//			{
+		//				id: 'culture-activities-list',
+		//				title: 'All Activities',
+		//				type: 'item',
+		//				auth: authRoles.cultureContentCreator,
+		//				icon: 'heroicons-outline:view-grid',
+		//				url: '/culture/activities'
+		//			},
+		//			{
+		//				id: 'culture-activity-types',
+		//				title: 'Activity Types',
+		//				type: 'item',
+		//				auth: authRoles.cultureContentCreator,
+		//				icon: 'heroicons-outline:tag',
+		//				url: '/culture/activity-types'
+		//			}
+		//		]
+	//		}
+	//	]
+	//},
 
 	// ── Administration ───────────────────────────────────────────────────────
 	{
@@ -196,49 +207,63 @@ const navigationConfig: FuseNavItemType[] = [
 			}
 		]
 	},
+	{
+				id: 'administration-culture',
+				title: 'Culture',
+				type: 'collapse',
+				auth: authRoles.memberAdmin,
+				icon: 'heroicons-outline:folder-open',
+				translate: 'CULTURE',
+				children: [
+					{ id: 'cultural-activities',          title: 'Cultural Activities',      auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/activities' },
+					{ id: 'cultural-activities-types',         title: 'Cultural Activity Types',         auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/activities/types' },
+					{ id: 'cultural-projects',   title: 'Cultural Projects',   auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/projects' },
+					{ id: 'cultural-projects-types', title: 'Cultural Project Types', auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/projects/types' }
+				]
+			},
 
 	// ── Content ──────────────────────────────────────────────────────────────
-	{
-		id: 'content',
-		type: 'group',
-		auth: authRoles.contentAdmin,
-        // color removed to comply with FuseNavItemType definitions
-		title: 'Content',
-		children: [
-			{
-				id: 'content-lessons',
-				title: 'Lessons',
-				type: 'collapse',
-				icon: 'heroicons-outline:academic-cap',
-				auth: authRoles.lessonContentCreator,
-				children: [
-					{ id: 'lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/content/lessons' }
-				]
-			},
-			{
-				id: 'content-podcast',
-				title: 'Podcast',
-				type: 'collapse',
-				icon: 'heroicons-outline:microphone',
-				auth: authRoles.podcastContentCreator,
-				children: [
-					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/content/podcast/courses' }
-				]
-			},
-			{
-				id: 'content-radio',
-				title: 'Radio',
-				type: 'collapse',
-				icon: 'heroicons-outline:radio',
-				auth: authRoles.radioContentCreator,
-				children: [
-					{ id: 'radio-content-emissions', title: 'Emissions', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/emissions' },
-					{ id: 'radio-content-episodes',  title: 'Episodes',  auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/episodes' },
-					{ id: 'radio-content-reportage', title: 'Reportage', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/reportages' }
-				]
-			}
-		]
-	},
+//	{
+//		id: 'content',
+//		type: 'group',
+//		auth: authRoles.contentAdmin,
+  //      // color removed to comply with FuseNavItemType definitions
+	//	title: 'Content',
+//		children: [
+//			{
+//				id: 'content-lessons',
+//				title: 'Lessons',
+//				type: 'collapse',
+//				icon: 'heroicons-outline:academic-cap',
+//				auth: authRoles.lessonContentCreator,
+//				children: [
+//					{ id: 'lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/content/lessons' }
+//				]
+//			},
+//			{
+//				id: 'content-podcast',
+//				title: 'Podcast',
+//				type: 'collapse',
+//				icon: 'heroicons-outline:microphone',
+//				auth: authRoles.podcastContentCreator,
+//				children: [
+//					{ id: 'podcast-courses', title: 'Episodes', auth: authRoles.podcastContentCreator, type: 'item', url: '/content/podcast/courses' }
+//				]
+//			},
+//			{
+//				id: 'content-radio',
+//				title: 'Radio',
+//				type: 'collapse',
+//				icon: 'heroicons-outline:radio',
+//				auth: authRoles.radioContentCreator,
+//				children: [
+//					{ id: 'radio-content-emissions', title: 'Emissions', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/emissions' },
+//					{ id: 'radio-content-episodes',  title: 'Episodes',  auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/episodes' },
+//					{ id: 'radio-content-reportage', title: 'Reportage', auth: authRoles.radioContentCreator, type: 'item', url: '/content/radio/reportages' }
+//				]
+//			}
+//		]
+//	},
 
 	// ── Studio ───────────────────────────────────────────────────────────────
 	{

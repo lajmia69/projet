@@ -14,7 +14,7 @@ const themeOptions = [
 		id: 'Default Dark',
 		section: {
 			main: themesConfig.defaultDark,
-			navbar: themesConfig.defaultDark,
+			navbar: themesConfig.defaultNavbar,
 			toolbar: themesConfig.defaultDark,
 			footer: themesConfig.defaultDark
 		}
@@ -32,7 +32,7 @@ const themeOptions = [
 		id: 'Legacy Dark',
 		section: {
 			main: themesConfig.legacyDark,
-			navbar: themesConfig.legacyDark,
+			navbar: themesConfig.legacy,
 			toolbar: themesConfig.legacyDark,
 			footer: themesConfig.legacyDark
 		}
@@ -68,7 +68,7 @@ const themeOptions = [
 		id: 'Charcoal Teal Dark',
 		section: {
 			main: themesConfig.charcoalTealDark,
-			navbar: themesConfig.charcoalTealDark,
+			navbar: themesConfig.charcoalTeal,
 			toolbar: themesConfig.charcoalTealDark,
 			footer: themesConfig.charcoalTealDark
 		}
@@ -86,7 +86,7 @@ const themeOptions = [
 		id: 'Blue Silver Dark',
 		section: {
 			main: themesConfig.darkBlueSilverDark,
-			navbar: themesConfig.darkBlueSilverDark,
+			navbar: themesConfig.darkBlueSilver,
 			toolbar: themesConfig.darkBlueSilverDark,
 			footer: themesConfig.darkBlueSilverDark
 		}
@@ -104,7 +104,7 @@ const themeOptions = [
 		id: 'Slate Crimson Dark',
 		section: {
 			main: themesConfig.slateCrimsonDark,
-			navbar: themesConfig.slateCrimsonDark,
+			navbar: themesConfig.slateCrimson,
 			toolbar: themesConfig.slateCrimsonDark,
 			footer: themesConfig.slateCrimsonDark
 		}
@@ -122,7 +122,7 @@ const themeOptions = [
 		id: 'Emarald Gold Dark',
 		section: {
 			main: themesConfig.emeraldGoldDark,
-			navbar: themesConfig.emeraldGoldDark,
+			navbar: themesConfig.emeraldGold,
 			toolbar: themesConfig.emeraldGoldDark,
 			footer: themesConfig.emeraldGoldDark
 		}
@@ -140,7 +140,7 @@ const themeOptions = [
 		id: 'Indigo Coral Dark',
 		section: {
 			main: themesConfig.indigoCoralDark,
-			navbar: themesConfig.indigoCoralDark,
+			navbar: themesConfig.indigoCoral,
 			toolbar: themesConfig.indigoCoralDark,
 			footer: themesConfig.indigoCoralDark
 		}
@@ -158,7 +158,7 @@ const themeOptions = [
 		id: 'Sky Blue Orange Dark',
 		section: {
 			main: themesConfig.skyBlueOrangeDark,
-			navbar: themesConfig.skyBlueOrangeDark,
+			navbar: themesConfig.skyBlueOrange,
 			toolbar: themesConfig.skyBlueOrangeDark,
 			footer: themesConfig.skyBlueOrangeDark
 		}
@@ -176,7 +176,7 @@ const themeOptions = [
 		id: 'Soft Green Maroon Dark',
 		section: {
 			main: themesConfig.softGreenMaroonDark,
-			navbar: themesConfig.softGreenMaroonDark,
+			navbar: themesConfig.softGreenMaroon,
 			toolbar: themesConfig.softGreenMaroonDark,
 			footer: themesConfig.softGreenMaroonDark
 		}
@@ -194,7 +194,7 @@ const themeOptions = [
 		id: 'Cool Grey Pink Dark',
 		section: {
 			main: themesConfig.coolGreyPinkDark,
-			navbar: themesConfig.coolGreyPinkDark,
+			navbar: themesConfig.coolGreyPink,
 			toolbar: themesConfig.coolGreyPinkDark,
 			footer: themesConfig.coolGreyPinkDark
 		}
@@ -212,7 +212,7 @@ const themeOptions = [
 		id: 'Aurora Violet Dark',
 		section: {
 			main: themesConfig.auroraVioletDark,
-			navbar: themesConfig.auroraVioletDark,
+			navbar: themesConfig.auroraViolet,
 			toolbar: themesConfig.auroraVioletDark,
 			footer: themesConfig.auroraVioletDark
 		}
@@ -230,7 +230,7 @@ const themeOptions = [
 		id: 'Midnight Emerald Dark',
 		section: {
 			main: themesConfig.midnightEmeraldDark,
-			navbar: themesConfig.midnightEmeraldDark,
+			navbar: themesConfig.midnightEmerald,
 			toolbar: themesConfig.midnightEmeraldDark,
 			footer: themesConfig.midnightEmeraldDark
 		}
@@ -248,7 +248,7 @@ const themeOptions = [
 		id: 'Cosmic Coral Dark',
 		section: {
 			main: themesConfig.cosmicCoralDark,
-			navbar: themesConfig.cosmicCoralDark,
+			navbar: themesConfig.cosmicCoral,
 			toolbar: themesConfig.cosmicCoralDark,
 			footer: themesConfig.cosmicCoralDark
 		}
@@ -266,7 +266,7 @@ const themeOptions = [
 		id: 'Royal Amethyst Dark',
 		section: {
 			main: themesConfig.royalAmethystDark,
-			navbar: themesConfig.royalAmethystDark,
+			navbar: themesConfig.royalAmethyst,
 			toolbar: themesConfig.royalAmethystDark,
 			footer: themesConfig.royalAmethystDark
 		}
@@ -284,7 +284,7 @@ const themeOptions = [
 		id: 'Frosted Onyx Dark',
 		section: {
 			main: themesConfig.frostedOnyxDark,
-			navbar: themesConfig.frostedOnyxDark,
+			navbar: themesConfig.frostedOnyx,
 			toolbar: themesConfig.frostedOnyxDark,
 			footer: themesConfig.frostedOnyxDark
 		}
@@ -302,7 +302,7 @@ const themeOptions = [
 		id: 'Neon Mint Dark',
 		section: {
 			main: themesConfig.neonMintDark,
-			navbar: themesConfig.neonMintDark,
+			navbar: themesConfig.neonMint,
 			toolbar: themesConfig.neonMintDark,
 			footer: themesConfig.neonMintDark
 		}
@@ -320,7 +320,7 @@ const themeOptions = [
 		id: 'Obsidian Rose Dark',
 		section: {
 			main: themesConfig.obsidianRoseDark,
-			navbar: themesConfig.obsidianRoseDark,
+			navbar: themesConfig.obsidianRose,
 			toolbar: themesConfig.obsidianRoseDark,
 			footer: themesConfig.obsidianRoseDark
 		}
@@ -338,7 +338,7 @@ const themeOptions = [
 		id: 'Gradient Pro Dark',
 		section: {
 			main: themesConfig.gradientProDark,
-			navbar: themesConfig.gradientProDark,
+			navbar: themesConfig.gradientPro,
 			toolbar: themesConfig.gradientProDark,
 			footer: themesConfig.gradientProDark
 		}

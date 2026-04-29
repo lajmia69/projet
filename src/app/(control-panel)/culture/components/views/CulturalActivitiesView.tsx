@@ -111,11 +111,7 @@ function ActivityCard({ activity, onDelete }: { activity: CulturalActivity; onDe
 					className="px-4 py-3 flex items-center justify-between"
 					sx={{ borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.default' }}
 				>
-					<Tooltip title="Delete">
-						<IconButton size="small" color="error" onClick={() => setConfirmOpen(true)}>
-							<FuseSvgIcon size={16}>lucide:trash-2</FuseSvgIcon>
-						</IconButton>
-					</Tooltip>
+
 					<Button
 						component={Link}
 						to={`/culture/activities/${activity.id}`}
@@ -363,23 +359,7 @@ export default function CulturalActivitiesView() {
 								</Typography>
 							)}
 
-							<Button
-								onClick={() => setCreateOpen(true)}
-								variant="contained"
-								size="small"
-								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-								sx={(theme) => ({
-									ml: 'auto',
-									borderRadius: '10px',
-									textTransform: 'none',
-									fontWeight: 700,
-									background: 'linear-gradient(135deg, #2563eb, #3b82f6)',
-									boxShadow: theme.palette.mode === 'dark' ? '0 0 14px rgba(59,130,246,0.45)' : '0 0 12px rgba(59,130,246,0.3)',
-									'&:hover': { background: 'linear-gradient(135deg, #1d4ed8, #2563eb)' },
-								})}
-							>
-								New activity
-							</Button>
+
 						</motion.div>
 
 						{/* Status chips */}

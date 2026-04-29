@@ -227,6 +227,15 @@ a[role=button] {
     box-shadow: var(--shadow-glow-teal);
 }
 
+/* Ensure user menu popover is high-contrast on all themes/backgrounds */
+.usermenu-popover {
+    background-color: #ffffff; /* white background for readability */
+    color: #111111;            /* dark text for contrast */
+}
+.usermenu-popover .MuiListItem-root, .usermenu-popover .MuiListItemText-root {
+    color: #111111; /* ensure menu text stays dark even if inherited styles are lighter */
+}
+
 /* Floating glass card */
 .glass-float {
     background: var(--glass-bg);

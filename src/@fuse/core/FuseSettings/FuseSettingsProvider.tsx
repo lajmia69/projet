@@ -8,6 +8,26 @@ import useUser from '@auth/useUser';
 import { PartialDeep } from 'type-fest';
 import FuseSettingsContext from './FuseSettingsContext';
 
+const THEME_STORAGE_KEY = 'fuseThemeSettings';
+
+const getStoredThemeSettings = (): Partial<FuseSettingsConfigType> => {
+	try {
+		const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+		return stored ? JSON.parse(stored) : {};
+	} catch {
+		return {};
+	}
+};
+
+const saveThemeSettings = (settings: Partial<FuseSettingsConfigType>) => {
+	try {
+		// Only persist the theme slice to avoid stale layout/other settings
+		window.localStorage.setItem(THEME_STORAGE_KEY, JSON.stringify({ theme: settings.theme }));
+	} catch {
+		// ignore
+	}
+};
+
 // Get initial settings
 const getInitialSettings = (): FuseSettingsConfigType => {
 	const defaultLayoutStyle = settingsConfig.layout?.style || 'layout1';
@@ -39,8 +59,12 @@ export function FuseSettingsProvider({ children }: { children: ReactNode }) {
 	const userSettings = useMemo(() => user?.settings || {}, [user]);
 
 	const calculateSettings = useCallback(() => {
-		const defaultSettings = _.merge({}, initialSettings);
-		return isGuest ? defaultSettings : _.merge({}, defaultSettings, userSettings);
+		const baseSettings = _.merge({}, initialSettings);
+		// Always apply localStorage theme on top so user choices survive navigation
+		const storedTheme = getStoredThemeSettings();
+		return isGuest
+			? _.merge({}, baseSettings, storedTheme)
+			: _.merge({}, baseSettings, userSettings, storedTheme);
 	}, [isGuest, userSettings]);
 
 	const [data, setData] = useState<FuseSettingsConfigType>(calculateSettings());
@@ -62,6 +86,7 @@ export function FuseSettingsProvider({ children }: { children: ReactNode }) {
 
 			if (!_.isEqual(_settings, data)) {
 				setData(_.merge({}, _settings));
+				saveThemeSettings(_settings);
 			}
 
 			return _settings;

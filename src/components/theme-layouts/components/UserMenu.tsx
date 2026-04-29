@@ -117,23 +117,24 @@ function UserMenu(props: UserMenuProps) {
 					</>
 				)}
 			</Button>
-			<Popover
-				open={Boolean(userMenu)}
-				anchorEl={userMenu}
-				onClose={userMenuClose}
-				anchorOrigin={{
-					vertical: 'top',
-					horizontal: 'right'
-				}}
-				transformOrigin={{
-					vertical: 'top',
-					horizontal: 'left'
-				}}
-				classes={{
-					paper: 'min-w-32'
-				}}
-				{...popoverProps}
-			>
+            <Popover
+                open={Boolean(userMenu)}
+                anchorEl={userMenu}
+                onClose={userMenuClose}
+                anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right'
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left'
+                }}
+                // Apply a dedicated class to control popover appearance for readability
+                classes={{
+                    paper: 'min-w-32 usermenu-popover'
+                }}
+                {...popoverProps}
+            >
 				{isGuest ? (
 					<>
 						<MenuItem
