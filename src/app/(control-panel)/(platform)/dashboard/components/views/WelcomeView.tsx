@@ -9,8 +9,7 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import useUser from '@auth/useUser';
 
-// Palette: #112468 Deep navy | #1764C0 Royal blue | #0EA8B0 Ocean teal
-//          #1DC98A Seafoam   | #2AE88E Mint green | #0D1A47 Midnight navy
+// Palette: #E8E4DA Cream | #2D8B7C Teal | #1C4A52 Dark teal | #1A2E38 Navy
 
 const Root = styled(FusePageSimple)(() => ({
     '& .FusePageSimple-header': { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 },
@@ -57,8 +56,8 @@ function Greeting({ name }: { name: string }) {
     const salutation = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
     return (
         <>
-            <span style={{ color: 'rgba(255,255,255,0.55)' }}>{salutation}, </span>
-            <span style={{ color: '#fff' }}>{name || 'there'}</span>
+            <span style={{ color: 'rgba(232,228,218,0.55)' }}>{salutation}, </span>
+            <span style={{ color: '#E8E4DA' }}>{name || 'there'}</span>
         </>
     );
 }
@@ -73,7 +72,7 @@ function LiveClock() {
         return () => clearInterval(id);
     }, []);
     return (
-        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums' }}>
+        <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: 'rgba(232,228,218,0.45)', letterSpacing: '0.08em', fontVariantNumeric: 'tabular-nums' }}>
             {time}
         </Typography>
     );
@@ -90,7 +89,7 @@ function QuickLinkCard({ link, delay }: { link: (typeof quickLinks)[0]; delay: n
                 component={Link}
                 to={link.url}
                 elevation={0}
-                sx={(theme) => ({
+                sx={{
                     display: 'flex',
                     flexDirection: 'column',
                     borderRadius: '18px',
@@ -98,53 +97,45 @@ function QuickLinkCard({ link, delay }: { link: (typeof quickLinks)[0]; delay: n
                     height: '100%',
                     textDecoration: 'none',
                     position: 'relative',
-                    border: theme.palette.mode === 'dark'
-                        ? '1px solid rgba(14,168,176,0.25)'
-                        : '1px solid rgba(14,168,176,0.22)',
-                    background: theme.palette.mode === 'dark'
-                        ? 'linear-gradient(145deg, #0D1A47 0%, #112468 100%)'
-                        : 'linear-gradient(145deg, #112468 0%, #1764C0 100%)',
-                    boxShadow: theme.palette.mode === 'dark'
-                        ? '0 0 0 1px rgba(14,168,176,0.1), 0 4px 24px rgba(13,26,71,0.4)'
-                        : '0 0 0 1px rgba(14,168,176,0.1), 0 4px 20px rgba(17,36,104,0.3)',
+                    border: '1px solid rgba(45,139,124,0.18)',
+                    background: '#F2F0EF',
+                    boxShadow: '0 2px 12px rgba(26,46,56,0.08)',
                     transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
                     '&:hover': {
                         transform: 'translateY(-5px)',
-                        borderColor: 'rgba(14,168,176,0.5)',
-                        boxShadow: theme.palette.mode === 'dark'
-                            ? '0 0 0 1px rgba(14,168,176,0.22), 0 8px 40px rgba(14,168,176,0.3)'
-                            : '0 0 0 1px rgba(14,168,176,0.22), 0 8px 40px rgba(14,168,176,0.35)'
+                        borderColor: 'rgba(45,139,124,0.4)',
+                        boxShadow: '0 8px 32px rgba(45,139,124,0.2)'
                     }
-                })}
+                }}
             >
                 {/* Top accent bar */}
-                <div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #0EA8B0, #1DC98A)', flexShrink: 0 }} />
+                <div style={{ height: 6, width: '100%', background: 'linear-gradient(90deg, #1A2E38, #2D8B7C)', flexShrink: 0 }} />
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 3, flex: 1, position: 'relative', zIndex: 1 }}>
                     <Box sx={{
                         width: 46, height: 46, borderRadius: '12px',
-                        background: 'rgba(14,168,176,0.18)',
-                        border: '1px solid rgba(14,168,176,0.35)',
+                        background: 'rgba(45,139,124,0.1)',
+                        border: '1px solid rgba(45,139,124,0.25)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 0 12px rgba(14,168,176,0.25)'
+                        boxShadow: '0 0 10px rgba(45,139,124,0.12)'
                     }}>
-                        <FuseSvgIcon sx={{ color: '#0EA8B0' }} size={22}>{link.icon}</FuseSvgIcon>
+                        <FuseSvgIcon sx={{ color: '#2D8B7C' }} size={22}>{link.icon}</FuseSvgIcon>
                     </Box>
 
                     <div>
-                        <Typography sx={{ fontWeight: 800, fontSize: '1rem', letterSpacing: '-0.01em', color: '#ffffff' }}>
+                        <Typography sx={{ fontWeight: 800, fontSize: '1rem', letterSpacing: '-0.01em', color: '#1A2E38' }}>
                             {link.label}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', mt: 0.5, lineHeight: 1.5 }}>
+                        <Typography sx={{ fontSize: '0.8rem', color: 'rgba(26,46,56,0.5)', mt: 0.5, lineHeight: 1.5 }}>
                             {link.description}
                         </Typography>
                     </div>
 
-                    <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(14,168,176,0.45), transparent)' }} />
+                    <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(45,139,124,0.3), transparent)' }} />
 
                     <Box sx={{ mt: 'auto', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#0EA8B0' }}>Open</Typography>
-                        <FuseSvgIcon size={14} sx={{ color: '#0EA8B0' }}>lucide:arrow-right</FuseSvgIcon>
+                        <Typography sx={{ fontSize: '0.75rem', fontWeight: 700, color: '#2D8B7C' }}>Open</Typography>
+                        <FuseSvgIcon size={14} sx={{ color: '#2D8B7C' }}>lucide:arrow-right</FuseSvgIcon>
                     </Box>
                 </Box>
             </Paper>
@@ -186,7 +177,7 @@ export default function WelcomeView() {
             header={
                 <div style={{
                     position: 'relative', width: '100%', overflow: 'hidden',
-                    background: 'linear-gradient(135deg, #0D1A47 0%, #112468 40%, #0EA8B0 80%, #1DC98A 100%)',
+                    background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)',
                     paddingTop: '56px', paddingBottom: '64px',
                     opacity: 1 - scrollProgress,
                     transform: `translateY(${-(scrollProgress * 24)}px)`,
@@ -195,13 +186,13 @@ export default function WelcomeView() {
                     {/* Grid overlay */}
                     <div style={{
                         position: 'absolute', inset: 0,
-                        backgroundImage: 'linear-gradient(rgba(29,201,138,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,201,138,0.06) 1px, transparent 1px)',
+                        backgroundImage: 'linear-gradient(rgba(232,228,218,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(232,228,218,0.06) 1px, transparent 1px)',
                         backgroundSize: '52px 52px', pointerEvents: 'none'
                     }} />
                     {/* Radial glow — left */}
-                    <div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,168,176,0.22) 0%, transparent 65%)', pointerEvents: 'none' }} />
-                    {/* Mint orb — right */}
-                    <div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '360px', height: '360px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(42,232,142,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
+                    <div style={{ position: 'absolute', top: '-100px', left: '-120px', width: '500px', height: '500px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(45,139,124,0.22) 0%, transparent 65%)', pointerEvents: 'none' }} />
+                    {/* Cream orb — right */}
+                    <div style={{ position: 'absolute', bottom: '-60px', right: '-60px', width: '360px', height: '360px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(232,228,218,0.18) 0%, transparent 65%)', pointerEvents: 'none' }} />
 
                     <div style={{ position: 'relative', zIndex: 1, paddingLeft: '48px', paddingRight: '48px', maxWidth: '800px' }}>
                         <motion.div
@@ -212,16 +203,16 @@ export default function WelcomeView() {
                             <div style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '6px',
                                 padding: '4px 14px', borderRadius: '999px',
-                                border: '1px solid rgba(14,168,176,0.35)',
-                                backgroundColor: 'rgba(14,168,176,0.12)'
+                                border: '1px solid rgba(45,139,124,0.35)',
+                                backgroundColor: 'rgba(45,139,124,0.12)'
                             }}>
-                                <FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:radio</FuseSvgIcon>
-                                <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.06em' }}>
+                                <FuseSvgIcon size={13} sx={{ color: 'rgba(45,139,124,0.75)' }}>lucide:radio</FuseSvgIcon>
+                                <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, color: 'rgba(45,139,124,0.85)', letterSpacing: '0.06em' }}>
                                     Platform
                                 </Typography>
                             </div>
                             <LiveClock />
-                            <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', ml: 'auto' }}>
+                            <Typography sx={{ fontSize: '0.8rem', color: 'rgba(232,228,218,0.3)', ml: 'auto' }}>
                                 {today}
                             </Typography>
                         </motion.div>
@@ -245,7 +236,7 @@ export default function WelcomeView() {
                         >
                             <Typography sx={{
                                 fontSize: { xs: '0.95rem', md: '1.05rem' },
-                                color: 'rgba(42,232,142,0.72)', maxWidth: 520, lineHeight: 1.75, mb: 4
+                                color: 'rgba(232,228,218,0.72)', maxWidth: 520, lineHeight: 1.75, mb: 4
                             }}>
                                 Welcome to EDUVOICE.
                             </Typography>
@@ -263,13 +254,13 @@ export default function WelcomeView() {
                                 size="medium"
                                 startIcon={<FuseSvgIcon size={16}>heroicons-outline:academic-cap</FuseSvgIcon>}
                                 sx={{
-                                    background: 'linear-gradient(135deg, #0EA8B0, #1DC98A)',
-                                    color: '#0D1A47', fontWeight: 700, textTransform: 'none',
+                                    background: 'linear-gradient(135deg, #2D8B7C, #1C4A52)',
+                                    color: '#E8E4DA', fontWeight: 700, textTransform: 'none',
                                     borderRadius: '10px', px: 3,
-                                    boxShadow: '0 0 16px rgba(14,168,176,0.5)',
+                                    boxShadow: '0 0 16px rgba(45,139,124,0.5)',
                                     '&:hover': {
-                                        background: 'linear-gradient(135deg, #1DC98A, #0EA8B0)',
-                                        boxShadow: '0 0 24px rgba(14,168,176,0.65)',
+                                        background: 'linear-gradient(135deg, #1C4A52, #2D8B7C)',
+                                        boxShadow: '0 0 24px rgba(45,139,124,0.65)',
                                         transform: 'scale(1.03)'
                                     }
                                 }}

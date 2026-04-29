@@ -11,6 +11,18 @@ const invalidateAll = (queryClient: ReturnType<typeof useQueryClient>, currentAc
 	queryClient.invalidateQueries({ queryKey: ['podcast', 'search', currentAccountId] });
 };
 
+// ─── Status payload types ─────────────────────────────────────────────────────
+
+export type ValidatePodcastPayload = {
+	id: number;
+	is_approved_content: boolean;
+};
+
+export type PublishPodcastPayload = {
+	id: number;
+	is_published: boolean;
+};
+
 // ─── Create ──────────────────────────────────────────────────────────────────
 
 export const useCreatePodcast = (currentAccountId: string, accessToken: string) => {
@@ -83,12 +95,12 @@ export const useValidatePodcast = (currentAccountId: string, accessToken: string
 	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (podcastId: number) =>
-			podcastApi.validatePodcast(currentAccountId, accessToken, podcastId),
-		onSuccess: (_, podcastId) => {
+		mutationFn: ({ id }: ValidatePodcastPayload) =>
+			podcastApi.validatePodcast(currentAccountId, accessToken, id),
+		onSuccess: (_, { id }) => {
 			invalidateAll(queryClient, currentAccountId);
 			queryClient.invalidateQueries({
-				queryKey: podcastQueryKey(currentAccountId, String(podcastId))
+				queryKey: podcastQueryKey(currentAccountId, String(id))
 			});
 			enqueueSnackbar('Podcast validated', { variant: 'success' });
 		},
@@ -103,12 +115,12 @@ export const usePublishPodcast = (currentAccountId: string, accessToken: string)
 	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (podcastId: number) =>
-			podcastApi.publishPodcast(currentAccountId, accessToken, podcastId),
-		onSuccess: (_, podcastId) => {
+		mutationFn: ({ id }: PublishPodcastPayload) =>
+			podcastApi.publishPodcast(currentAccountId, accessToken, id),
+		onSuccess: (_, { id }) => {
 			invalidateAll(queryClient, currentAccountId);
 			queryClient.invalidateQueries({
-				queryKey: podcastQueryKey(currentAccountId, String(podcastId))
+				queryKey: podcastQueryKey(currentAccountId, String(id))
 			});
 			enqueueSnackbar('Podcast published', { variant: 'success' });
 		},

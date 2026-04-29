@@ -93,7 +93,7 @@ export const podcastApi = {
 	): Promise<Podcast> => {
 		return api
 			.patch(`podcast/validate/${currentAccountId}/`, {
-				json: { id: podcastId },
+				json: { id: podcastId, is_approved_content: true },
 				...authHeader(accessToken)
 			})
 			.json();

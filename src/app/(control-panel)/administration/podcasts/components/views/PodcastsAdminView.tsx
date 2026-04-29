@@ -203,10 +203,10 @@ export default function PodcastsAdminView() {
 			header: 'Status',
 			accessorFn: row => row.is_published,
 			Cell: ({ row }) => {
-				const { is_published, is_approved_content, is_pubic_content } = row.original;
-				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_pubic_content ? 'Public' : 'Draft';
-				const bg    = is_published ? '#dcfce7'   : is_approved_content ? '#dbeafe'   : is_pubic_content ? '#fef9c3'  : '#f1f5f9';
-				const color = is_published ? '#15803d'   : is_approved_content ? '#1d4ed8'   : is_pubic_content ? '#854d0e'  : '#475569';
+				const { is_published, is_approved_content, is_public_content } = row.original;
+				const label = is_published ? 'Published' : is_approved_content ? 'Approved' : is_public_content ? 'Public' : 'Draft';
+				const bg    = is_published ? '#dcfce7'   : is_approved_content ? '#dbeafe'   : is_public_content ? '#fef9c3'  : '#f1f5f9';
+				const color = is_published ? '#15803d'   : is_approved_content ? '#1d4ed8'   : is_public_content ? '#854d0e'  : '#475569';
 				return <Chip label={label} size="small" sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700, backgroundColor: bg, color }} />;
 			},
 		},
@@ -293,12 +293,23 @@ export default function PodcastsAdminView() {
 									<MenuItem key="edit" onClick={() => { openEdit(row.original); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:pencil</FuseSvgIcon></ListItemIcon>Edit
 									</MenuItem>,
-									<MenuItem key="validate" onClick={() => { validate(row.original.id); closeMenu(); }}>
+
+									// ✅ Pass full payload object — matches lesson mutation pattern
+									<MenuItem key="validate" onClick={() => {
+										validate({ id: row.original.id, is_approved_content: true });
+										closeMenu();
+									}}>
 										<ListItemIcon><FuseSvgIcon>lucide:check-circle</FuseSvgIcon></ListItemIcon>Validate
 									</MenuItem>,
-									<MenuItem key="publish" onClick={() => { publish(row.original.id); closeMenu(); }}>
+
+									// ✅ Same pattern for Publish
+									<MenuItem key="publish" onClick={() => {
+										publish({ id: row.original.id, is_published: true });
+										closeMenu();
+									}}>
 										<ListItemIcon><FuseSvgIcon>lucide:send</FuseSvgIcon></ListItemIcon>Publish
 									</MenuItem>,
+
 									<MenuItem key="del" onClick={() => { setDeleteTarget(row.original.id); closeMenu(); }}>
 										<ListItemIcon><FuseSvgIcon>lucide:trash</FuseSvgIcon></ListItemIcon>Delete
 									</MenuItem>,

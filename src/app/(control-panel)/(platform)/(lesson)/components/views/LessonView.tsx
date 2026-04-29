@@ -107,19 +107,18 @@ function LessonView() {
 	const hasContent = transcription.content.length > 0;
 
 	function getSteps() {
+    console.log('=== transcription raw ===', JSON.stringify(lesson?.transcription));
+    console.log('=== content raw ===', lesson?.transcription?.content);
     const content = lesson?.transcription?.content;
     if (!content || !Array.isArray(content) || content.length === 0) return [];
-
-    return content
-        .filter((c): c is NonNullable<typeof c> => c != null)  // ← drop any null/undefined items
-        .map((c) => ({
-            index: Math.max(0, (c.index ?? 1) - 1),
-            languageOrientation: lesson?.transcription?.language_orientation ?? 'ltr',
-            speaker: c.speaker ?? '',
-            time: c.time ?? '',
-            timestamp: c.timestamp ?? 0,
-            text: c.text ?? '',
-        }));
+    return content.map((c: any) => ({
+        index: (c?.index ?? 1) - 1,
+        languageOrientation: lesson?.transcription?.language_orientation ?? 'ltr',
+        speaker: c?.speaker ?? '',
+        time: c?.time ?? '',
+        timestamp: c?.timestamp ?? 0,
+        text: c?.text ?? '',
+    }));
 }
 
 	const audioSrc = lesson.hd_version?.src || lesson.streaming_version?.src || null;

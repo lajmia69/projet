@@ -90,14 +90,14 @@ export type Podcast = {
 	description: string;
 	transcription: PodcastTranscription;
 	is_approved_content: boolean;
-	is_pubic_content: boolean;   // note: API typo — "pubic" not "public"
+	is_public_content: boolean;   
 	is_published: boolean;
 	publishing_date: string;
 	view_number: number;
 	hd_version: Audio | null;
 	streaming_version: Audio | null;
 	teaser_version: Audio | null;
-	podcast_category: PodcastCategory;   // was wrongly "category" before
+	podcast_category: PodcastCategory;   
 	language: Language;
 	tags: MetaTag[];
 	created_by: Account;

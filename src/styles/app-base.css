@@ -19,21 +19,21 @@
     --glassmorphism-opacity: 0.75;
     --glassmorphism-opacity-light: 0.85;
     --glassmorphism-opacity-dark: 0.65;
-    /* Gradients - Teal & Purple theme */
-    --gradient-primary: linear-gradient(135deg, #0D9488 0%, #8B5CF6 100%);
-    --gradient-secondary: linear-gradient(135deg, #14B8A6 0%, #A78BFA 100%);
+    /* Gradients - Cream, Teal & Navy theme */
+    --gradient-primary: linear-gradient(135deg, #2D8B7C 0%, #1C4A52 100%);
+    --gradient-secondary: linear-gradient(135deg, #3DA898 0%, #2D8B7C 100%);
     --gradient-success: linear-gradient(135deg, #34D399 0%, #10B981 100%);
-    --gradient-dark: linear-gradient(135deg, #0D0E10 0%, #1C1917 100%);
+    --gradient-dark: linear-gradient(135deg, #1A2E38 0%, #1C4A52 100%);
     --gradient-gold: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
     --gradient-rose: linear-gradient(135deg, #FB7185 0%, #F43F5E 100%);
-    --gradient-ocean: linear-gradient(135deg, #0EA5E9 0%, #06B6D4 100%);
-    --gradient-sunset: linear-gradient(135deg, #FB923C 0%, #F97316 100%);
+    --gradient-ocean: linear-gradient(135deg, #2D8B7C 0%, #1C4A52 100%);
+    --gradient-sunset: linear-gradient(135deg, #E8E4DA 0%, #2D8B7C 100%);
     /* Shadows */
     --shadow-soft: 0 4px 30px rgba(0, 0, 0, 0.1);
-    --shadow-glow-primary: 0 0 30px rgba(13, 148, 136, 0.4);
-    --shadow-glow-secondary: 0 0 30px rgba(139, 92, 246, 0.4);
-    --shadow-glow-teal: 0 0 40px rgba(20, 184, 166, 0.35);
-    --shadow-glow-purple: 0 0 40px rgba(167, 139, 250, 0.35);
+    --shadow-glow-primary: 0 0 30px rgba(45, 139, 124, 0.4);
+    --shadow-glow-secondary: 0 0 30px rgba(28, 74, 82, 0.4);
+    --shadow-glow-teal: 0 0 40px rgba(45, 139, 124, 0.35);
+    --shadow-glow-purple: 0 0 40px rgba(26, 46, 56, 0.35);
     --shadow-lifted: 0 10px 40px rgba(0, 0, 0, 0.15);
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
     --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.12);
@@ -49,58 +49,59 @@
     --border-radius-xl: 24px;
     --border-radius-full: 9999px;
     /* Glass variables */
-    --glass-bg: rgba(255, 255, 255, 0.72);
-    --glass-bg-solid: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.28);
-    --glass-border-light: rgba(255, 255, 255, 0.18);
+    --glass-bg: rgba(232, 228, 218, 0.72);
+    --glass-bg-solid: rgba(232, 228, 218, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.32);
+    --glass-border-light: rgba(255, 255, 255, 0.20);
     --frosted-glass: blur(12px) saturate(180%);
     --frosted-glass-heavy: blur(20px) saturate(200%);
     /* Accent colors */
-    --accent-teal: #0D9488;
-    --accent-teal-light: #14B8A6;
-    --accent-purple: #8B5CF6;
-    --accent-purple-light: #A78BFA;
+    --accent-teal: #2D8B7C;
+    --accent-teal-light: #3DA898;
+    --accent-navy: #1A2E38;
+    --accent-navy-light: #1C4A52;
+    --accent-cream: #E8E4DA;
     --accent-gold: #F59E0B;
     --accent-rose: #F43F5E;
 
     /* Palette (shared project colors) */
-    --color-deep-navy: #112468;            /* Deep navy */
-    --color-deep-navy-rgb: 17,36,104;       
-    --color-royal-blue: #1764C0;             /* Royal blue */
-    --color-royal-blue-rgb: 23,100,192;      
-    --color-ocean-teal: #0EA8B0;             /* Ocean teal */
-    --color-ocean-teal-rgb: 14,168,176;      
-    --color-seafoam: #1DC98A;                /* Seafoam */
-    --color-seafoam-rgb: 29,201,138;         
-    --color-mint: #2AE88E;                   /* Mint green */
-    --color-mint-rgb: 42,232,142;            
-    --color-midnight-navy: #0D1A47;           /* Midnight navy */
-    --color-midnight-navy-rgb: 13,26,71;      
+    --color-navy: #1A2E38;                 /* Navy */
+    --color-navy-rgb: 26,46,56;
+    --color-teal: #2D8B7C;                 /* Teal */
+    --color-teal-rgb: 45,139,124;
+    --color-dark-teal: #1C4A52;            /* Dark teal */
+    --color-dark-teal-rgb: 28,74,82;
+    --color-cream: #E8E4DA;                /* Cream */
+    --color-cream-rgb: 232,228,218;
+    --color-teal-light: #3DA898;           /* Light teal */
+    --color-teal-light-rgb: 61,168,152;
+    --color-navy-deep: #111E25;            /* Deep navy */
+    --color-navy-deep-rgb: 17,30,37;
 }
 
 /* Category-specific palettes (emissions, episodes, reportages) */
 :root {
-    /* Emissions: Deep Navy -> Royal Blue */
-    --palette-emissions-gradient: linear-gradient(135deg, #112468 0%, #1764C0 100%);
-    --palette-emissions-deep: #112468;
-    --palette-emissions-accent: #1764C0;
+    /* Emissions: Navy -> Dark Teal */
+    --palette-emissions-gradient: linear-gradient(135deg, #1A2E38 0%, #1C4A52 100%);
+    --palette-emissions-deep: #1A2E38;
+    --palette-emissions-accent: #1C4A52;
 
-    /* Episodes: Ocean Teal -> Seafoam */
-    --palette-episodes-gradient: linear-gradient(135deg, #0EA8B0 0%, #1DC98A 100%);
-    --palette-episodes-deep: #0EA8B0;
-    --palette-episodes-accent: #1DC98A;
+    /* Episodes: Teal -> Light Teal */
+    --palette-episodes-gradient: linear-gradient(135deg, #2D8B7C 0%, #3DA898 100%);
+    --palette-episodes-deep: #2D8B7C;
+    --palette-episodes-accent: #3DA898;
 
-    /* Reportages: Midnight Navy -> Royal Blue */
-    --palette-reportages-gradient: linear-gradient(135deg, #0D1A47 0%, #1764C0 100%);
-    --palette-reportages-deep: #0D1A47;
-    --palette-reportages-accent: #1764C0;
+    /* Reportages: Dark Teal -> Teal */
+    --palette-reportages-gradient: linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%);
+    --palette-reportages-deep: #1C4A52;
+    --palette-reportages-accent: #2D8B7C;
 }
 
 .dark {
-    --glass-bg: rgba(28, 25, 23, 0.72);
-    --glass-bg-solid: rgba(28, 25, 23, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-border-light: rgba(255, 255, 255, 0.05);
+    --glass-bg: rgba(26, 46, 56, 0.72);
+    --glass-bg-solid: rgba(26, 46, 56, 0.88);
+    --glass-border: rgba(232, 228, 218, 0.10);
+    --glass-border-light: rgba(232, 228, 218, 0.06);
     --shadow-soft: 0 4px 30px rgba(0, 0, 0, 0.4);
     --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -108,7 +109,7 @@
 
 html {
     font-family: 'Geist', Roboto, Helvetica Neue, Arial, sans-serif;
-    background-color: #121212;
+    background-color: #1A2E38;
 }
 
 body {
@@ -117,7 +118,7 @@ body {
     overflow-x: hidden;
     font-feature-settings: "salt";
     /* Page background uses shared color palette */
-    background: linear-gradient(135deg, var(--color-deep-navy, #112468) 0%, var(--color-royal-blue, #1764C0) 40%, var(--color-ocean-teal, #0EA8B0) 100%);
+    background: linear-gradient(135deg, var(--color-navy, #1A2E38) 0%, var(--color-dark-teal, #1C4A52) 40%, var(--color-teal, #2D8B7C) 100%);
     background-attachment: fixed;
 }
 

@@ -11,6 +11,8 @@ import BudgetTab from '../ui/tabs/budget/BudgetTab';
 import { useGetWidgets } from '../../api/hooks/widgets/useGetWidgets';
 import ProjectSelector from '../ui/ProjectSelector';
 
+// Palette: #E8E4DA Cream | #2D8B7C Teal | #1C4A52 Dark teal | #1A2E38 Navy
+
 /**
  * The ProjectDashboardApp page.
  */
@@ -37,6 +39,17 @@ function ProjectDashboardAppView() {
 							value={tabValue}
 							onChange={handleTabChange}
 							aria-label="New user tabs"
+							sx={{
+								'& .MuiTabs-indicator': {
+									backgroundColor: '#2D8B7C'
+								},
+								'& .MuiTab-root': {
+									color: '#1C4A52',
+									'&.Mui-selected': {
+										color: '#2D8B7C'
+									}
+								}
+							}}
 						>
 							<Tab
 								value="home"

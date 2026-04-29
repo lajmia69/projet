@@ -88,7 +88,7 @@ function LessonsView() {
 						position: 'relative',
 						width: '100%',
 						overflow: 'hidden',
-						background: 'linear-gradient(135deg, #0D1A47 0%, #112468 40%, #0EA8B0 80%, #1DC98A 100%)',
+						background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)',
 						paddingTop: '56px',
 						paddingBottom: '64px',
 						opacity: 1 - progress,
@@ -100,34 +100,34 @@ function LessonsView() {
 					{/* Grid overlay */}
 					<div style={{
 						position: 'absolute', inset: 0,
-						backgroundImage: `linear-gradient(rgba(29,201,138,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,201,138,0.06) 1px, transparent 1px)`,
+						backgroundImage: `linear-gradient(rgba(232,228,218,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(232,228,218,0.06) 1px, transparent 1px)`,
 						backgroundSize: '52px 52px',
 					}} />
 					{/* Radial glow — navy left */}
 					<div style={{
 						position: 'absolute', top: '-100px', left: '-120px',
 						width: '500px', height: '500px', borderRadius: '50%',
-						background: 'radial-gradient(circle, rgba(14,168,176,0.22) 0%, transparent 65%)',
+						background: 'radial-gradient(circle, rgba(45,139,124,0.22) 0%, transparent 65%)',
 					}} />
 					{/* Seafoam accent orb — right */}
 					<div style={{
 						position: 'absolute', bottom: '-60px', right: '-60px',
 						width: '360px', height: '360px', borderRadius: '50%',
-						background: 'radial-gradient(circle, rgba(29,201,138,0.18) 0%, transparent 65%)',
+						background: 'radial-gradient(circle, rgba(232,228,218,0.18) 0%, transparent 65%)',
 					}} />
 
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
 							<Typography component="h1" sx={{
 								fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' },
-								fontWeight: 800, color: '#e8fff5',
+								fontWeight: 800, color: '#E8E4DA',
 								textShadow: '0 2px 32px rgba(0,0,0,0.55)',
 							}}>
 								Explore Lessons
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
-							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(42,232,142,0.72)', lineHeight: 1.75 }}>
+							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(232,228,218,0.72)', lineHeight: 1.75 }}>
 								Browse our lessons — explore content, one session at a time.
 							</Typography>
 						</motion.div>
@@ -136,11 +136,11 @@ function LessonsView() {
 								<div style={{
 									display: 'inline-flex', alignItems: 'center', gap: '6px',
 									padding: '4px 14px', borderRadius: '999px',
-									border: '1px solid rgba(14,168,176,0.35)',
-									backgroundColor: 'rgba(14,168,176,0.12)',
+									border: '1px solid rgba(45,139,124,0.35)',
+									backgroundColor: 'rgba(45,139,124,0.12)',
 								}}>
-									<FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:book-open</FuseSvgIcon>
-									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)' }}>
+									<FuseSvgIcon size={13} sx={{ color: 'rgba(45,139,124,0.75)' }}>lucide:book-open</FuseSvgIcon>
+									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(45,139,124,0.85)' }}>
 										{lessons.count} lesson{lessons.count !== 1 ? 's' : ''} available
 									</Typography>
 								</div>
