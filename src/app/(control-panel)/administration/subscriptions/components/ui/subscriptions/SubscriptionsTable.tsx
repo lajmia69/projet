@@ -127,18 +127,9 @@ function SubscriptionsTable() {
 			{
 				accessorKey: 'id',
 				header: 'ID',
-				grow: false,
-				size: 60,
+				size: 70,
 				Cell: ({ cell }) => (
-					<Typography
-						sx={{
-							fontSize: '0.8rem',
-							fontWeight: 700,
-							fontFamily: 'monospace',
-							color: 'text.secondary',
-							letterSpacing: '0.02em'
-						}}
-					>
+					<Typography sx={{ fontSize: '0.8rem', fontWeight: 700, fontFamily: 'monospace', color: 'text.secondary' }}>
 						#{cell.getValue<number>()}
 					</Typography>
 				)
@@ -146,34 +137,17 @@ function SubscriptionsTable() {
 			{
 				id: 'account',
 				header: 'Account',
-				grow: 2,
+				size: 220,
 				accessorFn: (row) => (row.account as any)?.full_name ?? '',
 				Cell: ({ row }) => {
 					const acct = row.original.account as any;
 					return (
 						<div className="flex flex-col min-w-0">
-							<Typography
-								sx={{
-									fontSize: '0.875rem',
-									fontWeight: 600,
-									color: 'text.primary',
-									lineHeight: 1.4,
-									letterSpacing: '0.01em'
-								}}
-								className="truncate"
-							>
+							<Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'text.primary', lineHeight: 1.4 }} className="truncate">
 								{acct?.full_name ?? `Account #${acct?.id ?? '—'}`}
 							</Typography>
 							{acct?.email && (
-								<Typography
-									sx={{
-										fontSize: '0.775rem',
-										fontWeight: 400,
-										color: 'text.secondary',
-										letterSpacing: '0.01em'
-									}}
-									className="truncate"
-								>
+								<Typography sx={{ fontSize: '0.775rem', color: 'text.secondary' }} className="truncate">
 									{acct.email}
 								</Typography>
 							)}
@@ -184,18 +158,9 @@ function SubscriptionsTable() {
 			{
 				accessorKey: 'reference',
 				header: 'Reference',
-				grow: 2,
+				size: 200,
 				Cell: ({ cell }) => (
-					<Typography
-						sx={{
-							fontSize: '0.825rem',
-							fontWeight: 500,
-							color: 'text.primary',
-							letterSpacing: '0.015em',
-							fontFamily: 'monospace'
-						}}
-						className="truncate"
-					>
+					<Typography sx={{ fontSize: '0.825rem', fontWeight: 500, fontFamily: 'monospace' }} className="truncate">
 						{cell.getValue<string>() || '—'}
 					</Typography>
 				)
@@ -203,7 +168,7 @@ function SubscriptionsTable() {
 			{
 				id: 'level',
 				header: 'Level',
-				grow: 1,
+				size: 200,
 				accessorFn: (row) => resolveLevelName(row.level, levelMap) ?? '',
 				Cell: ({ row }) => {
 					const levelName = resolveLevelName(row.original.level, levelMap);
@@ -217,7 +182,6 @@ function SubscriptionsTable() {
 								border: '1px solid #bfdbfe',
 								fontWeight: 700,
 								fontSize: '0.775rem',
-								letterSpacing: '0.02em',
 								maxWidth: '100%',
 								height: 24
 							}}
@@ -230,8 +194,7 @@ function SubscriptionsTable() {
 			{
 				id: 'status',
 				header: 'Status',
-				grow: false,
-				size: 100,
+				size: 110,
 				accessorFn: (row) => row.is_active,
 				Cell: ({ row }) => (
 					<Chip
@@ -243,7 +206,6 @@ function SubscriptionsTable() {
 							border: `1px solid ${row.original.is_active ? '#86efac' : '#cbd5e1'}`,
 							fontWeight: 700,
 							fontSize: '0.775rem',
-							letterSpacing: '0.03em',
 							height: 24
 						}}
 					/>
@@ -252,18 +214,10 @@ function SubscriptionsTable() {
 			{
 				id: 'start_date',
 				header: 'Start Date',
-				grow: false,
-				size: 120,
+				size: 130,
 				accessorFn: (row) => row.start_date ?? '',
 				Cell: ({ row }) => (
-					<Typography
-						sx={{
-							fontSize: '0.825rem',
-							fontWeight: 500,
-							color: 'text.primary',
-							letterSpacing: '0.01em'
-						}}
-					>
+					<Typography sx={{ fontSize: '0.825rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
 						{safeFormat(row.original.start_date)}
 					</Typography>
 				)
@@ -271,18 +225,10 @@ function SubscriptionsTable() {
 			{
 				id: 'end_date',
 				header: 'Expiry Date',
-				grow: false,
-				size: 120,
+				size: 130,
 				accessorFn: (row) => row.end_date ?? '',
 				Cell: ({ row }) => (
-					<Typography
-						sx={{
-							fontSize: '0.825rem',
-							fontWeight: 500,
-							color: 'text.primary',
-							letterSpacing: '0.01em'
-						}}
-					>
+					<Typography sx={{ fontSize: '0.825rem', fontWeight: 500, whiteSpace: 'nowrap' }}>
 						{safeFormat(row.original.end_date)}
 					</Typography>
 				)
@@ -321,76 +267,49 @@ function SubscriptionsTable() {
 
 				<FormControl size="small" sx={{ width: 130 }}>
 					<InputLabel>Status</InputLabel>
-					<Select
-						label="Status"
-						value={statusFilter}
-						onChange={(e) => setStatusFilter(e.target.value)}
-					>
+					<Select label="Status" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
 						{STATUS_OPTIONS.map((o) => (
-							<MenuItem key={o.value} value={o.value}>
-								{o.label}
-							</MenuItem>
+							<MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>
 						))}
 					</Select>
 				</FormControl>
 
 				<Stack direction="row" alignItems="center" gap={0.5}>
 					<TextField
-						label="Start from"
-						type="date"
-						size="small"
-						value={startDateFrom}
+						label="Start from" type="date" size="small" value={startDateFrom}
 						onChange={(e) => setStartDateFrom(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-						inputProps={{ max: startDateTo || undefined }}
+						InputLabelProps={{ shrink: true }} inputProps={{ max: startDateTo || undefined }}
 						sx={{ width: 140 }}
 					/>
 					<Typography variant="caption" color="text.secondary">→</Typography>
 					<TextField
-						label="Start to"
-						type="date"
-						size="small"
-						value={startDateTo}
+						label="Start to" type="date" size="small" value={startDateTo}
 						onChange={(e) => setStartDateTo(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-						inputProps={{ min: startDateFrom || undefined }}
+						InputLabelProps={{ shrink: true }} inputProps={{ min: startDateFrom || undefined }}
 						sx={{ width: 140 }}
 					/>
 				</Stack>
 
 				<Stack direction="row" alignItems="center" gap={0.5}>
 					<TextField
-						label="Expiry from"
-						type="date"
-						size="small"
-						value={endDateFrom}
+						label="Expiry from" type="date" size="small" value={endDateFrom}
 						onChange={(e) => setEndDateFrom(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-						inputProps={{ max: endDateTo || undefined }}
+						InputLabelProps={{ shrink: true }} inputProps={{ max: endDateTo || undefined }}
 						sx={{ width: 140 }}
 					/>
 					<Typography variant="caption" color="text.secondary">→</Typography>
 					<TextField
-						label="Expiry to"
-						type="date"
-						size="small"
-						value={endDateTo}
+						label="Expiry to" type="date" size="small" value={endDateTo}
 						onChange={(e) => setEndDateTo(e.target.value)}
-						InputLabelProps={{ shrink: true }}
-						inputProps={{ min: endDateFrom || undefined }}
+						InputLabelProps={{ shrink: true }} inputProps={{ min: endDateFrom || undefined }}
 						sx={{ width: 140 }}
 					/>
 				</Stack>
 
 				{hasFilters && (
 					<Tooltip title="Clear all filters">
-						<Button
-							size="small"
-							variant="outlined"
-							color="inherit"
-							onClick={clearFilters}
-							startIcon={<FuseSvgIcon size={14}>lucide:filter-x</FuseSvgIcon>}
-						>
+						<Button size="small" variant="outlined" color="inherit" onClick={clearFilters}
+							startIcon={<FuseSvgIcon size={14}>lucide:filter-x</FuseSvgIcon>}>
 							Clear
 						</Button>
 					</Tooltip>
@@ -403,7 +322,12 @@ function SubscriptionsTable() {
 				</Box>
 			</Box>
 
-			{/* ── Table ── */}
+			{/* ── Table ──
+			    layoutMode intentionally omitted → defaults to "semantic" (standard
+			    HTML <table>). This is the only layout where whiteSpace: nowrap on
+			    header cells actually prevents text clipping. The "grid" mode uses
+			    CSS Grid with hard pixel widths that clip regardless of size prop.
+			-->*/}
 			<DataTable
 				enableStickyHeader
 				enableStickyFooter
@@ -412,7 +336,6 @@ function SubscriptionsTable() {
 				enableSelectAll={false}
 				enableRowSelection={false}
 				enableRowActions={false}
-				layoutMode="grid"
 				autoResetPageIndex
 				paginationDisplayMode="pages"
 				enableRowNumbers
@@ -426,14 +349,8 @@ function SubscriptionsTable() {
 					shape: 'rounded',
 					variant: 'outlined'
 				}}
-				muiTableProps={{
-					sx: { tableLayout: 'fixed' }
-				}}
 				muiTableContainerProps={{
-					sx: { overflow: 'hidden' },
-					onWheel: (e) => {
-						window.scrollBy({ top: e.deltaY, behavior: 'auto' });
-					}
+					sx: { overflowX: 'auto' }
 				}}
 				muiTableHeadCellProps={{
 					sx: {
@@ -445,7 +362,8 @@ function SubscriptionsTable() {
 						backgroundColor: 'background.paper',
 						borderBottom: '2px solid',
 						borderColor: 'divider',
-						paddingY: '12px'
+						paddingY: '12px',
+						whiteSpace: 'nowrap',
 					}
 				}}
 				muiTableBodyCellProps={{
@@ -459,9 +377,7 @@ function SubscriptionsTable() {
 					onClick: () => navigate(`/administration/subscriptions/${row.original.id}`),
 					sx: {
 						cursor: 'pointer',
-						'&:hover': {
-							backgroundColor: 'action.hover'
-						}
+						'&:hover': { backgroundColor: 'action.hover' }
 					}
 				})}
 				data={filtered}
