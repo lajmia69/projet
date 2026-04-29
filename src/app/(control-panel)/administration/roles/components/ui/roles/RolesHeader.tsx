@@ -1,4 +1,5 @@
 import Button from '@mui/material/Button';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import Typography from '@mui/material/Typography';
 import { motion } from 'motion/react';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -29,20 +30,9 @@ function RolesHeader() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
                         >
-                            <Button
-                                variant="contained"
-                                component={NavLinkAdapter}
-                                to="/administration/roles/new"
-                                startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}
-                                sx={{
-                                    background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)',
-                                    color: '#E8E4DA',
-                                    fontWeight: 700,
-                                    '&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)' }
-                                }}
-                            >
+                            <GradientButton component={NavLinkAdapter} to="/administration/roles/new" startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
                                 Add
-                            </Button>
+                            </GradientButton>
                         </motion.div>
 					</div>
 				</div>

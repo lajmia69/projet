@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
+import GradientButton from 'src/app/(control-panel)/components/ui/GradientButton';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
 	DialogActions, Button, Typography, FormControl, FormLabel,
@@ -270,9 +271,7 @@ export default function PodcastsAdminView() {
 								>
 									Categories
 								</Button>
-								<Button variant="contained" color="secondary" onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
-									Add Podcast
-								</Button>
+                                <GradientButton onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>Add Podcast</GradientButton>
 							</div>
 						</div>
 					</div>

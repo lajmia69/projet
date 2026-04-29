@@ -7,6 +7,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
+import GradientButton from 'src/app/(control-panel)/components/ui/GradientButton';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -246,27 +247,7 @@ function CoursesView() {
 								</Typography>
 							)}
 
-							<Button
-								onClick={handleOpenAdd}
-								variant="contained"
-								size="small"
-								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-								sx={() => ({
-									ml: 'auto',
-									borderRadius: '10px',
-									textTransform: 'none',
-									fontWeight: 700,
-                                background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)',
-									color: '#0D1A47',
-									boxShadow: '0 0 14px rgba(29,201,138,0.4)',
-                                '&:hover': {
-                                    background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)',
-                                    boxShadow: '0 0 24px rgba(0,0,0,0.25)',
-                                },
-								})}
-							>
-								Add Podcast
-							</Button>
+                            <GradientButton onClick={handleOpenAdd} startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>Add Podcast</GradientButton>
 						</motion.div>
 
 						{filteredData.length > 0 ? (

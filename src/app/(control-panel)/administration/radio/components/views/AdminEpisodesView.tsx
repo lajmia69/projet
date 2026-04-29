@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import { type MRT_ColumnDef } from 'material-react-table';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
@@ -355,14 +356,9 @@ export default function AdminEpisodesView() {
 								</Typography>
 							</motion.span>
 							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button
-									variant="contained"
-									color="secondary"
-									onClick={openAdd}
-									startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}
-								>
-									Add Episode
-								</Button>
+                            <GradientButton onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
+                                Add Episode
+                            </GradientButton>
 							</div>
 						</div>
 					</div>

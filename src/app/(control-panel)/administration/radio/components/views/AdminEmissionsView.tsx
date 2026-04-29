@@ -50,6 +50,7 @@ import { radioAdminApi } from '@/app/(control-panel)/administration/radio/api/se
 import { Emission, CreateEmissionPayload, UpdateEmissionPayload, RadioTag } from '@/app/(control-panel)/administration/radio/api/types';
 // ✅ Studio service for auto-creating a production board on validate
 import { createStudioProjectForContent } from '@/app/(control-panel)/studio/api/utils/autoCreateStudioProject';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 
 const Root = styled(FusePageCarded)(() => ({
 	'& .container': { maxWidth: '100%!important' }
@@ -563,9 +564,9 @@ export default function AdminEmissionsView() {
 								<Typography className="text-4xl leading-none font-extrabold tracking-tight">Emissions</Typography>
 							</motion.span>
 							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button variant="contained" color="secondary" onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
-									Add Emission
-								</Button>
+                                <GradientButton onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
+                                    Add Emission
+                                </GradientButton>
 							</div>
 						</div>
 					</div>

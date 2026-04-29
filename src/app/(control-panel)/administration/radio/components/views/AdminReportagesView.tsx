@@ -7,6 +7,7 @@ import {
 	DialogActions, Button, Typography, FormControl, FormLabel,
 	TextField, Select, Chip, CircularProgress, Divider
 } from '@mui/material';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
@@ -303,11 +304,9 @@ export default function AdminReportagesView() {
 							<motion.span initial={{ x: -20 }} animate={{ x: 0, transition: { delay: 0.2 } }}>
 								<Typography className="text-4xl leading-none font-extrabold tracking-tight">Reportages</Typography>
 							</motion.span>
-							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button variant="contained" color="secondary" onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
-									Add Reportage
-								</Button>
-							</div>
+                        <div className="flex flex-1 items-center justify-end gap-2">
+                                <GradientButton onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>Add Reportage</GradientButton>
+                            </div>
 						</div>
 					</div>
 				}

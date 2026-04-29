@@ -6,6 +6,7 @@ import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Box from '@mui/material/Box';
 import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import { useSearch } from '../../hooks/useSearch';
 import { useFilteredAccounts } from '../../hooks/useFilteredAccounts';
 import useUser from '@auth/useUser';
@@ -130,24 +131,9 @@ function AccountsHeader() {
                         initial={{ y: -10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1, transition: { delay: 0.25 } }}
                     >
-                        <Button
-                            variant="contained"
-                            component={NavLinkAdapter}
-                            to="/administration/accounts/new"
-                            startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}
-                            sx={{
-                                background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)',
-                                color: '#E8E4DA',
-                                fontWeight: 700,
-                                '&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)' },
-                                borderRadius: '8px',
-                                textTransform: 'none',
-                                paddingX: 2.5,
-                                height: 40
-                            }}
-                        >
+                        <GradientButton component={NavLinkAdapter} to="/administration/accounts/new" startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}>
                             Add
-                        </Button>
+                        </GradientButton>
                     </motion.div>
 				</div>
 			</Box>

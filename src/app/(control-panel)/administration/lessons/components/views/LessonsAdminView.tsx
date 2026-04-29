@@ -13,6 +13,7 @@
  */
 
 import { useMemo, useState } from 'react';
+import GradientButton from 'src/app/(control-panel)/components/ui/GradientButton';
 import { type MRT_ColumnDef } from 'material-react-table';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
@@ -293,9 +294,7 @@ export default function LessonsAdminView() {
 								<Typography className="text-4xl leading-none font-extrabold tracking-tight">Lessons</Typography>
 							</motion.span>
 							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button variant="contained" color="secondary" onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
-									Add Lesson
-								</Button>
+                            <GradientButton onClick={openAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>Add Lesson</GradientButton>
 							</div>
 						</div>
 					</div>

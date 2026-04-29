@@ -5,6 +5,7 @@ import { type MRT_ColumnDef } from 'material-react-table';
 import DataTable from 'src/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle,
 	DialogContent, DialogActions, Button, Typography
@@ -56,14 +57,9 @@ export function RadioAdminTable<T extends { id: number }>({
 								</Typography>
 							</motion.span>
 							<div className="flex flex-1 items-center justify-end gap-2">
-								<Button
-									variant="contained"
-									color="secondary"
-									onClick={onAdd}
-									startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}
-								>
-									{addButtonLabel}
-								</Button>
+                                <GradientButton onClick={onAdd} startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
+                                    {addButtonLabel}
+                                </GradientButton>
 							</div>
 						</div>
 					</div>
