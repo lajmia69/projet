@@ -49,7 +49,6 @@ export default function CulturalProjectTypesAdminTable() {
     <Box>
       <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb: 2 }}>
         <Typography variant="h6">Cultural Project Types</Typography>
-        <GradientButton onClick={openCreate} startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>New Type</GradientButton>
       </Box>
       {isLoading ? <FuseLoading /> : (
         <DataTable data={types ?? []} columns={columns} enableRowNumbers enableRowActions enablePagination initialState={{ pagination: { pageSize: 15, pageIndex: 0 } }} renderRowActionMenuItems={({ row, closeMenu }) => [

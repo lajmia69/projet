@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
 import DataTable from 'src/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider } from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider, MenuItem, ListItemIcon } from '@mui/material';
 import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useCulturalActivityTypes, useCreateCulturalActivityType, useUpdateCulturalActivityType, useDeleteCulturalActivityType } from '@/app/(control-panel)/culture/api/hooks/useCultureProjectsActivities';
@@ -47,10 +47,6 @@ export default function CulturalActivityTypesAdminTable() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <div />
-        <GradientButton onClick={openCreate} startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>New Type</GradientButton>
-      </Box>
       {isLoading ? <FuseLoading /> : (
         <DataTable data={types ?? []} columns={columns} enableRowNumbers enableRowActions enablePagination initialState={{ pagination: { pageSize: 15, pageIndex: 0 } }} renderRowActionMenuItems={({ row, closeMenu }) => [
           <MenuItem key="edit" onClick={() => { openEdit(row.original); closeMenu(); }}>

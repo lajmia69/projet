@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
 import DataTable from 'src/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
-import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider, MenuItem, Select, FormControl, InputLabel, Typography } from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider, MenuItem, Select, FormControl, InputLabel, Typography, ListItemIcon } from '@mui/material';
 import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { useCulturalProjects, useCreateCulturalProject, useUpdateCulturalProject, useDeleteCulturalProject, useCulturalProjectTypes } from '@/app/(control-panel)/culture/api/hooks/useCultureProjectsActivities';
@@ -100,7 +100,7 @@ export default function CulturalProjectsAdminTable() {
     <Box>
       <Box sx={{ display:'flex', justifyContent:'space-between', alignItems:'center', mb: 2 }}>
         <Typography variant="h6">Cultural Projects</Typography>
-        <GradientButton onClick={openAdd} startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>Add Project</GradientButton>
+        {/* Add button moved to the page header for parity with Lessons admin */}
       </Box>
       {isLoading ? <FuseLoading /> : (
         <DataTable data={projects ?? []} columns={columns} enableRowNumbers enableRowActions enablePagination initialState={{ pagination: { pageSize: 15, pageIndex: 0 } }} renderRowActionMenuItems={({ row, closeMenu }) => [

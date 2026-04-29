@@ -1,6 +1,6 @@
 'use client';
-import CultureProjectTypesAdminTable from './CultureProjectTypesAdminTable';
+import CultureProjectTypesAdminView from './CultureProjectTypesAdminView';
 
 export default function CulturalProjectTypesAdminPage() {
-  return <CultureProjectTypesAdminTable />;
+  return <CultureProjectTypesAdminView />;
 }

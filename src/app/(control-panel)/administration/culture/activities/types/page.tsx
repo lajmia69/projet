@@ -1,6 +1,6 @@
 'use client';
-import CultureActivityTypesAdminTable from '../CultureActivityTypesAdminTable';
+import CultureActivityTypesAdminView from './CultureActivityTypesAdminView';
 
 export default function CulturalActivityTypesAdminPage() {
-  return <CultureActivityTypesAdminTable />;
+  return <CultureActivityTypesAdminView />;
 }
