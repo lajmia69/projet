@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import {
-	Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
-	DialogTitle, Divider, IconButton, Paper, TextField, Tooltip, Typography
+    Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent,
+    DialogTitle, Divider, IconButton, Paper, TextField, Tooltip, Typography
 } from '@mui/material';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import { styled } from '@mui/material/styles';
 import { motion } from 'motion/react';
 import FusePageSimple from '@fuse/core/FusePageSimple';
@@ -230,13 +231,7 @@ export default function CulturalActivityTypesView() {
 								onChange={e => setSearch(e.target.value)}
 								sx={{ flex: 1, minWidth: 180, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
 							/>
-							<Button
-								onClick={openCreate} variant="contained" color="secondary" size="small"
-								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-								sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px', whiteSpace: 'nowrap' }}
-							>
-								New type
-							</Button>
+                            <GradientButton onClick={openCreate} startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>New type</GradientButton>
 						</div>
 
 						{/* List */}

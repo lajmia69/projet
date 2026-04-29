@@ -231,13 +231,7 @@ export default function CulturalProjectTypesView() {
 								onChange={e => setSearch(e.target.value)}
 								sx={{ flex: 1, minWidth: 180, '& .MuiOutlinedInput-root': { borderRadius: '10px' } }}
 							/>
-							<Button
-								onClick={openCreate} variant="contained" color="secondary" size="small"
-								startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}
-								sx={{ textTransform: 'none', fontWeight: 700, borderRadius: '10px', whiteSpace: 'nowrap' }}
-							>
-								New type
-							</Button>
+                            <GradientButton onClick={openCreate} startIcon={<FuseSvgIcon size={15}>lucide:plus</FuseSvgIcon>}>New type</GradientButton>
 						</div>
 
 						{/* List */}
