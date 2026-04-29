@@ -20,11 +20,15 @@ function Navigation(props: NavigationProps) {
 	const isMobile = useThemeMediaQuery((theme) => theme.breakpoints.down('lg'));
 
 	return useMemo(() => {
-		function handleItemClick(item) {
-			if (item?.url && isMobile) {
-				closeMobileNavbar();
-			}
-		}
+    function handleItemClick(item) {
+        // Make top-level groups unclickable; only their children (items/collapses) are interactive
+        if (item?.type === 'group') {
+            return;
+        }
+        if (item?.url && isMobile) {
+            closeMobileNavbar();
+        }
+    }
 
 		return (
 			<FuseNavigation

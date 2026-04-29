@@ -133,20 +133,20 @@ export const themesConfig: FuseThemesType = {
 	},
 	defaultNavbar: {
 		palette: {
-			mode: 'dark',
-			...neutralsDarkTheme,
-			primary: { main: '#2D8B7C', light: '#3DA898', dark: '#1C4A52', contrastText: '#E8E4DA' },
-			secondary: { main: '#3DA898', light: '#5CBFAD', dark: '#2D8B7C', contrastText: '#1A2E38' },
-            text: { primary: '#E8E4DA', secondary: '#B8C8CB', disabled: '#5A7A80' },
-            background: { default: '#1A2E38', paper: '#1C4A52' },
-			divider: '#2A5560',
+			mode: 'light',
+			...neutralsLightTheme,
+			primary: { main: '#2D8B7C', light: '#3DA898', dark: '#1C4A52', contrastText: '#FFFFFF' },
+			secondary: { main: '#1A2E38', light: '#1C4A52', dark: '#111E25', contrastText: '#E8E4DA' },
+			text: { primary: '#1A2E38', secondary: '#3D5A65', disabled: '#8AA0A8' },
+			background: { default: '#E8E4DA', paper: '#E2DDD3' },
+			divider: 'rgba(45, 139, 124, 0.18)',
 			action: {
-				active: '#3DA898',
-				hover: 'rgba(45, 139, 124, 0.14)',
-				selected: 'rgba(45, 139, 124, 0.24)',
-				disabled: '#5A7A80',
-				disabledBackground: '#1C4A52',
-				focus: 'rgba(45, 139, 124, 0.20)'
+				active: '#2D8B7C',
+				hover: 'rgba(45, 139, 124, 0.10)',
+				selected: 'rgba(45, 139, 124, 0.18)',
+				disabled: '#8AA0A8',
+				disabledBackground: '#D4CFC6',
+				focus: 'rgba(45, 139, 124, 0.16)'
 			}
 		}
 	},

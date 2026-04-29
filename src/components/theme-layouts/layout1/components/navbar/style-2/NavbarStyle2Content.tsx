@@ -14,8 +14,40 @@ import useNavigationItems from '@/components/theme-layouts/components/navigation
 import { useNavbarContext } from '@/components/theme-layouts/components/navbar/contexts/NavbarContext/useNavbarContext';
 
 const Root = styled('div')(({ theme }) => ({
-	backgroundColor: theme.vars.palette.background.default,
-	color: theme.vars.palette.text.primary
+	backgroundColor: '#E8E4DA',
+	color: '#1C4A52',
+	'& .MuiTypography-root': {
+		background: 'linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%)',
+		WebkitBackgroundClip: 'text',
+		WebkitTextFillColor: 'transparent',
+		backgroundClip: 'text',
+		display: 'inline-block',
+	},
+	'& .MuiListItemText-primary, & .MuiListItemText-secondary': {
+		background: 'linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%)',
+		WebkitBackgroundClip: 'text',
+		WebkitTextFillColor: 'transparent',
+		backgroundClip: 'text',
+		display: 'inline-block',
+	},
+	'& .MuiListSubheader-root': {
+		background: 'linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%)',
+		WebkitBackgroundClip: 'text',
+		WebkitTextFillColor: 'transparent',
+		backgroundClip: 'text',
+		backgroundColor: 'transparent',
+	},
+	'& svg': {
+		color: '#1A2E38 !important',
+		fill: '#1A2E38 !important',
+	},
+	'& .MuiListItemIcon-root': {
+		color: '#1A2E38 !important',
+	},
+	'& .MuiSvgIcon-root': {
+		color: '#1A2E38 !important',
+		fill: '#1A2E38 !important',
+	},
 }));
 
 type StyledPanelProps = {
@@ -24,7 +56,7 @@ type StyledPanelProps = {
 };
 
 const StyledPanel = styled(FuseScrollbars)<StyledPanelProps>(({ theme }) => ({
-	backgroundColor: theme.vars.palette.background.default,
+	backgroundColor: '#E8E4DA',
 	color: theme.vars.palette.text.primary,
 	transition: theme.transitions.create(['opacity'], {
 		easing: theme.transitions.easing.sharp,
@@ -86,23 +118,15 @@ type NavbarStyle2ContentProps = { className?: string };
 	}, [navigation, pathname]);
 
 	function handleParentItemClick(selected: FuseNavItemType) {
-		/** if there is no child item do not set/open panel
-		 */
 		if (!selected.children) {
 			setSelectedNavigation([]);
 			setPanelOpen(false);
 			return;
 		}
 
-		/**
-		 * If navigation already selected toggle panel visibility
-		 */
 		if (selectedNavigation[0]?.id === selected.id) {
 			setPanelOpen(!panelOpen);
 		} else {
-			/**
-			 * Set navigation and open panel
-			 */
 			setSelectedNavigation([selected]);
 			setPanelOpen(true);
 		}

@@ -97,6 +97,10 @@ function FuseNavVerticalItemBase(props: FuseNavVerticalBaseProps) {
 	function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
 		e.stopPropagation();
 
+		if (isGroup) {
+			return;
+		}
+
 		if (isCollapsable) {
 			setOpen((prev) => prev || !prev);
 		}

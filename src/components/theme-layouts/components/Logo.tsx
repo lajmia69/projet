@@ -29,13 +29,14 @@ function Logo(props: LogoProps) {
 	const { className = '' } = props;
 	return (
 		<Root className={clsx('flex flex-shrink-0 flex-grow items-center gap-3', className)}>
-			<div className="flex flex-1 flex-col items-center gap-2">
-				<img
-					className="logo-icon h-48 w-48"
-					src="/assets/images/logo/logo.png"
-					alt="logo"
-				/>
-			</div>
+            <div className="flex flex-1 flex-col items-center gap-2">
+                <img
+                    className="logo-icon"
+                    src="/assets/images/logo/logo.png"
+                    alt="logo"
+                    style={{ height: 'auto', maxHeight: 48, width: 'auto', objectFit: 'contain' }}
+                />
+            </div>
 			<MainProjectSelection />
 		</Root>
 	);

@@ -247,26 +247,7 @@ export default function WelcomeView() {
                             animate={{ opacity: 1, y: 0, transition: { delay: 0.28, duration: 0.4 } }}
                             style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}
                         >
-                            <Button
-                                component={Link}
-                                to="/content/lessons"
-                                variant="contained"
-                                size="medium"
-                                startIcon={<FuseSvgIcon size={16}>heroicons-outline:academic-cap</FuseSvgIcon>}
-                                sx={{
-                                    background: 'linear-gradient(135deg, #2D8B7C, #1C4A52)',
-                                    color: '#E8E4DA', fontWeight: 700, textTransform: 'none',
-                                    borderRadius: '10px', px: 3,
-                                    boxShadow: '0 0 16px rgba(45,139,124,0.5)',
-                                    '&:hover': {
-                                        background: 'linear-gradient(135deg, #1C4A52, #2D8B7C)',
-                                        boxShadow: '0 0 24px rgba(45,139,124,0.65)',
-                                        transform: 'scale(1.03)'
-                                    }
-                                }}
-                            >
-                                Browse Lessons
-                            </Button>
+
                         </motion.div>
                     </div>
                 </div>

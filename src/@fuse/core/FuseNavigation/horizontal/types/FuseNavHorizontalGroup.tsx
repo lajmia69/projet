@@ -1,6 +1,5 @@
 'use client';
 
-import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import { styled, useTheme } from '@mui/material/styles';
 import { useDebounce } from '@fuse/hooks';
 import Grow from '@mui/material/Grow';
@@ -8,7 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import clsx from 'clsx';
-import { memo, useMemo, useState } from 'react';
+import { memo, useState } from 'react';
 import * as ReactDOM from 'react-dom';
 import { Manager, Popper, Reference } from 'react-popper';
 import { ListItemButton, ListItemButtonProps } from '@mui/material';
@@ -55,20 +54,8 @@ function FuseNavHorizontalGroup(props: FuseNavHorizontalGroupProps) {
 	const [opened, setOpened] = useState(false);
 	const pathname = usePathname();
 	const theme = useTheme();
-	const component = item.url ? NavLinkAdapter : 'li';
+	const component = 'li';
 
-	const itemProps = useMemo(
-		() => ({
-			...(component !== 'li' && {
-				disabled: item.disabled,
-				to: item.url,
-				end: item.end,
-				role: 'button',
-				exact: item?.exact
-			})
-		}),
-		[item, component]
-	);
 	const handleToggle = useDebounce((open: boolean) => {
 		setOpened(open);
 	}, 150);
@@ -100,7 +87,6 @@ function FuseNavHorizontalGroup(props: FuseNavHorizontalGroupProps) {
 								aria-owns={opened ? 'menu-fuse-list-grow' : null}
 								aria-haspopup="true"
 								sx={item.sx}
-								{...itemProps}
 							>
 								{item.icon && (
 									<FuseSvgIcon
@@ -183,7 +169,7 @@ function FuseNavHorizontalGroup(props: FuseNavHorizontalGroupProps) {
 				)}
 			</Manager>
 		);
-	}, [component, dense, handleToggle, item, itemProps, nestedLevel, opened, pathname, theme.direction]);
+	}, [dense, handleToggle, item, nestedLevel, opened, pathname, theme.direction]);
 
 	if (checkPermission && !item?.hasPermission) {
 		return null;

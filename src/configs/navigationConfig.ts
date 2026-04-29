@@ -17,6 +17,7 @@ const navigationConfig: FuseNavItemType[] = [
 		title: 'Platform',
 		auth: authRoles.member,
 		translate: 'PLATFORM',
+		disabled: true,
 		children: [
 			{
 				id: 'platform-home',
@@ -139,6 +140,7 @@ const navigationConfig: FuseNavItemType[] = [
         // color removed to comply with FuseNavItemType definitions
 		title: 'Administration',
 		translate: 'ADMINISTRATION',
+		disabled: true,
 		children: [
 			{
 				id: 'administration-dashboard',
@@ -273,6 +275,7 @@ const navigationConfig: FuseNavItemType[] = [
         // color removed to comply with FuseNavItemType definitions
 		translate: 'STUDIO',
 		icon: 'heroicons-outline:color-swatch',
+		disabled: true,
 		children: [
 			// ✅ ADDED: Boards entry — was completely missing, causing /studio/boards to be unreachable from the nav
 			{

@@ -7,8 +7,44 @@ import UserMenu from 'src/components/theme-layouts/components/UserMenu';
 import Logo from '../../../../components/Logo';
 
 const Root = styled('div')(({ theme }) => ({
-	backgroundColor: theme.vars.palette.background.default,
-	color: theme.vars.palette.text.primary,
+	backgroundColor: '#E8E4DA',
+	color: '#1C4A52',
+	'& .MuiTypography-root': {
+		background: 'linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%)',
+		WebkitBackgroundClip: 'text',
+		WebkitTextFillColor: 'transparent',
+		backgroundClip: 'text',
+		display: 'inline-block',
+	},
+	'& .MuiListItemText-primary, & .MuiListItemText-secondary': {
+		background: 'linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%)',
+		WebkitBackgroundClip: 'text',
+		WebkitTextFillColor: 'transparent',
+		backgroundClip: 'text',
+		display: 'inline-block',
+	},
+  '& .MuiListSubheader-root': {
+    background: 'linear-gradient(135deg, #1C4A52 0%, #2D8B7C 100%)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    backgroundClip: 'text',
+    backgroundColor: 'transparent',
+    borderBottom: `1px solid ${theme.vars.palette.divider}`,
+    paddingBottom: 6,
+    marginBottom: 6,
+    pointerEvents: 'none',
+  },
+	'& svg': {
+		color: '#1A2E38 !important',
+		fill: '#1A2E38 !important',
+	},
+	'& .MuiListItemIcon-root': {
+		color: '#1A2E38 !important',
+	},
+	'& .MuiSvgIcon-root': {
+		color: '#1A2E38 !important',
+		fill: '#1A2E38 !important',
+	},
 	'& ::-webkit-scrollbar-thumb': {
 		boxShadow: `inset 0 0 0 20px ${'rgba(255, 255, 255, 0.24)'}`,
 		...theme.applyStyles('light', {
@@ -45,7 +81,7 @@ function NavbarStyle1Content(props: NavbarStyle1ContentProps) {
 
 	return (
 		<Root className={clsx('flex h-full flex-auto flex-col overflow-hidden', className)}>
-			<div className="flex h-12 shrink-0 flex-row items-center px-5 md:h-16">
+    <div className="flex h-12 shrink-0 flex-row items-center px-5 md:h-16">
 				<Logo />
 			</div>
 
