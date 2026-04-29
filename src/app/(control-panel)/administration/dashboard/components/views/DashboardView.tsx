@@ -36,13 +36,15 @@ import { useSearchLessons } from '../../../../content/(lesson)/api/hooks/lessons
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ACCENT_TEAL = '#0D9488';
+const ACCENT_BLUE = '#0284c7';
 
 const PALETTE: Array<{ color: string; bg: string }> = [
 	{ color: ACCENT_TEAL, bg: '#ccfbf1' },
 	{ color: '#8B5CF6',   bg: '#EDE9FE' },
 	{ color: '#F59E0B', bg: '#FEF3C7' },
 	{ color: '#F43F5E',   bg: '#FFF1F2' },
-	{ color: '#059669',   bg: '#ECFDF5' }
+	{ color: '#059669',   bg: '#ECFDF5' },
+	{ color: ACCENT_BLUE, bg: '#0284c7' }
 ];
 
 const FADE_START = 20;

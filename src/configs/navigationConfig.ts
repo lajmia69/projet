@@ -159,7 +159,6 @@ const navigationConfig: FuseNavItemType[] = [
 				children: [
 					{ id: 'accounts-list',          title: 'Accounts',      auth: authRoles.memberAdmin, type: 'item', url: '/administration/accounts' },
 					{ id: 'accounts-roles',         title: 'Roles',         auth: authRoles.memberAdmin, type: 'item', url: '/administration/roles' },
-					{ id: 'accounts-permissions',   title: 'Permissions',   auth: authRoles.memberAdmin, type: 'item', url: '/administration/permissions' },
 					{ id: 'accounts-subscriptions', title: 'Subscriptions', auth: authRoles.memberAdmin, type: 'item', url: '/administration/subscriptions' }
 				]
 			},

@@ -107,9 +107,9 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 					border: theme.palette.mode === 'dark'
 						? '1px solid rgba(29,201,138,0.22)'
 						: '1px solid rgba(29,201,138,0.20)',
-					background: theme.palette.mode === 'dark'
-						? 'linear-gradient(145deg, #0D1A47 0%, #112468 100%)'
-						: 'linear-gradient(145deg, #112468 0%, #1764C0 100%)',
+            background: theme.palette.mode === 'dark'
+                        ? 'linear-gradient(145deg, #0D1A47 0%, #112468 100%)'
+                        : '#F2F0EF',
 					boxShadow: theme.palette.mode === 'dark'
 						? '0 0 0 1px rgba(29,201,138,0.1), 0 4px 24px rgba(13,26,71,0.4)'
 						: '0 0 0 1px rgba(29,201,138,0.08), 0 4px 20px rgba(17,36,104,0.3)',
@@ -125,8 +125,8 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 					},
 				})}
 			>
-				{/* Top accent bar — Seafoam → Mint */}
-				<div style={{ height: 3, width: '100%', background: 'linear-gradient(90deg, #1DC98A, #2AE88E)' }} />
+                {/* Top accent bar — Navy → Teal (match Lesson) */}
+                <div style={{ height: 6, width: '100%', background: 'linear-gradient(90deg, #1A2E38, #2D8B7C)' }} />
 
 				{/* Body */}
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
@@ -134,22 +134,22 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 					{/* Category chip */}
 					<div className="flex items-start justify-between gap-2">
 						{podcast.podcast_category?.name ? (
-							<Chip
-								label={podcast.podcast_category.name}
-								size="small"
-								sx={() => ({
-									fontSize: '0.72rem',
-									fontWeight: 700,
-									letterSpacing: '0.04em',
-									textTransform: 'uppercase',
-									height: 22,
-									color: '#fff',
-									backgroundColor: 'rgba(42,232,142,0.18)',
-									border: '1px solid rgba(42,232,142,0.4)',
-									boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
-									'& .MuiChip-label': { color: '#fff' },
-								})}
-							/>
+                        <Chip
+                                label={podcast.podcast_category.name}
+                                size="small"
+                                sx={() => ({
+                                    fontSize: '0.72rem',
+                                    fontWeight: 700,
+                                    letterSpacing: '0.04em',
+                                    textTransform: 'uppercase',
+                                    height: 22,
+                                    color: '#1A2E38',
+                                    backgroundColor: 'rgba(45,139,124,0.15)',
+                                    border: '1px solid rgba(45,139,124,0.3)',
+                                    boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+                                    '& .MuiChip-label': { color: '#1A2E38' },
+                                })}
+                            />
 						) : (
 							<div />
 						)}
@@ -196,14 +196,14 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 								</Typography>
 							</div>
 						)}
-						{podcast.language?.name && (
-							<div className="flex items-center gap-1">
-								<FuseSvgIcon size={12} sx={{ color: 'rgba(255,255,255,0.4)' }}>lucide:globe</FuseSvgIcon>
-								<Typography className="text-xs" sx={{ fontWeight: 500, color: 'rgba(255,255,255,0.45)' }}>
-									{podcast.language.name}
-								</Typography>
-							</div>
-						)}
+                        {podcast.language?.name && (
+                            <div className="flex items-center gap-1">
+                                <FuseSvgIcon size={12} sx={{ color: 'rgba(0,0,0,0.4)' }}>lucide:globe</FuseSvgIcon>
+                                <Typography className="text-xs" sx={{ fontWeight: 500, color: 'rgba(0,0,0,0.6)' }}>
+                                    {podcast.language.name}
+                                </Typography>
+                            </div>
+                        )}
 						{podcast.is_published && (
 							<Chip
 								label="Published"
@@ -231,7 +231,7 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 								</Typography>
 							</div>
 						)}
-						<Button
+                        <Button
 							component={Link}
 							to={`/content/podcast/courses/${podcast.id}`}
 							size="small"
@@ -246,15 +246,15 @@ function PodcastCard({ podcast }: PodcastCardProps) {
 								flexShrink: 0,
 								minWidth: 'unset',
 								letterSpacing: '0.02em',
-								background: 'linear-gradient(135deg, #1DC98A, #2AE88E)',
-								color: '#0D1A47',
-								boxShadow: '0 0 14px rgba(29,201,138,0.45)',
+                                background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)',
+                                color: '#E8E4DA',
+                                boxShadow: '0 0 14px rgba(45,139,124,0.5)',
 								transition: 'box-shadow 0.2s ease, transform 0.15s ease',
-								'&:hover': {
-									background: 'linear-gradient(135deg, #2AE88E, #1DC98A)',
-									boxShadow: '0 0 20px rgba(42,232,142,0.55)',
-									transform: 'scale(1.04)',
-								},
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)',
+                                    boxShadow: '0 0 20px rgba(42,232,142,0.55)',
+                                    transform: 'scale(1.04)',
+                                },
 							})}
 							endIcon={
 								<FuseSvgIcon size={13}>

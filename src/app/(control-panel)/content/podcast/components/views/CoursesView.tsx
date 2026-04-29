@@ -135,7 +135,7 @@ function CoursesView() {
 							position: 'relative',
 							width: '100%',
 							overflow: 'hidden',
-							background: 'linear-gradient(135deg, #0D1A47 0%, #112468 40%, #0EA8B0 80%, #1DC98A 100%)',
+                        background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)',
 							paddingTop: '56px',
 							paddingBottom: '64px',
 							opacity: 1 - progress,
@@ -256,13 +256,13 @@ function CoursesView() {
 									borderRadius: '10px',
 									textTransform: 'none',
 									fontWeight: 700,
-									background: 'linear-gradient(135deg, #1DC98A, #2AE88E)',
+                                background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)',
 									color: '#0D1A47',
 									boxShadow: '0 0 14px rgba(29,201,138,0.4)',
-									'&:hover': {
-										background: 'linear-gradient(135deg, #2AE88E, #1DC98A)',
-										boxShadow: '0 0 20px rgba(42,232,142,0.5)',
-									},
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)',
+                                    boxShadow: '0 0 24px rgba(0,0,0,0.25)',
+                                },
 								})}
 							>
 								Add Podcast

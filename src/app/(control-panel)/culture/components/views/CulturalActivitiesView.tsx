@@ -60,28 +60,39 @@ function ActivityCard({ activity, onDelete }: { activity: CulturalActivity; onDe
 
 	return (
 		<>
-			<Card
-				className="flex flex-col h-full shadow-sm"
-				sx={{ borderRadius: '14px', overflow: 'hidden', transition: 'transform .2s, box-shadow .2s', '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 } }}
-			>
-				<div style={{ height: 4, backgroundColor: badge.color }} />
+            <Card
+                className="flex flex-col h-full shadow-sm"
+                sx={(theme) => ({
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    transition: 'transform .2s, box-shadow .2s',
+                    background: theme.palette.mode === 'dark' ? 'linear-gradient(145deg, #0D1A47 0%, #112468 100%)' : '#F2F0EF',
+                    '&:hover': {
+                        transform: 'translateY(-4px)',
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(42,232,142,0.45)' : 'rgba(29,201,138,0.5)',
+                        boxShadow: theme.palette.mode === 'dark'
+                            ? '0 0 0 1px rgba(42,232,142,0.2), 0 8px 40px rgba(29,201,138,0.3)'
+                            : '0 0 0 1px rgba(29,201,138,0.22), 0 8px 40px rgba(17,36,104,0.45)'
+                    },
+                })}
+            >
+                <div style={{ height: 6, width: '100%', background: 'linear-gradient(90deg, #1A2E38, #2D8B7C)' }} />
 
 				<CardContent className="flex flex-col flex-1 p-4 gap-2">
 					<div className="flex items-center gap-1.5 flex-wrap">
 						<Chip size="small" label={badge.label}
 							sx={{ fontSize: '0.68rem', fontWeight: 700, height: 22, color: badge.color, backgroundColor: badge.bg }} />
-						{activity.cultural_activity_type && (
-							<Chip size="small" label={activity.cultural_activity_type.name} variant="outlined"
-								sx={{ fontSize: '0.68rem', height: 22 }} />
-						)}
-						{activity.language && (
-							<Chip size="small" label={activity.language.short_name.toUpperCase()} sx={{ fontSize: '0.65rem', height: 20 }} />
-						)}
+                        {activity.cultural_activity_type && (
+                            <Chip size="small" label={activity.cultural_activity_type.name} variant="outlined" sx={{ fontSize: '0.68rem', height: 22, color: '#1A2E38', backgroundColor: 'rgba(45,139,124,0.15)', border: '1px solid rgba(45,139,124,0.3)' }} />
+                        )}
+                        {activity.language && (
+                            <Chip size="small" label={activity.language.short_name.toUpperCase()} sx={{ fontSize: '0.68rem', height: 20, color: '#1A2E38', backgroundColor: 'rgba(45,139,124,0.15)', border: '1px solid rgba(45,139,124,0.3)' }} />
+                        )}
 					</div>
 
-					<Typography className="font-bold line-clamp-2" sx={{ fontSize: '1rem' }}>
-						{activity.name}
-					</Typography>
+                    <Typography className="font-bold line-clamp-2" sx={(theme) => ({ fontSize: '1rem', fontWeight: 800, color: theme.palette.mode === 'dark' ? '#ffffff' : '#1A2E38', lineHeight: 1.25 })}>
+                        {activity.name}
+                    </Typography>
 
 					<Typography className="line-clamp-2 text-sm flex-1" color="text.secondary">
 						{activity.description}
@@ -112,15 +123,15 @@ function ActivityCard({ activity, onDelete }: { activity: CulturalActivity; onDe
 					sx={{ borderTop: '1px solid', borderColor: 'divider', backgroundColor: 'background.default' }}
 				>
 
-					<Button
-						component={Link}
-						to={`/culture/activities/${activity.id}`}
-						size="small" variant="contained" color="secondary"
-						endIcon={<FuseSvgIcon size={14}>lucide:arrow-right</FuseSvgIcon>}
-						sx={{ textTransform: 'none', fontWeight: 700 }}
-					>
-						View Details
-					</Button>
+                    <Button
+                        component={Link}
+                        to={`/culture/activities/${activity.id}`}
+                        size="small" variant="contained"
+                        endIcon={<FuseSvgIcon size={14}>lucide:arrow-right</FuseSvgIcon>}
+                        sx={{ textTransform: 'none', fontWeight: 700, background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)', color: '#E8E4DA', '&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)' } }}
+                    >
+                        View Details
+                    </Button>
 				</CardActions>
 			</Card>
 
@@ -280,7 +291,7 @@ export default function CulturalActivitiesView() {
 							position: 'relative',
 							width: '100%',
 							overflow: 'hidden',
-							background: 'linear-gradient(160deg, #1c2537 0%, #1e2d45 50%, #192132 100%)',
+                        background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)',
 							paddingTop: '56px',
 							paddingBottom: '64px',
 							opacity: heroOpacity,
