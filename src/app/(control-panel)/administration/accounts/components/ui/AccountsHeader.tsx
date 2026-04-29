@@ -25,13 +25,13 @@ function AccountsHeader() {
 				<PageBreadcrumb className="text-sm" />
 			</div>
 
-			{/* Teal gradient banner */}
-			<Box
-				className="relative flex w-full items-center px-6 py-5 md:px-8"
-				sx={{
-					background: 'linear-gradient(135deg, #0D9488 0%, #0F766E 40%, #134E4A 100%)'
-				}}
-			>
+            {/* Navy-to-teal gradient banner (parity with Lesson) */}
+            <Box
+                className="relative flex w-full items-center px-6 py-5 md:px-8"
+                sx={{
+                    background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)'
+                }}
+            >
 				{/* Left: icon + title */}
 				<div className="flex flex-auto items-center gap-4">
 					{/* Icon container */}
@@ -55,19 +55,19 @@ function AccountsHeader() {
 						</Box>
 					</motion.div>
 
-					{/* Title + count */}
-					<div className="flex flex-col">
-						<motion.div
-							initial={{ x: -20, opacity: 0 }}
-							animate={{ x: 0, opacity: 1, transition: { delay: 0.15 } }}
-						>
-							<Typography
-								className="text-3xl font-extrabold leading-tight tracking-tight text-white"
-								variant="h4"
-							>
-								Accounts
-							</Typography>
-						</motion.div>
+                    {/* Title + count */}
+                    <div className="flex flex-col">
+                        <motion.div
+                            initial={{ x: -20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1, transition: { delay: 0.15 } }}
+                        >
+                            <Typography
+                                className="text-3xl font-extrabold leading-tight tracking-tight text-white"
+                                variant="h4"
+                            >
+                                Accounts
+                            </Typography>
+                        </motion.div>
 						<motion.div
 							initial={{ x: -20, opacity: 0 }}
 							animate={{ x: 0, opacity: 1, transition: { delay: 0.2 } }}
@@ -125,32 +125,30 @@ function AccountsHeader() {
 						</Box>
 					</motion.div>
 
-					{/* Add button */}
-					<motion.div
-						initial={{ y: -10, opacity: 0 }}
-						animate={{ y: 0, opacity: 1, transition: { delay: 0.25 } }}
-					>
-						<Button
-							variant="contained"
-							component={NavLinkAdapter}
-							to="/administration/accounts/new"
-							startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}
-							sx={{
-								backgroundColor: 'white',
-								color: '#0D9488',
-								fontWeight: 700,
-								'&:hover': {
-									backgroundColor: 'rgba(255,255,255,0.9)'
-								},
-								borderRadius: '8px',
-								textTransform: 'none',
-								paddingX: 2.5,
-								height: 40
-							}}
-						>
-							Add
-						</Button>
-					</motion.div>
+                    {/* Add button */}
+                    <motion.div
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1, transition: { delay: 0.25 } }}
+                    >
+                        <Button
+                            variant="contained"
+                            component={NavLinkAdapter}
+                            to="/administration/accounts/new"
+                            startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}
+                            sx={{
+                                background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)',
+                                color: '#E8E4DA',
+                                fontWeight: 700,
+                                '&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)' },
+                                borderRadius: '8px',
+                                textTransform: 'none',
+                                paddingX: 2.5,
+                                height: 40
+                            }}
+                        >
+                            Add
+                        </Button>
+                    </motion.div>
 				</div>
 			</Box>
 		</div>

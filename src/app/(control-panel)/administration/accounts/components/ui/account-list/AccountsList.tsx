@@ -49,14 +49,14 @@ function AccountsList() {
 						className="relative"
 					>
 						{/* Near-white neutral band */}
-						<div
-							className="sticky top-0 z-10 flex items-center gap-4 px-4 py-2 md:px-8"
-							style={{
-								background: '#f8fafc',
-								borderTop: '1px solid #e2e8f0',
-								borderBottom: '1px solid #e2e8f0'
-							}}
-						>
+                        <div
+                            className="sticky top-0 z-10 flex items-center gap-4 px-4 py-2 md:px-8"
+                            style={{
+                                background: '#F2F0EF',
+                                borderTop: '1px solid #e2e8f0',
+                                borderBottom: '1px solid #e2e8f0'
+                            }}
+                        >
 							{/* Letter badge */}
 							<div
 								style={{

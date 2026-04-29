@@ -19,12 +19,12 @@ function AccountListItem(props: AccountListItemPropsType) {
 
 	return (
 		<>
-			<ListItemButton
-				className="border-divider border-b-1 px-4 py-4 md:px-8"
-				sx={{ bgcolor: 'background.paper' }}
-				component={NavLinkAdapter}
-				to={`/administration/accounts/${account.id}`}
-			>
+            <ListItemButton
+                className="border-divider border-b-1 px-4 py-4 md:px-8"
+                sx={{ bgcolor: '#F2F0EF', border: '1px solid rgba(45,139,124,0.25)' }}
+                component={NavLinkAdapter}
+                to={`/administration/accounts/${account.id}`}
+            >
 				<ListItemAvatar>
 					<Avatar
 						alt={account.full_name}

@@ -2,6 +2,7 @@
 import _ from 'lodash';
 import { ChangeEvent, useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
+import { TOP_BAR_GRADIENT, CARD_BG_LIGHT, CTA_GRADIENT, CHIP_TEAL_BG, CHIP_TEAL_COLOR, ON_AIR_BG } from '@/app/(control-panel)/design/palette';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -44,12 +45,12 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 
 	return (
 		<>
-			<Card
+                <Card
 				sx={{
 					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
 					height: '100%', position: 'relative',
 					border: '1px solid rgba(45,139,124,0.18)',
-					background: '#F2F0EF',
+                    background: CARD_BG_LIGHT,
 					boxShadow: '0 2px 12px rgba(26,46,56,0.08)',
 					transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
 					'&:hover': {
@@ -60,33 +61,43 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 				}}
 			>
 				{/* Top accent bar */}
-				<div style={{ height: 6, width: '100%', background: 'linear-gradient(90deg, #1A2E38, #2D8B7C)' }} />
+                <div style={{ height: 6, width: '100%', background: TOP_BAR_GRADIENT }} />
 
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
 					{/* Chips */}
 					<div className="flex flex-wrap gap-1.5">
-						{episode.emission_type?.name && (
-							<Chip
-								label={episode.emission_type.name}
-								size="small"
-								sx={{
-									fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
-									textTransform: 'uppercase', height: 22,
-									color: '#1A2E38',
-									backgroundColor: 'rgba(45,139,124,0.15)',
-									border: '1px solid rgba(45,139,124,0.35)',
-									'& .MuiChip-label': { color: '#1A2E38' },
-								}}
-							/>
-						)}
-						{episode.season?.name && (
-							<Chip label={episode.season.name} size="small" sx={{
-								fontSize: '0.68rem', fontWeight: 600, height: 20,
-								color: 'rgba(26,46,56,0.6)',
-								backgroundColor: 'rgba(26,46,56,0.07)',
-								border: '1px solid rgba(26,46,56,0.12)',
-							}} />
-						)}
+                        {episode.emission_type?.name && (
+                            <Chip
+                                label={episode.emission_type.name}
+                                size="small"
+                                sx={{
+                                    fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+                                    textTransform: 'uppercase', height: 22,
+                                    color: CHIP_TEAL_COLOR,
+                                    backgroundColor: CHIP_TEAL_BG,
+                                    border: '1px solid rgba(45,139,124,0.35)',
+                                    maxWidth: 140,
+                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    '& .MuiChip-label': { color: CHIP_TEAL_COLOR },
+                                }}
+                            />
+                        )}
+							{episode.season?.name && (
+								<Chip 
+    label={episode.season.name} 
+    size="small" 
+    sx={{
+        fontSize: '0.72rem', 
+        fontWeight: 700, 
+        textTransform: 'uppercase', 
+        height: 22,
+        color: CHIP_TEAL_COLOR,
+        backgroundColor: CHIP_TEAL_BG,
+        border: '1px solid rgba(45,139,124,0.35)',
+        '& .MuiChip-label': { color: CHIP_TEAL_COLOR },
+    }}
+/>
+							)}
 						{episode.episode_number != null && (
 							<Chip label={`Ep. ${episode.episode_number}`} size="small" sx={{
 								fontSize: '0.68rem', fontWeight: 700, height: 20,
@@ -152,15 +163,15 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 								</Typography>
 							</div>
 						)}
-						<Button component={Link} to={`/content/radio/episodes/${episode.id}`} size="small" variant="contained"
-							sx={{
-								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
-								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em',
-								background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)', color: '#E8E4DA',
-								boxShadow: '0 0 14px rgba(45,139,124,0.35)',
-								transition: 'box-shadow 0.2s ease, transform 0.15s ease',
-								'&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)', boxShadow: '0 0 20px rgba(45,139,124,0.5)', transform: 'scale(1.04)' },
-							}}
+                    <Button component={Link} to={`/content/radio/episodes/${episode.id}`} size="small" variant="contained"
+                            sx={{
+                                borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
+                                paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em',
+                                background: CTA_GRADIENT, color: '#E8E4DA',
+                                boxShadow: '0 0 14px rgba(45,139,124,0.35)',
+                                transition: 'box-shadow 0.2s ease, transform 0.15s ease',
+                                '&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)', boxShadow: '0 0 20px rgba(45,139,124,0.5)', transform: 'scale(1.04)' },
+                            }}
 							endIcon={<FuseSvgIcon size={13}>{episode.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Listen
 						</Button>

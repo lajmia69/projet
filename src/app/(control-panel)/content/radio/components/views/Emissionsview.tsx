@@ -22,6 +22,7 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import { styled } from '@mui/material/styles';
+import { TOP_BAR_GRADIENT, CARD_BG_LIGHT, CTA_GRADIENT, CHIP_TEAL_BG, CHIP_TEAL_COLOR, ON_AIR_BG } from '@/app/(control-panel)/design/palette';
 import useUser from '@auth/useUser';
 import { useSearchEmissions, useEmissionTypes, useSeasons, useDeleteEmission } from '../../api/hooks/Radiohooks';
 import { Emission, SearchEmissions } from '../../api/types';
@@ -44,12 +45,12 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 
 	return (
 		<>
-			<Card
+                <Card
 				sx={{
 					display: 'flex', flexDirection: 'column', borderRadius: '18px', overflow: 'hidden',
 					height: '100%', position: 'relative',
 					border: '1px solid rgba(45,139,124,0.18)',
-					background: '#F2F0EF',
+                    background: CARD_BG_LIGHT,
 					boxShadow: '0 2px 12px rgba(26,46,56,0.08)',
 					transition: 'transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease',
 					'&:hover': {
@@ -59,26 +60,28 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 					},
 				}}
 			>
-				{/* Top accent bar */}
-				<div style={{ height: 6, width: '100%', background: 'linear-gradient(90deg, #1A2E38, #2D8B7C)' }} />
+                {/* Top accent bar */}
+                <div style={{ height: 6, width: '100%', background: TOP_BAR_GRADIENT }} />
 
 				<div className="flex flex-col flex-1 p-5 gap-3" style={{ position: 'relative', zIndex: 1 }}>
 					{/* Chips */}
-					<div className="flex flex-wrap gap-1.5">
-						{emission.emission_type?.name && (
-							<Chip
-								label={emission.emission_type.name}
-								size="small"
-								sx={{
-									fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
-									textTransform: 'uppercase', height: 22,
-									color: '#1A2E38',
-									backgroundColor: 'rgba(45,139,124,0.15)',
-									border: '1px solid rgba(45,139,124,0.35)',
-									'& .MuiChip-label': { color: '#1A2E38' },
-								}}
-							/>
-						)}
+                    <div className="flex flex-wrap gap-1.5">
+                        {emission.emission_type?.name && (
+                            <Chip
+                                label={emission.emission_type.name}
+                                size="small"
+                                sx={{
+                                    fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
+                                    textTransform: 'uppercase', height: 22,
+                                    color: CHIP_TEAL_COLOR,
+                                    backgroundColor: CHIP_TEAL_BG,
+                                    border: '1px solid rgba(45,139,124,0.35)',
+                                    maxWidth: 140,
+                                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    '& .MuiChip-label': { color: CHIP_TEAL_COLOR },
+                                }}
+                            />
+                        )}
 						{emission.season?.name && (
 							<Chip label={emission.season.name} size="small" sx={{
 								fontSize: '0.68rem', fontWeight: 600, height: 20,
@@ -124,14 +127,14 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 								</Typography>
 							</div>
 						)}
-						{emission.is_published && (
-							<Typography className="text-xs ml-auto" sx={{
-								fontWeight: 700, paddingX: '7px', paddingY: '2px', borderRadius: '6px',
-								color: '#1C4A52', background: 'rgba(45,139,124,0.12)', border: '1px solid rgba(45,139,124,0.3)',
-							}}>
-								On Air
-							</Typography>
-						)}
+                        {emission.is_published && (
+                            <Typography className="text-xs ml-auto" sx={{
+                                fontWeight: 700, paddingX: '7px', paddingY: '2px', borderRadius: '6px',
+                                color: '#1C4A52', background: ON_AIR_BG, border: '1px solid rgba(45,139,124,0.3)',
+                            }}>
+                                On Air
+                            </Typography>
+                        )}
 					</div>
 
 					{/* Creator + CTA */}
@@ -144,15 +147,15 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 								</Typography>
 							</div>
 						)}
-						<Button component={Link} to={`/content/radio/emissions/${emission.id}`} size="small" variant="contained"
-							sx={{
-								borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
-								paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em',
-								background: 'linear-gradient(135deg, #1A2E38, #2D8B7C)', color: '#E8E4DA',
-								boxShadow: '0 0 14px rgba(45,139,124,0.35)',
-								transition: 'box-shadow 0.2s ease, transform 0.15s ease',
-								'&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)', boxShadow: '0 0 20px rgba(45,139,124,0.5)', transform: 'scale(1.04)' },
-							}}
+                        <Button component={Link} to={`/content/radio/emissions/${emission.id}`} size="small" variant="contained"
+                            sx={{
+                                borderRadius: '9px', fontSize: '0.73rem', fontWeight: 700, textTransform: 'none',
+                                paddingX: '14px', paddingY: '5px', flexShrink: 0, minWidth: 'unset', letterSpacing: '0.02em',
+                                background: CTA_GRADIENT, color: '#E8E4DA',
+                                boxShadow: '0 0 14px rgba(45,139,124,0.35)',
+                                transition: 'box-shadow 0.2s ease, transform 0.15s ease',
+                                '&:hover': { background: 'linear-gradient(135deg, #2D8B7C, #1A2E38)', boxShadow: '0 0 20px rgba(45,139,124,0.5)', transform: 'scale(1.04)' },
+                            }}
 							endIcon={<FuseSvgIcon size={13}>{emission.transcription?.language_orientation === 'rtl' ? 'lucide:arrow-left' : 'lucide:arrow-right'}</FuseSvgIcon>}>
 							Listen
 						</Button>
