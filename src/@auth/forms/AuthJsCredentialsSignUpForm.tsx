@@ -1,4 +1,5 @@
 import { useForm, Controller } from 'react-hook-form';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import _ from 'lodash';
@@ -9,7 +10,8 @@ import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import { signIn } from 'next-auth/react';
 import FormHelperText from '@mui/material/FormHelperText';
-import { Alert } from '@mui/material';
+import { Alert, InputAdornment } from '@mui/material';
+import { Visibility as EyeIcon, VisibilityOff as EyeOffIcon } from '@mui/icons-material';
 import signinErrors from './signinErrors';
 
 /**
@@ -51,6 +53,9 @@ function AuthJsCredentialsSignUpForm() {
 		defaultValues,
 		resolver: zodResolver(schema)
 	});
+	
+	const [showPassword, setShowPassword] = useState(false);
+	const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
 	const { isValid, dirtyFields, errors } = formState;
 
@@ -126,40 +131,70 @@ function AuthJsCredentialsSignUpForm() {
 					/>
 				)}
 			/>
-			<Controller
-				name="password"
-				control={control}
-				render={({ field }) => (
-					<TextField
-						{...field}
-						className="mb-6"
-						label="Password"
-						type="password"
-						error={!!errors.password}
-						helperText={errors?.password?.message}
-						variant="outlined"
-						required
-						fullWidth
-					/>
-				)}
-			/>
-			<Controller
-				name="passwordConfirm"
-				control={control}
-				render={({ field }) => (
-					<TextField
-						{...field}
-						className="mb-6"
-						label="Password (Confirm)"
-						type="password"
-						error={!!errors.passwordConfirm}
-						helperText={errors?.passwordConfirm?.message}
-						variant="outlined"
-						required
-						fullWidth
-					/>
-				)}
-			/>
+<Controller
+  name="password"
+  control={control}
+  render={({ field }) => (
+    <TextField
+      {...field}
+      className="mb-6"
+      label="Password"
+      type={showPassword ? 'text' : 'password'}
+      error={!!errors.password}
+      helperText={errors?.password?.message}
+      variant="outlined"
+      required
+      fullWidth
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <Button
+              onClick={() => setShowPassword(!showPassword)}
+              variant="text"
+              size="small"
+              aria-label="toggle password visibility"
+              className="p-0"
+            >
+              {showPassword ? <EyeOffIcon fontSize="small" /> : <EyeIcon fontSize="small" />}
+            </Button>
+          </InputAdornment>
+        )
+      }}
+    />
+  )}
+/>
+<Controller
+  name="passwordConfirm"
+  control={control}
+  render={({ field }) => (
+    <TextField
+      {...field}
+      className="mb-6"
+      label="Password (Confirm)"
+      type={showConfirmPassword ? 'text' : 'password'}
+      error={!!errors.passwordConfirm}
+      helperText={errors?.passwordConfirm?.message}
+      variant="outlined"
+      required
+      fullWidth
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <Button
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              variant="text"
+              size="small"
+              aria-label="toggle password visibility"
+              className="p-0"
+            >
+              {showConfirmPassword ? <EyeOffIcon fontSize="small" /> : <EyeIcon fontSize="small" />}
+            </Button>
+          </InputAdornment>
+        )
+      }}
+    />
+  )}
+/>
 			<Controller
 				name="acceptTermsConditions"
 				control={control}

@@ -5,7 +5,7 @@ function SignInPageTitle() {
 	return (
 		<div className="w-full">
 			<img
-				className="w-12"
+				className="w-24"
 				src="/assets/images/logo/logo.png"
 				alt="logo"
 			/>

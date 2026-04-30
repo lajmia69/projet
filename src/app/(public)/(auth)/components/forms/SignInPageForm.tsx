@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
@@ -12,6 +13,8 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormLabel from '@mui/material/FormLabel';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 
 /**
  * Form Validation Schema
@@ -34,6 +37,7 @@ const defaultValues = {
 };
 
 function SignInPageForm() {
+	const [showPassword, setShowPassword] = useState(false);
 	const { control, formState, handleSubmit, reset } = useForm<FormType>({
 		mode: 'onChange',
 		defaultValues,
@@ -41,6 +45,10 @@ function SignInPageForm() {
 	});
 
 	const { isValid, dirtyFields, errors } = formState;
+
+	const handleTogglePassword = () => {
+		setShowPassword(!showPassword);
+	};
 
 	function onSubmit() {
 		reset(defaultValues);
@@ -80,11 +88,27 @@ function SignInPageForm() {
 						<FormLabel htmlFor="password">Password</FormLabel>
 						<TextField
 							{...field}
-							type="password"
+							type={showPassword ? 'text' : 'password'}
 							error={!!errors.password}
 							helperText={errors?.password?.message}
 							required
 							fullWidth
+							InputProps={{
+								endAdornment: (
+									<InputAdornment position="end">
+										<IconButton
+											aria-label="toggle password visibility"
+											onClick={handleTogglePassword}
+											onMouseDown={(e) => e.preventDefault()}
+											edge="end"
+										>
+											<FuseSvgIcon size={20}>
+												{showPassword ? 'heroicons-outline:eye-off' : 'heroicons-outline:eye'}
+											</FuseSvgIcon>
+										</IconButton>
+									</InputAdornment>
+								)
+							}}
 						/>
 					</FormControl>
 				)}

@@ -1,4 +1,5 @@
 import { useForm, Controller } from 'react-hook-form';
+import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 // import { useEffect } from 'react';
 import { z } from 'zod';
@@ -10,7 +11,8 @@ import Checkbox from '@mui/material/Checkbox';
 import Link from '@fuse/core/Link';
 import Button from '@mui/material/Button';
 import { signIn } from 'next-auth/react';
-import { Alert } from '@mui/material';
+import { Alert, InputAdornment } from '@mui/material';
+import { Visibility as EyeIcon, VisibilityOff as EyeOffIcon } from '@mui/icons-material';
 import signinErrors from './signinErrors';
 
 /**
@@ -34,13 +36,14 @@ const defaultValues = {
 };
 
 function AuthJsCredentialsSignInForm() {
-	const { control, formState, handleSubmit, setValue, setError } = useForm<FormType>({
-		mode: 'onChange',
-		defaultValues,
-		resolver: zodResolver(schema)
-	});
+  const { control, formState, handleSubmit, setValue, setError } = useForm<FormType>({
+    mode: 'onChange',
+    defaultValues,
+    resolver: zodResolver(schema)
+  });
 
-	const { isValid, dirtyFields, errors } = formState;
+  const { isValid, dirtyFields, errors } = formState;
+  const [showPassword, setShowPassword] = useState(false);
 
 	// useEffect(() => {
 	// 	setValue('email', 'admin@fusetheme.com', {
@@ -108,23 +111,38 @@ function AuthJsCredentialsSignInForm() {
 					/>
 				)}
 			/>
-			<Controller
-				name="password"
-				control={control}
-				render={({ field }) => (
-					<TextField
-						{...field}
-						className="mb-6"
-						label="Password"
-						type="password"
-						error={!!errors.password}
-						helperText={errors?.password?.message}
-						variant="outlined"
-						required
-						fullWidth
-					/>
-				)}
-			/>
+<Controller
+  name="password"
+  control={control}
+  render={({ field }) => (
+    <TextField
+      {...field}
+      className="mb-6"
+      label="Password"
+      type={showPassword ? 'text' : 'password'}
+      error={!!errors.password}
+      helperText={errors?.password?.message}
+      variant="outlined"
+      required
+      fullWidth
+      InputProps={{
+        endAdornment: (
+          <InputAdornment position="end">
+            <Button
+              onClick={() => setShowPassword(!showPassword)}
+              variant="text"
+              size="small"
+              aria-label="toggle password visibility"
+              className="p-0"
+            >
+              {showPassword ? <EyeOffIcon fontSize="small" /> : <EyeIcon fontSize="small" />}
+            </Button>
+          </InputAdornment>
+        )
+      }}
+    />
+  )}
+/>
 			<div className="flex flex-col items-center justify-center sm:flex-row sm:justify-between">
 				<Controller
 					name="remember"
