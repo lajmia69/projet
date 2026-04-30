@@ -93,56 +93,58 @@ function AuthJsCredentialsSignInForm() {
 					{errors?.root?.message}
 				</Alert>
 			)}
-			<Controller
-				name="email"
-				control={control}
-				render={({ field }) => (
-					<TextField
-						{...field}
-						className="mb-6"
-						label="Email"
-						autoFocus
-						type="email"
-						error={!!errors.email}
-						helperText={errors?.email?.message}
-						variant="outlined"
-						required
-						fullWidth
-					/>
-				)}
-			/>
-<Controller
-  name="password"
-  control={control}
-  render={({ field }) => (
-    <TextField
-      {...field}
-      className="mb-6"
-      label="Password"
-      type={showPassword ? 'text' : 'password'}
-      error={!!errors.password}
-      helperText={errors?.password?.message}
-      variant="outlined"
-      required
-      fullWidth
-      InputProps={{
-        endAdornment: (
-          <InputAdornment position="end">
-            <Button
-              onClick={() => setShowPassword(!showPassword)}
-              variant="text"
-              size="small"
-              aria-label="toggle password visibility"
-              className="p-0"
-            >
-              {showPassword ? <EyeOffIcon fontSize="small" /> : <EyeIcon fontSize="small" />}
-            </Button>
-          </InputAdornment>
-        )
-      }}
-    />
-  )}
-/>
+            <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        className="mb-6"
+                        label="Email"
+                        autoFocus
+                        type="email"
+                        error={!!errors.email}
+                        helperText={errors?.email?.message}
+                        variant="outlined"
+                        required
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                    />
+                )}
+            />
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  className="mb-6"
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  error={!!errors.password}
+                  helperText={errors?.password?.message}
+                  variant="outlined"
+                  required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Button
+                          onClick={() => setShowPassword(!showPassword)}
+                          variant="text"
+                          size="small"
+                          aria-label="toggle password visibility"
+                          className="p-0"
+                        >
+                          {showPassword ? <EyeOffIcon fontSize="small" /> : <EyeIcon fontSize="small" />}
+                        </Button>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              )}
+            />
 			<div className="flex flex-col items-center justify-center sm:flex-row sm:justify-between">
 				<Controller
 					name="remember"
