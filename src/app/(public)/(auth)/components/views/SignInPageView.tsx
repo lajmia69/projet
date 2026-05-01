@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Box from '@mui/material/Box';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Link from '@mui/material/Link';
-import { styled, keyframes } from '@mui/material/styles';
+import MuiLink from '@mui/material/Link';
+import { keyframes } from '@mui/material/styles';
+import Link from '@fuse/core/Link';
+import AuthJsForm from '@auth/forms/AuthJsForm';
 
 // ─── Color tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -231,26 +231,8 @@ function RightPanel() {
   );
 }
 
-// ─── Styled input ─────────────────────────────────────────────────────────────
-const StyledInput = styled('input')({
-  width: '100%',
-  padding: '12px 14px',
-  background: C.navy,
-  color: C.cream,
-  border: `1.5px solid transparent`,
-  borderRadius: 8,
-  fontSize: 14,
-  fontFamily: '"DM Sans", sans-serif',
-  outline: 'none',
-  transition: 'border-color 0.2s',
-  '&::placeholder': { color: 'rgba(232,228,218,0.25)' },
-  '&:focus': { borderColor: C.teal },
-});
-
 // ─── Main component ───────────────────────────────────────────────────────────
 function SignInPageView() {
-  const [remember, setRemember] = useState(false);
-
   return (
     <Box
       sx={{
@@ -297,27 +279,34 @@ function SignInPageView() {
               mb: 3,
             }}
           >
-            {(['Sign In', 'Sign Up', 'Sign Out'] as const).map((t) => (
-              <Box
-                key={t}
-                sx={{
-                  flex: 1,
-                  textAlign: 'center',
-                  py: '8px',
-                  borderRadius: '8px',
-                  fontSize: 11,
-                  fontWeight: 500,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  ...(t === 'Sign In'
-                    ? { background: C.navy, color: C.cream, boxShadow: '0 2px 8px rgba(26,46,56,0.25)' }
-                    : { color: C.darkTeal, opacity: 0.5 }),
-                }}
+            {([
+              { label: 'Sign In', path: '/sign-in' },
+              { label: 'Sign Up', path: '/sign-up' },
+            ] as const).map(({ label, path }) => (
+              <Link
+                key={label}
+                to={path}
+                style={{ flex: 1, textDecoration: 'none' }}
               >
-                {t}
-              </Box>
+                <Box
+                  sx={{
+                    textAlign: 'center',
+                    py: '8px',
+                    borderRadius: '8px',
+                    fontSize: 11,
+                    fontWeight: 500,
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    ...(label === 'Sign In'
+                      ? { background: C.navy, color: C.cream, boxShadow: '0 2px 8px rgba(26,46,56,0.25)' }
+                      : { color: C.darkTeal, opacity: 0.5, '&:hover': { opacity: 0.8 } }),
+                  }}
+                >
+                  {label}
+                </Box>
+              </Link>
             ))}
           </Box>
 
@@ -375,75 +364,50 @@ function SignInPageView() {
             </Box>
           </Box>
 
-          {/* Form */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {/* Email */}
-            <Box sx={{ mb: 1.5 }}>
-              <Box sx={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.navy, opacity: 0.45, mb: 0.75 }}>
-                Email Address
-              </Box>
-              <StyledInput type="email" placeholder="you@example.com" />
-            </Box>
-
-            {/* Password */}
-            <Box sx={{ mb: 1.5 }}>
-              <Box sx={{ fontSize: 10, fontWeight: 500, letterSpacing: '0.15em', textTransform: 'uppercase', color: C.navy, opacity: 0.45, mb: 0.75 }}>
-                Password
-              </Box>
-              <StyledInput type="password" placeholder="••••••••" />
-            </Box>
-
-            {/* Remember + Forgot */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={remember}
-                    onChange={(e) => setRemember(e.target.checked)}
-                    sx={{ color: C.darkTeal, '&.Mui-checked': { color: C.teal }, p: 0.5 }}
-                  />
-                }
-                label={<Box sx={{ fontSize: 12, color: C.darkTeal, fontWeight: 300 }}>Remember me</Box>}
-                sx={{ m: 0, gap: 0.5 }}
-              />
-              <Link href="#" underline="hover" sx={{ fontSize: 12, color: C.teal, fontWeight: 400 }}>
-                Forgot password?
-              </Link>
-            </Box>
-
-            {/* Submit */}
-            <Box
-              component="button"
-              sx={{
-                width: '100%',
-                py: '14px',
-                background: C.darkTeal,
-                color: C.cream,
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: 11,
-                fontFamily: '"DM Sans", sans-serif',
-                fontWeight: 500,
-                letterSpacing: '0.16em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                transition: 'background 0.2s, transform 0.1s',
-                '&:hover': { background: C.navy },
-                '&:active': { transform: 'scale(0.98)' },
-              }}
-            >
-              Sign In
-            </Box>
-
-            {/* Divider */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, my: 1.5, color: C.darkTeal, opacity: 0.35, fontSize: 11 }}>
-              <Box sx={{ flex: 1, height: '0.5px', background: C.darkTeal, opacity: 0.4 }} />
-              or
-              <Box sx={{ flex: 1, height: '0.5px', background: C.darkTeal, opacity: 0.4 }} />
-            </Box>
-
-            {/* Info box */}
+          {/* Form — uses real AuthJsForm for auth logic, styled to match theme */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2,
+              /* ── override AuthJsForm internals to match the cream/navy palette ── */
+              '& input': {
+                background: `${C.navy} !important`,
+                color: `${C.cream} !important`,
+                border: `1.5px solid transparent !important`,
+                borderRadius: '8px !important',
+                fontFamily: '"DM Sans", sans-serif !important',
+                fontSize: '14px !important',
+                outline: 'none !important',
+                transition: 'border-color 0.2s !important',
+                '&::placeholder': { color: 'rgba(232,228,218,0.25) !important' },
+                '&:focus': { borderColor: `${C.teal} !important` },
+              },
+              '& label': {
+                fontSize: '10px !important',
+                fontWeight: '500 !important',
+                letterSpacing: '0.15em !important',
+                textTransform: 'uppercase !important',
+                color: `${C.navy} !important`,
+                opacity: '0.5 !important',
+              },
+              '& button[type="submit"]': {
+                background: `${C.darkTeal} !important`,
+                color: `${C.cream} !important`,
+                border: 'none !important',
+                borderRadius: '8px !important',
+                fontFamily: '"DM Sans", sans-serif !important',
+                fontWeight: '500 !important',
+                letterSpacing: '0.16em !important',
+                textTransform: 'uppercase !important',
+                fontSize: '11px !important',
+                transition: 'background 0.2s !important',
+                '&:hover': { background: `${C.navy} !important` },
+              },
+              '& a': { color: `${C.teal} !important` },
+            }}
+          >
+            <AuthJsForm formType="signin" />
             <Box
               sx={{
                 background: 'rgba(45,139,124,0.1)',
@@ -458,13 +422,11 @@ function SignInPageView() {
             >
               You are browsing <strong style={{ fontWeight: 500 }}>EduVoice Demo</strong>. Click on the "Sign in" button to access your audio-learning environment.
             </Box>
-
-            {/* Alt link */}
-            <Box sx={{ textAlign: 'center', fontSize: 12, color: C.darkTeal, opacity: 0.55, mt: 1.5 }}>
+            <Box sx={{ textAlign: 'center', fontSize: 12, color: C.darkTeal, opacity: 0.55 }}>
               No account?{' '}
-              <Link href="#" underline="hover" sx={{ color: C.teal, fontWeight: 500, opacity: 1 }}>
+              <MuiLink component={Link} to="/sign-up" underline="hover" sx={{ color: C.teal, fontWeight: 500, opacity: 1 }}>
                 Create one
-              </Link>
+              </MuiLink>
             </Box>
           </Box>
         </Box>
