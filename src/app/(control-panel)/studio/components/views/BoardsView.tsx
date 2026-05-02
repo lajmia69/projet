@@ -15,7 +15,6 @@ import Tooltip from '@mui/material/Tooltip';
 import Chip from '@mui/material/Chip';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import { motion } from 'motion/react';
 import { formatDistance } from 'date-fns';
@@ -147,58 +146,57 @@ function ProjectCard({ board, index }: { board: ProductionProject; index: number
 					style={provided.draggableProps.style}
 				>
 				<Card
-    component={NavLinkAdapter as React.ElementType} // <-- Add type assertion here
-    to={`/studio/boards/${board.id}`}
-    className="block rounded-xl shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer mb-3 border-0"
-    elevation={snapshot.isDragging ? 6 : 1}
-    onClick={(e: React.MouseEvent<HTMLElement>) => {
-        // Prevent navigation while dragging
-        if (snapshot.isDragging) e.preventDefault();
-    }}
->
-						<CardContent className="p-3 !pb-3">
-							<div className="mb-2">
-								<span
-									className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold text-white"
-									style={{ backgroundColor: typeColor }}
-								>
-									{board.project_type?.name ?? '—'}
-								</span>
-							</div>
+					component={NavLinkAdapter as React.ElementType}
+					to={`/studio/boards/${board.id}`}
+					className="block rounded-xl shadow-sm hover:shadow-md transition-shadow duration-150 cursor-pointer mb-3 border-0"
+					elevation={snapshot.isDragging ? 6 : 1}
+					onClick={(e: React.MouseEvent<HTMLElement>) => {
+						if (snapshot.isDragging) e.preventDefault();
+					}}
+				>
+					<CardContent className="p-3 !pb-3">
+						<div className="mb-2">
+							<span
+								className="inline-block rounded-full px-2 py-0.5 text-xs font-semibold text-white"
+								style={{ backgroundColor: typeColor }}
+							>
+								{board.project_type?.name ?? '—'}
+							</span>
+						</div>
 
-							<Typography className="font-semibold text-sm leading-snug mb-1 line-clamp-2">
-								{board.name}
+						<Typography className="font-semibold text-sm leading-snug mb-1 line-clamp-2">
+							{board.name}
+						</Typography>
+
+						{board.description && (
+							<Typography className="text-xs line-clamp-2 mb-2" color="text.secondary">
+								{board.description}
 							</Typography>
+						)}
 
-							{board.description && (
-								<Typography className="text-xs line-clamp-2 mb-2" color="text.secondary">
-									{board.description}
-								</Typography>
+						<Divider className="my-2" />
+
+						<div className="flex items-center justify-between gap-1">
+							<Tooltip title={board.studio_leader?.full_name ?? ''}>
+								<div className="flex items-center gap-1 min-w-0">
+									<FuseSvgIcon size={13} color="action">lucide:user</FuseSvgIcon>
+									<Typography className="text-xs truncate" color="text.secondary">
+										{board.studio_leader?.full_name ?? '—'}
+									</Typography>
+								</div>
+							</Tooltip>
+
+							{board.end_date && (
+								<Chip
+									size="small"
+									label={formatDistance(new Date(board.end_date), new Date(), { addSuffix: true })}
+									className="text-xs h-5"
+									color={isOverdue ? 'error' : 'default'}
+								/>
 							)}
-
-							<Divider className="my-2" />
-
-							<div className="flex items-center justify-between gap-1">
-								<Tooltip title={board.studio_leader?.full_name ?? ''}>
-									<div className="flex items-center gap-1 min-w-0">
-										<FuseSvgIcon size={13} color="action">lucide:user</FuseSvgIcon>
-										<Typography className="text-xs truncate" color="text.secondary">
-											{board.studio_leader?.full_name ?? '—'}
-										</Typography>
-									</div>
-								</Tooltip>
-
-								{board.end_date && (
-									<Chip
-										size="small"
-										label={formatDistance(new Date(board.end_date), new Date(), { addSuffix: true })}
-										className="text-xs h-5"
-										color={isOverdue ? 'error' : 'default'}
-									/>
-								)}
-							</div>
-						</CardContent>
-					</Card>
+						</div>
+					</CardContent>
+				</Card>
 				</div>
 			)}
 		</Draggable>
@@ -213,7 +211,6 @@ function StatusColumn({
 	config: (typeof STATUS_COLUMNS)[number] & { names: string[] };
 	projects: ProductionProject[];
 }) {
-	// Use first name as the stable droppableId
 	const droppableId = config.names[0];
 
 	return (
@@ -296,22 +293,16 @@ function BoardsView() {
 		if (!destination) return;
 		if (source.droppableId === destination.droppableId) return;
 
-		// Find the project being dragged
 		const project = boards.find((b) => String(b.id) === draggableId);
 		if (!project) return;
 
-		// Find the target column config by matching droppableId to names[0]
 		const targetColumn =
-			STATUS_COLUMNS.find((col) => col.names[0] === destination.droppableId) ??
-			null;
-
+			STATUS_COLUMNS.find((col) => col.names[0] === destination.droppableId) ?? null;
 		if (!targetColumn) return;
 
-		// Find the real status ID from the API by matching any of the column's names
 		const matchedStatus = projectStatuses.find((s) =>
 			targetColumn.names.includes(s.name)
 		);
-
 		if (!matchedStatus?.id) return;
 
 		await updateProject({
@@ -326,33 +317,89 @@ function BoardsView() {
 	}
 
 	return (
-		<div className="flex flex-col h-full">
-			{/* Header */}
-			<div className="px-6 pt-6 pb-4 shrink-0">
-				<PageBreadcrumb className="mb-3" />
-				<div className="flex items-center justify-between flex-wrap gap-3">
-					<div>
-						<Typography className="text-3xl font-extrabold tracking-tight leading-none">
+		<div className="flex flex-col h-full" style={{ background: 'var(--mui-palette-background-default)' }}>
+			{/* ── Hero Header ── */}
+			<div
+				style={{
+					position: 'relative',
+					width: '100%',
+					overflow: 'hidden',
+					background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)',
+					paddingTop: '48px',
+					paddingBottom: '56px',
+					flexShrink: 0,
+				}}
+			>
+				{/* Grid overlay */}
+				<div style={{
+					position: 'absolute', inset: 0,
+					backgroundImage: `linear-gradient(rgba(29,201,138,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,201,138,0.06) 1px, transparent 1px)`,
+					backgroundSize: '52px 52px',
+					pointerEvents: 'none',
+				}} />
+				{/* Glow orbs */}
+				<div style={{
+					position: 'absolute', top: '-80px', left: '-100px',
+					width: '420px', height: '420px', borderRadius: '50%',
+					background: 'radial-gradient(circle, rgba(14,168,176,0.22) 0%, transparent 65%)',
+					pointerEvents: 'none',
+				}} />
+				<div style={{
+					position: 'absolute', bottom: '-50px', right: '-50px',
+					width: '320px', height: '320px', borderRadius: '50%',
+					background: 'radial-gradient(circle, rgba(42,232,142,0.18) 0%, transparent 65%)',
+					pointerEvents: 'none',
+				}} />
+
+				<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
+					<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
+						<Typography component="h1" sx={{
+							fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' },
+							fontWeight: 800,
+							color: '#e8fff5',
+							textShadow: '0 2px 32px rgba(0,0,0,0.55)',
+						}}>
 							Studio Boards
 						</Typography>
-						<Typography className="text-sm mt-1" color="text.secondary">
-							{boards.length} projet{boards.length !== 1 ? 's' : ''} au total
+					</motion.div>
+					<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
+						<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(42,232,142,0.72)', lineHeight: 1.75 }}>
+							Track and manage all your production projects — drag cards across columns to update their status.
 						</Typography>
-					</div>
-					<Button
-						variant="contained"
-						color="secondary"
-						startIcon={<FuseSvgIcon size={18}>lucide:plus</FuseSvgIcon>}
-						onClick={() => setDialogOpen(true)}
-					>
-						Nouveau projet
-					</Button>
+					</motion.div>
+					{boards.length > 0 && (
+						<motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.24, duration: 0.4 } }} className="mt-5">
+							<div style={{
+								display: 'inline-flex', alignItems: 'center', gap: '6px',
+								padding: '4px 14px', borderRadius: '999px',
+								border: '1px solid rgba(14,168,176,0.35)',
+								backgroundColor: 'rgba(14,168,176,0.12)',
+							}}>
+								<FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:layout-grid</FuseSvgIcon>
+								<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.025em' }}>
+									{boards.length} projet{boards.length !== 1 ? 's' : ''} au total
+								</Typography>
+							</div>
+						</motion.div>
+					)}
 				</div>
+			</div>
+
+			{/* ── Toolbar ── */}
+			<div className="px-6 py-4 shrink-0 flex items-center justify-end">
+				<Button
+					variant="contained"
+					color="secondary"
+					startIcon={<FuseSvgIcon size={18}>lucide:plus</FuseSvgIcon>}
+					onClick={() => setDialogOpen(true)}
+				>
+					Nouveau projet
+				</Button>
 			</div>
 
 			<Divider />
 
-			{/* Kanban columns */}
+			{/* ── Kanban columns ── */}
 			{isLoading ? (
 				<FuseLoading />
 			) : (

@@ -39,6 +39,9 @@ const AUDIO_TYPES = [
 const ACCEPTED_AUDIO = 'audio/*,.mp3,.wav,.ogg,.flac,.aac,.m4a,.opus,.wma';
 const MAX_NAME_LENGTH = 50;
 
+const FADE_START = 20;
+const FADE_END = 180;
+
 type UploadPanelProps = {
 	onUploaded: () => void;
 	projects: ReturnType<typeof useGetStudioBoards>['data'];
@@ -124,49 +127,44 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 	}
 
 	async function handleSubmit() {
-	if (!selectedFile || !name.trim() || !taskId || !formatId) return;
-	setUploadError(null);
+		if (!selectedFile || !name.trim() || !taskId || !formatId) return;
+		setUploadError(null);
 
-	const duration = secondsToIsoDuration(detectedDuration || 0);
-	const timestamp = selectedFile.lastModified
-		? selectedFile.lastModified / 1000
-		: Date.now() / 1000;
+		const duration = secondsToIsoDuration(detectedDuration || 0);
+		const timestamp = selectedFile.lastModified
+			? selectedFile.lastModified / 1000
+			: Date.now() / 1000;
 
-	const payload: CreateAudioFile = {
-		name: name.trim().slice(0, MAX_NAME_LENGTH),
-		description: description.trim(),
-		duration,
-		timestamp,
-		format_id: formatId,
-		type: audioType,
-		production_task_id: taskId,
-	};
+		const payload: CreateAudioFile = {
+			name: name.trim().slice(0, MAX_NAME_LENGTH),
+			description: description.trim(),
+			duration,
+			timestamp,
+			format_id: formatId,
+			type: audioType,
+			production_task_id: taskId,
+		};
 
-	try {
-		await upload({ payload, file: selectedFile });
-		resetForm();
-		onUploaded();
-	} catch (err) {
-		const msg = err instanceof Error ? err.message : '';
-
-		// Backend uploads the file successfully but returns 404 when serializing
-		// the response because it can't resolve a related object (e.g. "No Lesson
-		// matches the given query"). The file IS created — treat this as success.
-		if (msg.includes('404') && msg.includes('No Lesson matches')) {
+		try {
+			await upload({ payload, file: selectedFile });
 			resetForm();
 			onUploaded();
-			return;
-		}
-
-		if (msg.includes('UniqueViolation') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
-			setUploadError('This task already has an audio file linked to it. Please select a different task, or delete the existing audio file for this task first.');
-		} else if (msg.includes('string_too_long') || msg.includes('max_length')) {
-			setUploadError('The name is too long. Please shorten it to 50 characters or less.');
-		} else {
-			setUploadError('Upload failed. Please try again.');
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : '';
+			if (msg.includes('404') && msg.includes('No Lesson matches')) {
+				resetForm();
+				onUploaded();
+				return;
+			}
+			if (msg.includes('UniqueViolation') || msg.includes('duplicate key') || msg.includes('unique constraint')) {
+				setUploadError('This task already has an audio file linked to it. Please select a different task, or delete the existing audio file for this task first.');
+			} else if (msg.includes('string_too_long') || msg.includes('max_length')) {
+				setUploadError('The name is too long. Please shorten it to 50 characters or less.');
+			} else {
+				setUploadError('Upload failed. Please try again.');
+			}
 		}
 	}
-}
 
 	const canSubmit = !!selectedFile && !!name.trim() && name.length <= MAX_NAME_LENGTH && !!projectId && !!taskId && !!formatId && !isPending;
 
@@ -224,7 +222,6 @@ function UploadPanel({ onUploaded, projects = [], formats = [], projectsLoading,
 
 			<Collapse in={!!selectedFile}>
 				<div className="flex flex-col gap-3">
-
 					{uploadError && (
 						<Alert severity="error" onClose={() => setUploadError(null)}>
 							{uploadError}
@@ -479,6 +476,7 @@ export default function AudioPage() {
 	const [search, setSearch] = useState('');
 	const [showUpload, setShowUpload] = useState(false);
 	const [deleteTarget, setDeleteTarget] = useState<AudioFile | null>(null);
+	const [scrollY, setScrollY] = useState(0);
 
 	const { data: audios = [], isLoading } = useGetProjectAudios();
 	const { mutateAsync: deleteAudio, isPending: isDeleting } = useDeleteAudioFile();
@@ -494,6 +492,14 @@ export default function AudioPage() {
 
 	const totalSec = audios.reduce((s, a) => s + isoDurationToSeconds(a.duration), 0);
 
+	useEffect(() => {
+		const onScroll = () => setScrollY(window.scrollY);
+		window.addEventListener('scroll', onScroll, { passive: true });
+		return () => window.removeEventListener('scroll', onScroll);
+	}, []);
+
+	const progress = Math.min(1, Math.max(0, (scrollY - FADE_START) / (FADE_END - FADE_START)));
+
 	async function handleConfirmDelete() {
 		if (!deleteTarget?.id) return;
 		await deleteAudio(deleteTarget.id);
@@ -501,32 +507,106 @@ export default function AudioPage() {
 	}
 
 	return (
-		<div className="flex flex-col h-full">
-			<div className="px-6 pt-6 pb-4 shrink-0">
-				<PageBreadcrumb className="mb-3" />
-				<div className="flex items-center justify-between flex-wrap gap-3">
-					<div>
-						<Typography className="text-3xl font-extrabold tracking-tight leading-none">
-							Audio Library
-						</Typography>
-						<Typography className="text-sm mt-1" color="text.secondary">
-							{audios.length} file{audios.length !== 1 ? 's' : ''} · Total duration:{' '}
-							{formatIsoDuration(secondsToIsoDuration(totalSec))}
-						</Typography>
-					</div>
-					<Button
-						variant={showUpload ? 'outlined' : 'contained'}
-						color="secondary"
-						startIcon={
-							<FuseSvgIcon size={18}>
-								{showUpload ? 'lucide:x' : 'lucide:upload-cloud'}
-							</FuseSvgIcon>
-						}
-						onClick={() => setShowUpload((v) => !v)}
-					>
-						{showUpload ? 'Cancel' : 'Upload Audio'}
-					</Button>
+		<div className="flex flex-col h-full" style={{ background: 'var(--mui-palette-background-default)' }}>
+			{/* ── Hero Header ── */}
+			<div
+				style={{
+					position: 'relative',
+					width: '100%',
+					overflow: 'hidden',
+					background: 'linear-gradient(135deg, #1A2E38 0%, #2D8B7C 100%)',
+					paddingTop: '48px',
+					paddingBottom: '56px',
+					opacity: 1 - progress,
+					transform: `translateY(${-(progress * 24)}px)`,
+					willChange: 'opacity, transform',
+					flexShrink: 0,
+				}}
+			>
+				{/* Grid overlay */}
+				<div style={{
+					position: 'absolute', inset: 0,
+					backgroundImage: `linear-gradient(rgba(29,201,138,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(29,201,138,0.06) 1px, transparent 1px)`,
+					backgroundSize: '52px 52px',
+					pointerEvents: 'none',
+				}} />
+				{/* Glow orbs */}
+				<div style={{
+					position: 'absolute', top: '-80px', left: '-100px',
+					width: '420px', height: '420px', borderRadius: '50%',
+					background: 'radial-gradient(circle, rgba(14,168,176,0.22) 0%, transparent 65%)',
+					pointerEvents: 'none',
+				}} />
+				<div style={{
+					position: 'absolute', bottom: '-50px', right: '-50px',
+					width: '320px', height: '320px', borderRadius: '50%',
+					background: 'radial-gradient(circle, rgba(42,232,142,0.18) 0%, transparent 65%)',
+					pointerEvents: 'none',
+				}} />
+
+				<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
+					<PageBreadcrumb className="mb-4 opacity-60" />
+					<Typography component="h1" sx={{
+						fontSize: { xs: '1.75rem', sm: '2.4rem', md: '3rem' },
+						fontWeight: 800,
+						color: '#e8fff5',
+						textShadow: '0 2px 32px rgba(0,0,0,0.55)',
+						lineHeight: 1.15,
+					}}>
+						Audio Library
+					</Typography>
+					<Typography sx={{
+						fontSize: { xs: '0.875rem', sm: '0.95rem' },
+						color: 'rgba(42,232,142,0.72)',
+						lineHeight: 1.75,
+						mt: 1.5,
+					}}>
+						Manage and upload audio files linked to your production tasks.
+					</Typography>
+
+					{audios.length > 0 && (
+						<div className="mt-4 flex items-center gap-3 flex-wrap justify-center">
+							<div style={{
+								display: 'inline-flex', alignItems: 'center', gap: '6px',
+								padding: '4px 14px', borderRadius: '999px',
+								border: '1px solid rgba(14,168,176,0.35)',
+								backgroundColor: 'rgba(14,168,176,0.12)',
+							}}>
+								<FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:music</FuseSvgIcon>
+								<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.025em' }}>
+									{audios.length} file{audios.length !== 1 ? 's' : ''}
+								</Typography>
+							</div>
+							<div style={{
+								display: 'inline-flex', alignItems: 'center', gap: '6px',
+								padding: '4px 14px', borderRadius: '999px',
+								border: '1px solid rgba(42,232,142,0.25)',
+								backgroundColor: 'rgba(42,232,142,0.10)',
+							}}>
+								<FuseSvgIcon size={13} sx={{ color: 'rgba(42,232,142,0.75)' }}>lucide:clock</FuseSvgIcon>
+								<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(42,232,142,0.85)', letterSpacing: '0.025em' }}>
+									{formatIsoDuration(secondsToIsoDuration(totalSec))} total
+								</Typography>
+							</div>
+						</div>
+					)}
 				</div>
+			</div>
+
+			{/* ── Toolbar ── */}
+			<div className="px-6 py-4 shrink-0 flex items-center justify-between flex-wrap gap-3">
+				<Button
+					variant={showUpload ? 'outlined' : 'contained'}
+					color="secondary"
+					startIcon={
+						<FuseSvgIcon size={18}>
+							{showUpload ? 'lucide:x' : 'lucide:upload-cloud'}
+						</FuseSvgIcon>
+					}
+					onClick={() => setShowUpload((v) => !v)}
+				>
+					{showUpload ? 'Cancel' : 'Upload Audio'}
+				</Button>
 			</div>
 
 			<Divider />
