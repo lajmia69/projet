@@ -24,9 +24,16 @@ import { LessonTranscription } from '@/app/(control-panel)/(platform)/(lesson)/a
 import clsx from 'clsx';
 // #endregion ------------ ICONS ---------
 
+// ─── Brand tokens (mirrors LessonsView palette) ───────────────────────────────
+const TEAL        = '#2D8B7C';   // primary accent — seafoam/teal
+const TEAL_DARK   = '#1f6b5e';   // hover / active shade
+const TEAL_LIGHT  = 'rgba(45,139,124,0.12)';  // subtle fill
+const TEAL_RING   = 'rgba(45,139,124,0.22)';  // focus ring / rail opacity
+const SAND        = '#E8E4DA';   // warm off-white (text on dark bg)
+
 // #region -------- Styled Components -----------------------------------------
 
-/** Transport bar — white card matching LessonView's paper surfaces */
+/** Transport bar */
 const TransportPaper = styled(Paper)(({ theme }) => ({
 	backgroundColor: theme.vars.palette.background.paper,
 	border: `1px solid ${theme.vars.palette.divider}`,
@@ -35,24 +42,24 @@ const TransportPaper = styled(Paper)(({ theme }) => ({
 	boxShadow: theme.shadows[1],
 }));
 
-/** Progress slider — lime accent, no pointer on track */
+/** Progress slider — teal accent */
 const PSlider = styled(Slider)(() => ({
-	color: '#84cc16',           // Tailwind lime-400
+	color: TEAL,
 	height: 3,
 	'&:hover': { cursor: 'auto' },
 	'& .MuiSlider-thumb': {
 		width: 12,
 		height: 12,
 		'&:hover, &.Mui-focusVisible': {
-			boxShadow: '0 0 0 6px rgba(132,204,22,0.18)',
+			boxShadow: `0 0 0 6px ${TEAL_RING}`,
 		},
 	},
 	'& .MuiSlider-rail': { opacity: 0.22 },
 }));
 
-/** Volume slider — thinner, subdued */
+/** Volume slider */
 const VSlider = styled(Slider)(() => ({
-	color: '#84cc16',
+	color: TEAL,
 	height: 2,
 	width: 72,
 	'&:hover': { cursor: 'pointer' },
@@ -60,7 +67,7 @@ const VSlider = styled(Slider)(() => ({
 	'& .MuiSlider-rail': { opacity: 0.22 },
 }));
 
-/** Lime-400 index badge — mirrors the lesson list badges */
+/** Teal index badge */
 const IndexBadge = styled('div')({
 	display: 'inline-flex',
 	alignItems: 'center',
@@ -68,7 +75,7 @@ const IndexBadge = styled('div')({
 	minWidth: 28,
 	height: 28,
 	borderRadius: 6,
-	backgroundColor: '#84cc16',
+	backgroundColor: TEAL,
 	color: '#fff',
 	fontWeight: 700,
 	fontSize: '0.78rem',
@@ -77,14 +84,22 @@ const IndexBadge = styled('div')({
 	flexShrink: 0,
 });
 
-/** Sky-100 speaker pill */
+/** Speaker pill — teal-tinted to match brand */
 const SpeakerBadge = styled('div')(({ theme }) => ({
 	display: 'inline-flex',
 	alignItems: 'center',
 	padding: '2px 8px',
 	borderRadius: 6,
-	backgroundColor: theme.palette.mode === 'dark' ? 'rgba(186,230,253,0.12)' : '#e0f2fe',
-	color: theme.palette.mode === 'dark' ? '#7dd3fc' : '#0369a1',
+	backgroundColor:
+		theme.palette.mode === 'dark'
+			? 'rgba(45,139,124,0.18)'
+			: 'rgba(45,139,124,0.10)',
+	color:
+		theme.palette.mode === 'dark' ? '#5ecec0' : '#1f6b5e',
+	border:
+		theme.palette.mode === 'dark'
+			? '1px solid rgba(45,139,124,0.30)'
+			: '1px solid rgba(45,139,124,0.25)',
 	fontSize: '0.72rem',
 	fontWeight: 600,
 	whiteSpace: 'nowrap',
@@ -104,16 +119,16 @@ const IconBtn = styled('button')(({ theme }) => ({
 	color: theme.palette.text.secondary,
 	transition: 'color 0.15s, background 0.15s',
 	'&:hover': {
-		color: '#84cc16',
+		color: TEAL,
 		backgroundColor:
 			theme.palette.mode === 'dark'
-				? 'rgba(132,204,22,0.12)'
-				: 'rgba(132,204,22,0.08)',
+				? 'rgba(45,139,124,0.14)'
+				: 'rgba(45,139,124,0.09)',
 	},
 }));
 
-/** The large play/pause icon button */
-const PlayBtn = styled('button')(({ theme }) => ({
+/** The large play/pause button */
+const PlayBtn = styled('button')(() => ({
 	display: 'inline-flex',
 	alignItems: 'center',
 	justifyContent: 'center',
@@ -122,10 +137,10 @@ const PlayBtn = styled('button')(({ theme }) => ({
 	borderRadius: '50%',
 	border: 'none',
 	cursor: 'pointer',
-	backgroundColor: '#84cc16',
+	background: `linear-gradient(135deg, ${TEAL} 0%, #1A2E38 100%)`,
 	color: '#fff',
-	transition: 'background 0.15s, transform 0.1s',
-	'&:hover': { backgroundColor: '#65a30d', transform: 'scale(1.06)' },
+	transition: 'filter 0.15s, transform 0.1s',
+	'&:hover': { filter: 'brightness(1.12)', transform: 'scale(1.06)' },
 	'&:active': { transform: 'scale(0.96)' },
 }));
 
@@ -376,7 +391,7 @@ export default function Player(props: PlayerProps): JSX.Element {
 					width: '100%',
 					borderRadius: 3,
 					border: `1px solid ${theme.vars.palette.divider}`,
-					borderLeft: '4px solid #84cc16',
+					borderLeft: `4px solid ${TEAL}`,
 					backgroundColor: theme.vars.palette.background.paper,
 					boxShadow: theme.shadows[1],
 					overflow: 'hidden',
@@ -427,15 +442,15 @@ export default function Player(props: PlayerProps): JSX.Element {
 							activeStep={activeStep}
 							sx={{
 								backgroundColor: 'transparent',
-								'& .MuiLinearProgress-root': { backgroundColor: 'rgba(132,204,22,0.15)' },
-								'& .MuiLinearProgress-bar': { backgroundColor: '#84cc16' },
+								'& .MuiLinearProgress-root': { backgroundColor: TEAL_LIGHT },
+								'& .MuiLinearProgress-bar': { backgroundColor: TEAL },
 							}}
 							nextButton={
 								<Button
 									size="small"
 									onClick={handleNext}
 									disabled={activeStep === maxSteps - 1}
-									sx={{ color: '#65a30d', '&:hover': { backgroundColor: 'rgba(132,204,22,0.08)' } }}
+									sx={{ color: TEAL_DARK, '&:hover': { backgroundColor: TEAL_LIGHT } }}
 								>
 									Next
 									{theme.direction === 'rtl' ? <KeyboardArrowLeft /> : <KeyboardArrowRight />}
@@ -446,7 +461,7 @@ export default function Player(props: PlayerProps): JSX.Element {
 									size="small"
 									onClick={handleBack}
 									disabled={activeStep === 0}
-									sx={{ color: '#65a30d', '&:hover': { backgroundColor: 'rgba(132,204,22,0.08)' } }}
+									sx={{ color: TEAL_DARK, '&:hover': { backgroundColor: TEAL_LIGHT } }}
 								>
 									{theme.direction === 'rtl' ? <KeyboardArrowRight /> : <KeyboardArrowLeft />}
 									Back
@@ -463,7 +478,7 @@ export default function Player(props: PlayerProps): JSX.Element {
 					width: '100%',
 					borderRadius: 3,
 					border: `1px solid ${theme.vars.palette.divider}`,
-					borderLeft: '4px solid #84cc16',
+					borderLeft: `4px solid ${TEAL}`,
 					backgroundColor: theme.vars.palette.background.paper,
 					boxShadow: theme.shadows[1],
 					overflow: 'hidden',
@@ -499,11 +514,10 @@ export default function Player(props: PlayerProps): JSX.Element {
 										key={content.index}
 										className={clsx(
 											'grid grid-cols-12 gap-x-2 rounded-lg transition-colors',
-											isActive && 'bg-lime-50'
 										)}
 										style={{
 											backgroundColor: isActive
-												? 'rgba(132,204,22,0.07)'
+												? 'rgba(45,139,124,0.07)'
 												: undefined,
 										}}
 									>
@@ -515,7 +529,7 @@ export default function Player(props: PlayerProps): JSX.Element {
 										>
 											<IndexBadge
 												style={{
-													backgroundColor: isActive ? '#65a30d' : '#84cc16',
+													backgroundColor: isActive ? TEAL_DARK : TEAL,
 													opacity: isActive ? 1 : 0.75,
 													transition: 'background 0.15s, opacity 0.15s',
 												}}

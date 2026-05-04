@@ -14,24 +14,24 @@ import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/DurationDisplay';
 
+// ─── Brand tokens (mirrors LessonsView palette) ───────────────────────────────
+const TEAL      = '#2D8B7C';
+const TEAL_DARK = '#1f6b5e';
+
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
 		backgroundColor: theme.vars.palette.background.paper,
 		borderBottomWidth: 1,
 		borderStyle: 'solid',
-		borderColor: theme.vars.palette.divider
+		borderColor: theme.vars.palette.divider,
 	},
 	'& .FusePageSimple-content': {},
 	'& .FusePageSimple-sidebarHeader': {},
-	'& .FusePageSimple-sidebarContent': {}
+	'& .FusePageSimple-sidebarContent': {},
 }));
 
 // ─── Safe transcription helpers ───────────────────────────────────────────────
 
-/**
- * Returns a safe transcription object — never null/undefined.
- * New lessons often have transcription = null or {} with no content array.
- */
 function safeTranscription(raw: unknown): {
 	title?: string;
 	author?: string;
@@ -107,19 +107,19 @@ function LessonView() {
 	const hasContent = transcription.content.length > 0;
 
 	function getSteps() {
-    console.log('=== transcription raw ===', JSON.stringify(lesson?.transcription));
-    console.log('=== content raw ===', lesson?.transcription?.content);
-    const content = lesson?.transcription?.content;
-    if (!content || !Array.isArray(content) || content.length === 0) return [];
-    return content.map((c: any) => ({
-        index: (c?.index ?? 1) - 1,
-        languageOrientation: lesson?.transcription?.language_orientation ?? 'ltr',
-        speaker: c?.speaker ?? '',
-        time: c?.time ?? '',
-        timestamp: c?.timestamp ?? 0,
-        text: c?.text ?? '',
-    }));
-}
+		console.log('=== transcription raw ===', JSON.stringify(lesson?.transcription));
+		console.log('=== content raw ===', lesson?.transcription?.content);
+		const content = lesson?.transcription?.content;
+		if (!content || !Array.isArray(content) || content.length === 0) return [];
+		return content.map((c: any) => ({
+			index: (c?.index ?? 1) - 1,
+			languageOrientation: lesson?.transcription?.language_orientation ?? 'ltr',
+			speaker: c?.speaker ?? '',
+			time: c?.time ?? '',
+			timestamp: c?.timestamp ?? 0,
+			text: c?.text ?? '',
+		}));
+	}
 
 	const audioSrc = lesson.hd_version?.src || lesson.streaming_version?.src || null;
 	const audioTimestamp = lesson.hd_version?.timestamp ?? lesson.streaming_version?.timestamp ?? 0;
@@ -139,22 +139,17 @@ function LessonView() {
 							<Chip
 								label={lesson.lesson_type.name}
 								size="small"
-								sx={(theme) => ({
+								sx={{
 									fontSize: '0.68rem',
 									fontWeight: 700,
 									letterSpacing: '0.04em',
 									textTransform: 'uppercase',
 									height: 20,
-									color: theme.palette.mode === 'dark' ? '#93c5fd' : '#1d4ed8',
-									backgroundColor:
-										theme.palette.mode === 'dark'
-											? 'rgba(59,130,246,0.18)'
-											: 'rgba(59,130,246,0.1)',
-									border:
-										theme.palette.mode === 'dark'
-											? '1px solid rgba(99,179,237,0.3)'
-											: '1px solid rgba(59,130,246,0.25)',
-								})}
+									// ── teal instead of blue ──
+									color: TEAL,
+									backgroundColor: 'rgba(45,139,124,0.10)',
+									border: `1px solid rgba(45,139,124,0.30)`,
+								}}
 							/>
 						)}
 						{lesson.module?.subject?.name && (
@@ -179,16 +174,28 @@ function LessonView() {
 							<Chip
 								label="Published"
 								size="small"
-								color="success"
-								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+								sx={{
+									height: 20,
+									fontSize: '0.65rem',
+									fontWeight: 700,
+									color: TEAL,
+									backgroundColor: 'rgba(45,139,124,0.10)',
+									border: `1px solid rgba(45,139,124,0.30)`,
+								}}
 							/>
 						)}
 						{lesson.is_approved_content && (
 							<Chip
 								label="Approved"
 								size="small"
-								color="info"
-								sx={{ height: 20, fontSize: '0.65rem', fontWeight: 700 }}
+								sx={{
+									height: 20,
+									fontSize: '0.65rem',
+									fontWeight: 700,
+									color: TEAL_DARK,
+									backgroundColor: 'rgba(45,139,124,0.08)',
+									border: `1px solid rgba(45,139,124,0.25)`,
+								}}
 							/>
 						)}
 					</div>
@@ -265,12 +272,14 @@ function LessonView() {
 					{/* Player — only when audio is available */}
 					{audioSrc ? (
 						<Player
-    steps={getSteps()}
-    playlist={[{ src: lesson.hd_version?.src || lesson.streaming_version?.src, timestamp: lesson.hd_version?.timestamp ?? 0 }]}
-transcription={transcription as any}/>
+							steps={getSteps()}
+							playlist={[{ src: lesson.hd_version?.src || lesson.streaming_version?.src, timestamp: lesson.hd_version?.timestamp ?? 0 }]}
+							transcription={transcription as any}
+						/>
 					) : (
 						<div className="flex flex-1 flex-col items-center justify-center gap-3 py-20">
-							<FuseSvgIcon size={48} sx={{ color: 'text.disabled' }}>
+							{/* Teal-tinted icon */}
+							<FuseSvgIcon size={48} sx={{ color: 'rgba(45,139,124,0.45)' }}>
 								lucide:audio-lines
 							</FuseSvgIcon>
 							<Typography color="text.secondary" variant="h6">
@@ -284,13 +293,22 @@ transcription={transcription as any}/>
 							{hasContent && (
 								<div
 									dir={langOrientation}
-									className="mt-6 w-full max-w-2xl space-y-3 rounded-xl border border-dashed p-6"
-									style={{ borderColor: 'rgba(0,0,0,0.12)' }}
+									className="mt-6 w-full max-w-2xl space-y-3 rounded-xl p-6"
+									style={{
+										border: `1px solid rgba(45,139,124,0.25)`,
+										backgroundColor: 'rgba(45,139,124,0.04)',
+									}}
 								>
 									<Typography
 										variant="subtitle2"
-										color="text.secondary"
-										className="mb-4 font-semibold uppercase tracking-widest"
+										sx={{
+											mb: 2,
+											fontWeight: 700,
+											textTransform: 'uppercase',
+											letterSpacing: '0.08em',
+											fontSize: '0.7rem',
+											color: TEAL,
+										}}
 									>
 										Transcription
 									</Typography>
