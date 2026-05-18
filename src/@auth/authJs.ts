@@ -10,6 +10,7 @@ import Credentials from 'next-auth/providers/credentials';
 // import Facebook from 'next-auth/providers/facebook';
 // import Google from 'next-auth/providers/google';
 import { authLoginUser, authGetUserAccount } from './authApi';
+import { v4 as uuidv4 } from 'uuid';
 
 const storage = createStorage({
 	driver: process.env.VERCEL
@@ -30,38 +31,91 @@ export const providers: Provider[] = [
 			 * !! Do not use this in production
 			 */
 
-			/**
-			 * Sign in
-			 */
-			if (formInput.formType === 'signin') {
-				if (formInput.password && formInput.email) {
+		/**
+		 * Sign in
+		 */
+		if (formInput.formType === 'signin') {
+			if (formInput.password && formInput.email) {
+				// First check unstorage for locally created users
+				const localUser = await storage.getItem(`user:email:${formInput.email}`);
+				if (localUser && typeof localUser === 'object') {
+					const userData = localUser as Record<string, string>;
+					if (userData.password === formInput.password) {
+						return {
+							id: userData.id,
+							name: userData.name,
+							email: userData.email
+						};
+					}
+					throw new Error('CredentialsSignin');
+				}
+
+				// Fallback to backend authentication
+				try {
 					const response = await authLoginUser(formInput.email.toString(), formInput.password.toString());
+
+					if (!response.ok) {
+						throw new Error('CredentialsSignin');
+					}
 
 					const token = await response.json();
 
 					if (!token) {
-						// No user found, so this is their first attempt to login
-						// Optionally, this is also the place you could do a user registration
-						throw new Error('Invalid credentials.');
+						throw new Error('CredentialsSignin');
 					}
 
-					// console.log(token);
 					return {
 						id: token.id,
 						name: token.access,
 						email: token.refresh
 					};
+				} catch (error) {
+					if (error instanceof Error && error.message === 'CredentialsSignin') {
+						throw error;
+					}
+					throw new Error('CredentialsSignin');
 				}
+			}
+		}
+
+		/**
+		 * Sign up
+		 */
+		if (formInput.formType === 'signup') {
+			if (formInput.password === '' || formInput.email === '') {
+				return null;
 			}
 
-			/**
-			 * Sign up
-			 */
-			if (formInput.formType === 'signup') {
-				if (formInput.password === '' || formInput.email === '') {
-					return null;
-				}
+			// Check if user already exists in unstorage
+			const existingUser = await storage.getItem(`user:email:${formInput.email}`);
+			if (existingUser) {
+				throw new Error('EmailAlreadyExists');
 			}
+
+			// Create new user in unstorage
+			const userId = uuidv4();
+			await storage.setItem(`user:email:${formInput.email}`, {
+				id: userId,
+				email: formInput.email,
+				name: formInput.displayName || formInput.email,
+				password: formInput.password,
+				createdAt: new Date().toISOString()
+			});
+
+			await storage.setItem(`user:id:${userId}`, {
+				id: userId,
+				email: formInput.email,
+				name: formInput.displayName || formInput.email,
+				password: formInput.password,
+				createdAt: new Date().toISOString()
+			});
+
+			return {
+				id: userId,
+				email: formInput.email as string,
+				name: formInput.displayName as string
+			};
+		}
 
 			/**
 			 * Response Success with email

@@ -1,14 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Box from '@mui/material/Box';
 import MuiLink from '@mui/material/Link';
 import Dialog from '@mui/material/Dialog';
 import DialogContent from '@mui/material/DialogContent';
 import { keyframes } from '@mui/material/styles';
 import Link from '@fuse/core/Link';
-import AuthJsForm from '@auth/forms/AuthJsForm';
-import { useSearchParams, useRouter } from 'next/navigation';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 // ─── Color tokens ────────────────────────────────────────────────────────────
 const C = {
@@ -188,8 +191,8 @@ function RightPanel() {
 	);
 }
 
-// ─── Wrong-password popup ─────────────────────────────────────────────────────
-function WrongPasswordDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+// ─── Success popup ────────────────────────────────────────────────────────────
+function ResetSuccessDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
 	return (
 		<Dialog
 			open={open}
@@ -201,19 +204,18 @@ function WrongPasswordDialog({ open, onClose }: { open: boolean; onClose: () => 
 					border: `1px solid rgba(45,139,124,0.3)`,
 					boxShadow: '0 24px 60px rgba(0,0,0,0.5)',
 					minWidth: 320,
-					maxWidth: 380,
+					maxWidth: 400,
 				},
 			}}
 		>
 			<DialogContent sx={{ p: '28px 32px' }}>
-				{/* Icon */}
 				<Box
 					sx={{
 						width: 48,
 						height: 48,
 						borderRadius: '50%',
-						background: 'rgba(220,60,60,0.12)',
-						border: '1.5px solid rgba(220,60,60,0.35)',
+						background: 'rgba(45,139,124,0.1)',
+						border: `1.5px solid rgba(45,139,124,0.4)`,
 						display: 'flex',
 						alignItems: 'center',
 						justifyContent: 'center',
@@ -221,14 +223,12 @@ function WrongPasswordDialog({ open, onClose }: { open: boolean; onClose: () => 
 						mb: 2,
 					}}
 				>
-					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e05555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-						<circle cx="12" cy="12" r="10" />
-						<line x1="12" y1="8" x2="12" y2="12" />
-						<line x1="12" y1="16" x2="12.01" y2="16" />
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+						<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+						<polyline points="22 4 12 14.01 9 11.01" />
 					</svg>
 				</Box>
 
-				{/* Title */}
 				<Box
 					sx={{
 						fontFamily: '"Playfair Display", Georgia, serif',
@@ -239,26 +239,25 @@ function WrongPasswordDialog({ open, onClose }: { open: boolean; onClose: () => 
 						mb: 1,
 					}}
 				>
-					Wrong password
+					Check your email
 				</Box>
 
-				{/* Body */}
 				<Box
 					sx={{
 						fontFamily: '"DM Sans", sans-serif',
 						fontSize: 13,
 						color: 'rgba(232,228,218,0.6)',
 						textAlign: 'center',
-						lineHeight: 1.6,
+						lineHeight: 1.7,
 						mb: 3,
 					}}
 				>
-					The password you entered is incorrect. Please try again.
+					If an account exists with that email, we've sent password reset instructions.
 				</Box>
 
-				{/* Dismiss button */}
 				<Box
-					component="button"
+					component={Link}
+					to="/sign-in"
 					onClick={onClose}
 					sx={{
 						display: 'block',
@@ -274,35 +273,47 @@ function WrongPasswordDialog({ open, onClose }: { open: boolean; onClose: () => 
 						letterSpacing: '0.14em',
 						textTransform: 'uppercase',
 						cursor: 'pointer',
+						textAlign: 'center',
+						textDecoration: 'none',
 						transition: 'background 0.2s',
 						'&:hover': { background: C.teal },
 					}}
 				>
-					Try again
+					Back to sign in
 				</Box>
 			</DialogContent>
 		</Dialog>
 	);
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-function SignInPageView() {
-	const searchParams = useSearchParams();
-	const router = useRouter();
-	const [wrongPasswordOpen, setWrongPasswordOpen] = useState(false);
+// ─── Form Validation Schema ───────────────────────────────────────────────────
+const schema = z.object({
+	email: z.string().email('You must enter a valid email').nonempty('You must enter an email'),
+});
 
-	// next-auth redirects back with ?error=CredentialsSignin on bad password
-	useEffect(() => {
-		const error = searchParams.get('error');
-		if (error === 'CredentialsSignin' || error === 'credentials') {
-			setWrongPasswordOpen(true);
-			// Clean the URL so the dialog doesn't re-open on refresh
-			const params = new URLSearchParams(Array.from(searchParams.entries()));
-			params.delete('error');
-			const clean = params.toString();
-			router.replace(`/sign-in${clean ? `?${clean}` : ''}`, { scroll: false });
-		}
-	}, [searchParams, router]);
+type FormType = z.infer<typeof schema>;
+
+const defaultValues = {
+	email: '',
+};
+
+// ─── Main component ───────────────────────────────────────────────────────────
+function ForgotPasswordPageView() {
+	const [successOpen, setSuccessOpen] = useState(false);
+
+	const { control, formState, handleSubmit, reset } = useForm<FormType>({
+		mode: 'onChange',
+		defaultValues,
+		resolver: zodResolver(schema),
+	});
+
+	const { isValid, dirtyFields, errors } = formState;
+
+	function onSubmit(formData: FormType) {
+		console.log('Password reset requested for:', formData.email);
+		setSuccessOpen(true);
+		reset();
+	}
 
 	return (
 		<Box
@@ -366,9 +377,9 @@ function SignInPageView() {
 										textTransform: 'uppercase',
 										cursor: 'pointer',
 										transition: 'all 0.2s',
-										...(label === 'Sign In'
-											? { background: C.navy, color: C.cream, boxShadow: '0 2px 8px rgba(26,46,56,0.25)' }
-											: { color: C.darkTeal, opacity: 0.5, '&:hover': { opacity: 0.8 } }),
+										color: C.darkTeal,
+										opacity: 0.5,
+										'&:hover': { opacity: 0.8 },
 									}}
 								>
 									{label}
@@ -404,79 +415,97 @@ function SignInPageView() {
 					{/* Heading */}
 					<Box sx={{ mb: 3 }}>
 						<Box sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 42, fontWeight: 400, color: C.navy, lineHeight: 1.0 }}>
-							Welcome
+							Reset
 						</Box>
 						<Box sx={{ fontFamily: '"Playfair Display", Georgia, serif', fontSize: 42, fontWeight: 400, fontStyle: 'italic', color: C.teal, lineHeight: 1.0 }}>
-							back.
+							password.
 						</Box>
 						<Box sx={{ fontSize: 13, color: C.darkTeal, opacity: 0.65, mt: 0.75, fontWeight: 300 }}>
-							Sign in — your voice assistant is ready
+							Enter your email to receive reset instructions
 						</Box>
 					</Box>
 
 					{/* Form */}
-					<Box
-						sx={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: 2,
-							'& input': {
-								background: `${C.navy} !important`,
-								color: `${C.cream} !important`,
-								border: `1.5px solid transparent !important`,
-								borderRadius: '8px !important',
-								fontFamily: '"DM Sans", sans-serif !important',
-								fontSize: '14px !important',
-								outline: 'none !important',
-								transition: 'border-color 0.2s !important',
-								'&::placeholder': { color: 'rgba(232,228,218,0.25) !important' },
-								'&:focus': { borderColor: `${C.teal} !important` },
-							},
-							'& label': {
-								fontSize: '10px !important',
-								fontWeight: '500 !important',
-								letterSpacing: '0.15em !important',
-								textTransform: 'uppercase !important',
-								color: `${C.navy} !important`,
-								opacity: '0.5 !important',
-							},
-							'& button[type="submit"]': {
-								background: `${C.darkTeal} !important`,
-								color: `${C.cream} !important`,
-								border: 'none !important',
-								borderRadius: '8px !important',
-								fontFamily: '"DM Sans", sans-serif !important',
-								fontWeight: '500 !important',
-								letterSpacing: '0.16em !important',
-								textTransform: 'uppercase !important',
-								fontSize: '11px !important',
-								transition: 'background 0.2s !important',
-								'&:hover': { background: `${C.navy} !important` },
-							},
-							'& a': { color: `${C.teal} !important` },
-						}}
+					<form
+						onSubmit={handleSubmit(onSubmit)}
+						style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
 					>
-						<AuthJsForm formType="signin" />
 						<Box
 							sx={{
-								background: 'rgba(45,139,124,0.1)',
-								border: '0.5px solid rgba(45,139,124,0.3)',
-								borderRadius: '8px',
-								p: '10px 14px',
-								fontSize: 12,
-								color: C.darkTeal,
-								lineHeight: 1.65,
-								fontWeight: 300,
+								'& input': {
+									background: `${C.navy} !important`,
+									color: `${C.cream} !important`,
+									border: `1.5px solid transparent !important`,
+									borderRadius: '8px !important',
+									fontFamily: '"DM Sans", sans-serif !important',
+									fontSize: '14px !important',
+									outline: 'none !important',
+									transition: 'border-color 0.2s !important',
+									'&::placeholder': { color: 'rgba(232,228,218,0.25) !important' },
+									'&:focus': { borderColor: `${C.teal} !important` },
+								},
+								'& label': {
+									fontSize: '10px !important',
+									fontWeight: '500 !important',
+									letterSpacing: '0.15em !important',
+									textTransform: 'uppercase !important',
+									color: `${C.navy} !important`,
+									opacity: '0.5 !important',
+								},
+								'& button[type="submit"]': {
+									background: `${C.darkTeal} !important`,
+									color: `${C.cream} !important`,
+									border: 'none !important',
+									borderRadius: '8px !important',
+									fontFamily: '"DM Sans", sans-serif !important',
+									fontWeight: '500 !important',
+									letterSpacing: '0.16em !important',
+									textTransform: 'uppercase !important',
+									fontSize: '11px !important',
+									transition: 'background 0.2s !important',
+									'&:hover': { background: `${C.navy} !important` },
+								},
+								'& a': { color: `${C.teal} !important` },
 							}}
 						>
-							You are browsing <strong style={{ fontWeight: 500 }}>EduVoice Demo</strong>. Click on the "Sign in" button to access your audio-learning environment.
+							<Controller
+								name="email"
+								control={control}
+								render={({ field }) => (
+									<TextField
+										{...field}
+										className="mb-6"
+										label="Email"
+										autoFocus
+										type="email"
+										error={!!errors.email}
+										helperText={errors?.email?.message}
+										variant="outlined"
+										required
+										fullWidth
+										InputLabelProps={{ shrink: true }}
+									/>
+								)}
+							/>
+							<Button
+								variant="contained"
+								color="secondary"
+								className="w-full"
+								aria-label="Send reset link"
+								disabled={!isValid}
+								type="submit"
+								size="large"
+							>
+								Send reset link
+							</Button>
 						</Box>
-						<Box sx={{ textAlign: 'center', fontSize: 12, color: C.darkTeal, opacity: 0.55 }}>
-							No account?{' '}
-							<MuiLink component={Link} to="/sign-up" underline="hover" sx={{ color: C.teal, fontWeight: 500, opacity: 1 }}>
-								Create one
-							</MuiLink>
-						</Box>
+					</form>
+
+					<Box sx={{ textAlign: 'center', fontSize: 12, color: C.darkTeal, opacity: 0.55, mt: 2 }}>
+						Remember your password?{' '}
+						<MuiLink component={Link} to="/sign-in" underline="hover" sx={{ color: C.teal, fontWeight: 500, opacity: 1 }}>
+							Sign in
+						</MuiLink>
 					</Box>
 				</Box>
 			</Box>
@@ -484,10 +513,10 @@ function SignInPageView() {
 			{/* ── RIGHT PANEL ── */}
 			<RightPanel />
 
-			{/* ── WRONG PASSWORD DIALOG ── */}
-			<WrongPasswordDialog open={wrongPasswordOpen} onClose={() => setWrongPasswordOpen(false)} />
+			{/* ── SUCCESS DIALOG ── */}
+			<ResetSuccessDialog open={successOpen} onClose={() => setSuccessOpen(false)} />
 		</Box>
 	);
 }
 
-export default SignInPageView;
+export default ForgotPasswordPageView;

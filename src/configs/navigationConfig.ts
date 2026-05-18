@@ -136,7 +136,6 @@ const navigationConfig: FuseNavItemType[] = [
 	{
 		id: 'administration',
 		type: 'group',
-		auth: authRoles.admins,
         // color removed to comply with FuseNavItemType definitions
 		title: 'Administration',
 		translate: 'ADMINISTRATION',
@@ -167,9 +166,9 @@ const navigationConfig: FuseNavItemType[] = [
 			{
 				id: 'administration-radio',
 				title: 'Radio',
+				auth: authRoles.radioContentCreator,
 				type: 'collapse',
 				icon: 'heroicons-outline:radio',
-				auth: authRoles.radioContentCreator,
         // color removed to comply with FuseNavItemType definitions
 				translate: 'RADIO',
 				children: [
@@ -212,14 +211,14 @@ const navigationConfig: FuseNavItemType[] = [
 				id: 'administration-culture',
 				title: 'Culture',
 				type: 'collapse',
-				auth: authRoles.memberAdmin,
+				auth: authRoles.cultureContentCreator,
 				icon: 'heroicons-outline:folder-open',
 				translate: 'CULTURE',
 				children: [
-					{ id: 'cultural-activities',          title: 'Cultural Activities',      auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/activities' },
-					{ id: 'cultural-activities-types',         title: 'Cultural Activity Types',         auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/activities/types' },
-					{ id: 'cultural-projects',   title: 'Cultural Projects',   auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/projects' },
-					{ id: 'cultural-projects-types', title: 'Cultural Project Types', auth: authRoles.memberAdmin, type: 'item', url: '/administration/culture/projects/types' }
+					{ id: 'cultural-activities',          title: 'Cultural Activities',      auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/activities' },
+					{ id: 'cultural-activities-types',         title: 'Cultural Activity Types',         auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/activities/types' },
+					{ id: 'cultural-projects',   title: 'Cultural Projects',   auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/projects' },
+					{ id: 'cultural-projects-types', title: 'Cultural Project Types', auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/projects/types' }
 				]
 			},
 
@@ -271,9 +270,9 @@ const navigationConfig: FuseNavItemType[] = [
 		id: 'studio',
 		type: 'group',
 		title: 'Studio',
-		auth: authRoles.studioStaff,
         // color removed to comply with FuseNavItemType definitions
 		translate: 'STUDIO',
+		auth: authRoles.studioAdmin,
 		icon: 'heroicons-outline:color-swatch',
 		disabled: true,
 		children: [

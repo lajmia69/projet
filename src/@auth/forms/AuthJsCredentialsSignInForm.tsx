@@ -1,14 +1,14 @@
 import { useForm, Controller } from 'react-hook-form';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-// import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import _ from 'lodash';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Link from '@fuse/core/Link';
+import MuiLink from '@mui/material/Link';
 import Button from '@mui/material/Button';
 import { signIn } from 'next-auth/react';
 import { Alert, InputAdornment } from '@mui/material';
@@ -36,6 +36,7 @@ const defaultValues = {
 };
 
 function AuthJsCredentialsSignInForm() {
+  const router = useRouter();
   const { control, formState, handleSubmit, setValue, setError } = useForm<FormType>({
     mode: 'onChange',
     defaultValues,
@@ -68,6 +69,7 @@ function AuthJsCredentialsSignInForm() {
 
 		if (result?.error) {
 			setError('root', { type: 'manual', message: signinErrors[result.error] });
+			router.replace(`/sign-in?error=${result.error}`, { scroll: false });
 			return false;
 		}
 
@@ -164,12 +166,13 @@ function AuthJsCredentialsSignInForm() {
 					)}
 				/>
 
-				<Link
-					className="text-md font-medium"
-					to="/#"
+				<MuiLink
+					href="/forgot-password"
+					underline="hover"
+					sx={{ fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer' }}
 				>
 					Forgot password?
-				</Link>
+				</MuiLink>
 			</div>
 			<Button
 				variant="contained"

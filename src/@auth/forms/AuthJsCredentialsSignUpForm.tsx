@@ -1,6 +1,7 @@
 import { useForm, Controller } from 'react-hook-form';
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import _ from 'lodash';
 import TextField from '@mui/material/TextField';
@@ -48,6 +49,7 @@ export type FormType = {
 };
 
 function AuthJsCredentialsSignUpForm() {
+	const router = useRouter();
 	const { control, formState, handleSubmit, setError } = useForm({
 		mode: 'onChange',
 		defaultValues,
@@ -61,6 +63,21 @@ function AuthJsCredentialsSignUpForm() {
 
 	async function onSubmit(formData: FormType) {
 		const { displayName, email, password } = formData;
+
+		try {
+			const existingUserResponse = await fetch(`/api/mock/auth/user-by-email/${encodeURIComponent(email)}`);
+
+			if (existingUserResponse.ok) {
+				const data = await existingUserResponse.json();
+				if (data.exists) {
+					window.location.href = '/sign-up?error=EmailAlreadyExists';
+					return false;
+				}
+			}
+		} catch (error) {
+			// If the API call fails, continue with signup
+		}
+
 		const result = await signIn('credentials', {
 			displayName,
 			email,
@@ -71,6 +88,7 @@ function AuthJsCredentialsSignUpForm() {
 
 		if (result?.error) {
 			setError('root', { type: 'manual', message: signinErrors[result.error] });
+			window.location.href = `/sign-up?error=${result.error}`;
 			return false;
 		}
 

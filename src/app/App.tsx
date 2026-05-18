@@ -39,46 +39,55 @@ function App(props: AppProps) {
 
 	return (
 		<ErrorBoundary>
-			<AppContext value={AppContextValue}>
-				{/* Date Picker Localization Provider */}
-				<LocalizationProvider
-					dateAdapter={AdapterDateFns}
-					adapterLocale={enUS}
-				>
-					<QueryClientProvider client={queryClient}>
-						<FuseSettingsProvider>
-							<I18nProvider>
-								{/* Theme Provider */}
-								<RootThemeProvider>
-									<MainThemeProvider>
-										<NavbarContextProvider>
-											<NavigationContextProvider>
-												<FuseDialogContextProvider>
-													{/* Notistack Notification Provider */}
-													<SnackbarProvider
-														maxSnack={5}
-														anchorOrigin={{
-															vertical: 'bottom',
-															horizontal: 'right'
-														}}
-														classes={{
-															containerRoot:
-																'bottom-0 right-0 mb-13 md:mb-17 mr-2 lg:mr-20 z-99'
-														}}
-													>
+			<div className="flex w-full flex-col items-center">
+				<div className="sticky top-0 z-9999 flex w-full items-center justify-center bg-white py-2 shadow-sm dark:bg-gray-900">
+					<img
+						src="/assets/images/logo_association.jpeg"
+						alt="Association Logo"
+						className="h-16 w-auto object-contain"
+					/>
+				</div>
+				<AppContext value={AppContextValue}>
+					{/* Date Picker Localization Provider */}
+					<LocalizationProvider
+						dateAdapter={AdapterDateFns}
+						adapterLocale={enUS}
+					>
+						<QueryClientProvider client={queryClient}>
+							<FuseSettingsProvider>
+								<I18nProvider>
+									{/* Theme Provider */}
+									<RootThemeProvider>
+										<MainThemeProvider>
+											<NavbarContextProvider>
+												<NavigationContextProvider>
+													<FuseDialogContextProvider>
+														{/* Notistack Notification Provider */}
+														<SnackbarProvider
+															maxSnack={5}
+															anchorOrigin={{
+																vertical: 'bottom',
+																horizontal: 'right'
+															}}
+															classes={{
+																containerRoot:
+																	'bottom-0 right-0 mb-13 md:mb-17 mr-2 lg:mr-20 z-99'
+															}}
+														>
 															<QuickPanelProvider>{children}</QuickPanelProvider>
-													</SnackbarProvider>
-												</FuseDialogContextProvider>
-											</NavigationContextProvider>
-										</NavbarContextProvider>
-									</MainThemeProvider>
-								</RootThemeProvider>
-							</I18nProvider>
-						</FuseSettingsProvider>
-						<ReactQueryDevtools initialIsOpen={false} />
-					</QueryClientProvider>
-				</LocalizationProvider>
-			</AppContext>
+														</SnackbarProvider>
+													</FuseDialogContextProvider>
+												</NavigationContextProvider>
+											</NavbarContextProvider>
+										</MainThemeProvider>
+									</RootThemeProvider>
+								</I18nProvider>
+							</FuseSettingsProvider>
+							<ReactQueryDevtools initialIsOpen={false} />
+						</QueryClientProvider>
+					</LocalizationProvider>
+				</AppContext>
+			</div>
 		</ErrorBoundary>
 	);
 }

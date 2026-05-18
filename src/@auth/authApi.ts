@@ -47,12 +47,3 @@ export function authUpdateDbUser(user: PartialDeep<User>) {
 		body: JSON.stringify(UserModel(user))
 	});
 }
-
-/**
- * Create user
- */
-export async function authCreateDbUser(user: PartialDeep<User>) {
-	return api.post('mock/users', {
-		body: JSON.stringify(UserModel(user))
-	});
-}
