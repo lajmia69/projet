@@ -77,10 +77,6 @@ function RightPanel() {
 				<DotGrid />
 			</Box>
 
-			<Box sx={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
-				<img src="/assets/images/logo_association.jpg" alt="Logo Association" style={{ height: 60, width: 'auto', objectFit: 'contain' }} />
-			</Box>
-
 			<Box
 				sx={{
 					fontFamily: '"DM Mono", monospace',
