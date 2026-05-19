@@ -15,6 +15,7 @@ import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/La
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
 import { AppBar, Divider } from '@mui/material';
 import ToolbarTheme from 'src/contexts/ToolbarTheme';
+import PageLogo from 'src/components/PageLogo';
 
 type ToolbarLayout1Props = {
 	className?: string;
@@ -54,7 +55,10 @@ function ToolbarLayout1(props: ToolbarLayout1Props) {
 							</>
 						)}
 
+						<div className="flex flex-1 justify-center">
+							<PageLogo />
 						</div>
+					</div>
 
 					<div className="flex items-center overflow-x-auto px-2 py-2 md:px-4">
 						<LanguageSwitcher />

@@ -10,7 +10,7 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import NavigationSearch from '../../components/navigation/NavigationSearch';
 import UserMenu from '../../components/UserMenu';
 import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggleButton';
-import Logo from '../../components/Logo';
+import PageLogo from 'src/components/PageLogo';
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
 import ToolbarTheme from '@/contexts/ToolbarTheme';
 
@@ -36,10 +36,11 @@ function ToolbarLayout3(props: ToolbarLayout3Props) {
 				elevation={0}
 			>
 				<Toolbar className="container min-h-12 gap-2 p-0 md:min-h-16 lg:px-8">
-					<div className={clsx('flex gap-2')}>
+					<div className={clsx('flex items-center gap-2')}>
 						{config.navbar.display && isMobile && <NavbarToggleButton className="h-9 w-9 p-0" />}
-
-						{!isMobile && <Logo />}
+						<div className="flex flex-1 justify-center">
+							<PageLogo />
+						</div>
 					</div>
 
 					<div className="flex flex-auto items-center justify-end overflow-x-auto">

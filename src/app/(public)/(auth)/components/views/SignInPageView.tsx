@@ -74,6 +74,10 @@ function RightPanel() {
 				<DotGrid />
 			</Box>
 
+			<Box sx={{ position: 'absolute', top: 20, left: '50%', transform: 'translateX(-50%)', zIndex: 10 }}>
+				<img src="/assets/images/logo_association.jpg" alt="Logo Association" style={{ height: 60, width: 'auto', objectFit: 'contain' }} />
+			</Box>
+
 			<Box
 				sx={{
 					fontFamily: '"DM Mono", monospace',
@@ -327,17 +331,12 @@ function SignInPageView() {
 				<Box sx={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', height: '100%', p: '36px 44px 32px' }}>
 
 					{/* Brand */}
-					<Box
-						sx={{
-							fontFamily: '"DM Mono", monospace',
-							fontSize: 10,
-							letterSpacing: '0.2em',
-							color: C.teal,
-							textTransform: 'uppercase',
-							mb: 'auto',
-						}}
-					>
-						EduVoice
+					<Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+						<img
+							src="/assets/images/logo_association.jpg"
+							alt="Logo Association"
+							style={{ height: 140, width: 'auto', objectFit: 'contain' }}
+						/>
 					</Box>
 
 					{/* Tab bar */}

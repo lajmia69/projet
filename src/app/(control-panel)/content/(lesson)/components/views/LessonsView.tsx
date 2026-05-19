@@ -151,7 +151,6 @@ function LessonsView() {
 			}
 			content={
 				<div className="mx-auto flex w-full flex-1 flex-col p-4 pt-6">
-					{/* Filter bar */}
 					<motion.div
 						initial={{ opacity: 0, y: 10 }}
 						animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
@@ -211,7 +210,6 @@ function LessonsView() {
 						)}
 					</motion.div>
 
-					{/* Card grid */}
 					{filteredData.length > 0 ? (
 						<motion.div
 							className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4"
