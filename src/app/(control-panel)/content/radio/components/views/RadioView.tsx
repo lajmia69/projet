@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import DurationDisplay from '../ui/Durationdisplay';
+import DurationDisplay from '../ui/DurationDisplay';
 // Palette: #112468 Deep navy | #1764C0 Royal blue | #0EA8B0 Ocean teal
 //          #1DC98A Seafoam   | #2AE88E Mint green | #0D1A47 Midnight navy
 

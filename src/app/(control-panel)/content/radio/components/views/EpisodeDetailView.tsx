@@ -10,7 +10,7 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import DurationDisplay from '../ui/Durationdisplay';
+import DurationDisplay from '../ui/DurationDisplay';
 import { useEpisode } from '../../api/hooks/Radiohooks';
 import { useLinkedStudioProject } from '@/app/(control-panel)/studio/api/hooks/useLinkedStudioProject';
 import { useGetTaskAudio } from '@/app/(control-panel)/studio/api/hooks/audio/usegettaskaudio';

@@ -23,14 +23,14 @@ function AccountListItem(props: AccountListItemPropsType) {
   const { account } = props;
   const { data: currentUser } = useUser();
   const token = currentUser?.token;
-  const { mutate: deleteAccount, isLoading: isDeleting } = useDeleteAccount(token as any, account.id);
+  const { mutate: deleteAccount, isPending: isDeleting } = useDeleteAccount(token as any, account.id);
 
   const handleDelete = (ev: React.MouseEvent) => {
     ev.stopPropagation();
     ev.preventDefault();
     if (!token) return;
     // Prevent deleting the currently logged-in account
-    if (currentUser?.id === account.id) return;
+    if (currentUser?.id === String(account.id)) return;
     // Simple confirmation before deletion
     const ok = window.confirm('Delete this account? This action cannot be undone.');
     if (ok) deleteAccount();
@@ -71,7 +71,7 @@ function AccountListItem(props: AccountListItemPropsType) {
                             size="small"
                             color="error"
                             onClick={handleDelete}
-                            disabled={isDeleting || !!(currentUser?.id === account.id)}
+                            disabled={isDeleting || !!(currentUser?.id === String(account.id))}
                             aria-label="Delete account"
                         >
                             <FuseSvgIcon>lucide:trash</FuseSvgIcon>

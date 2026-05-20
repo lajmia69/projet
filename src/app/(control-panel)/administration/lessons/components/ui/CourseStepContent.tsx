@@ -1,8 +1,8 @@
 import { useTheme } from '@mui/material/styles';
 import { Typography } from '@mui/material';
 import FuseLoading from '@fuse/core/FuseLoading';
-import { useCourseStepContent } from '../../api/hooks/steps/useCourseStepContent';
-import { CourseStep } from '../../api/types';
+import { useCourseStepContent } from '@/app/(control-panel)/content/(lesson)/api/hooks/steps/useCourseStepContent';
+import { CourseStep } from '@/app/(control-panel)/content/(lesson)/api/types';
 
 type CourseStepContentProps = {
 	step: CourseStep;
@@ -11,7 +11,7 @@ type CourseStepContentProps = {
 function CourseStepContent(props: CourseStepContentProps) {
 	const { step } = props;
 	const theme = useTheme();
-	const { data: stepContent, isLoading } = useCourseStepContent(step?.id);
+	const { data: stepContent, isPending: isLoading } = useCourseStepContent(step?.id);
 
 	if (isLoading) {
 		return <FuseLoading />;
@@ -35,7 +35,7 @@ function CourseStepContent(props: CourseStepContentProps) {
 
 			<div
 				className="prose prose-sm dark:prose-invert w-full max-w-full"
-				dangerouslySetInnerHTML={{ __html: stepContent?.html || '' }}
+				dangerouslySetInnerHTML={{ __html: '' }}
 				dir={theme.direction}
 			/>
 		</div>

@@ -35,7 +35,7 @@ function CourseStepContent(props: CourseStepContentProps) {
 
 			<div
 				className="prose prose-sm dark:prose-invert w-full max-w-full"
-				dangerouslySetInnerHTML={{ __html: stepContent?.html || '' }}
+				dangerouslySetInnerHTML={{ __html: (stepContent as { html?: string } | null | undefined)?.html ?? '' }}
 				dir={theme.direction}
 			/>
 		</div>

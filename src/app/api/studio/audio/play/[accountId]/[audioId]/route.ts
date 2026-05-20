@@ -5,8 +5,8 @@ import { NextRequest } from 'next/server'
 // CORS issues.
 
 // Route: /api/studio/audio/play/:accountId/:audioId
-export async function GET(req: NextRequest, context: { params: { accountId: string; audioId: string } }) {
-  const { accountId, audioId } = context.params
+export async function GET(req: NextRequest, { params }: { params: Promise<{ accountId: string; audioId: string }> }) {
+  const { accountId, audioId } = await params;
   const account = Number(accountId) || 0
   const id = Number(audioId) || 0
 

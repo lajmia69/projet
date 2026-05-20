@@ -8,9 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { accountId: string } }
+	{ params }: { params: Promise<{ accountId: string }> }
 ) {
-	const { accountId } = params;
+	 const { accountId } = await params;
 	const authHeader = request.headers.get('Authorization');
 
 	// Forward the raw multipart body as-is — do NOT call request.formData()

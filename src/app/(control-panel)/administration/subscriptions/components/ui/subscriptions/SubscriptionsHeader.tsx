@@ -27,7 +27,7 @@ function SubscriptionsHeader() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
                         >
-                            <GradientButton component={NavLinkAdapter} to="/administration/subscriptions/new" startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
+                            <GradientButton component={NavLinkAdapter} href="/administration/subscriptions/new" startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
                                 Add
                             </GradientButton>
                         </motion.div>

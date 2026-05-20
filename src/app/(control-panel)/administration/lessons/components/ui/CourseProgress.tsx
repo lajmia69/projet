@@ -1,6 +1,6 @@
 import LinearProgress from '@mui/material/LinearProgress';
 import clsx from 'clsx';
-import { Course } from '../../api/types';
+import { Course } from '@/app/(control-panel)/content/(lesson)/api/types';
 
 type CourseProgressProps = {
 	course: Course;

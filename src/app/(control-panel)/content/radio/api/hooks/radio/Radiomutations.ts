@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { radioApi } from '../../services/RadioApiService';
-import { Radio } from '../../types';
+import { Radio, CreateRadioPayload, UpdateRadioPayload } from '../../types';
 import { useSnackbar } from 'notistack';
 import { radiosQueryKey, radioQueryKey } from './useRadios';
 
@@ -11,7 +11,7 @@ export const useCreateRadio = (currentAccountId: string, accessToken: string) =>
 	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (data: Partial<Radio>) =>
+		mutationFn: (data: CreateRadioPayload) =>
 			radioApi.createRadio(currentAccountId, accessToken, data),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: radiosQueryKey(currentAccountId) });
@@ -30,7 +30,7 @@ export const useUpdateRadio = (currentAccountId: string, accessToken: string) =>
 	const { enqueueSnackbar } = useSnackbar();
 
 	return useMutation({
-		mutationFn: (data: Partial<Radio> & { id: number }) =>
+		mutationFn: (data: UpdateRadioPayload) =>
 			radioApi.updateRadio(currentAccountId, accessToken, data),
 		onSuccess: (_, data) => {
 			queryClient.invalidateQueries({ queryKey: radiosQueryKey(currentAccountId) });

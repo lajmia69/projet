@@ -7,9 +7,9 @@ import { Token } from '@auth/user';
 export const useDeleteAccount = (token: Token, accountId: number) => {
 	const queryClient = useQueryClient();
 
-	return useMutation({
+	return useMutation<void, Error, void>({
 		mutationFn: () => accountsApi.deleteAccount(token, accountId),
-		onSuccess: (_, accountId: number) => {
+		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: accountsListQueryKey(token) });
 			queryClient.invalidateQueries({ queryKey: accountQueryKey(token, accountId) });
 		}

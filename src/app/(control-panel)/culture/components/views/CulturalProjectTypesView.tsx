@@ -11,6 +11,7 @@ import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import {
 	useCulturalProjectTypes,
 	useCreateCulturalProjectType,

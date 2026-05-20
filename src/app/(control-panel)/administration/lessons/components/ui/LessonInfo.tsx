@@ -3,7 +3,7 @@ import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import clsx from 'clsx';
 import LessonModule from './LessonModule';
-import { Lesson } from '../../api/types';
+import { Lesson } from '@/app/(control-panel)/content/(lesson)/api/types';
 import DurationDisplay from './DurationDisplay';
 
 type CourseInfoProps = {

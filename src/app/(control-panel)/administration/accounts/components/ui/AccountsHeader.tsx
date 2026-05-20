@@ -131,7 +131,7 @@ function AccountsHeader() {
                         initial={{ y: -10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1, transition: { delay: 0.25 } }}
                     >
-                        <GradientButton component={NavLinkAdapter} to="/administration/accounts/new" startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}>
+                        <GradientButton component={NavLinkAdapter} href="/administration/accounts/new" startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}>
                             Add
                         </GradientButton>
                     </motion.div>

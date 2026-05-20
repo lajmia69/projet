@@ -1,6 +1,6 @@
 import { darken, lighten } from '@mui/material/styles';
 import Chip from '@mui/material/Chip';
-import { Lesson } from '../../api/types';
+import { Lesson } from '@/app/(control-panel)/content/(lesson)/api/types';
 
 type CourseCategoryProps = {
 	lesson: Lesson;

@@ -11,8 +11,9 @@ import Typography from '@mui/material/Typography';
 import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import DurationDisplay from '../ui/Durationdisplay';
+import DurationDisplay from '../ui/DurationDisplay';
 import { usePodcast } from '../../api/hooks/usePodcast';
+import { LessonTranscription } from '@/app/(control-panel)/(platform)/(lesson)/api/types';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {
@@ -34,13 +35,20 @@ function CourseView() {
 	if (!podcast) return null;
 
 	function getSteps() {
-		return (podcast.transcription?.content ?? []).map((content) => ({
-			index: content.index - 1,
+		const content = podcast.transcription?.content as Array<{
+			index: number;
+			speaker: string;
+			time: string;
+			timestamp: string;
+			text: string;
+		}> | undefined;
+		return (content ?? []).map((item) => ({
+			index: item.index - 1,
 			languageOrientation: podcast.transcription.language_orientation,
-			speaker: content.speaker,
-			time: content.time,
-			timestamp: content.timestamp,
-			text: content.text
+			speaker: item.speaker,
+			time: item.time,
+			timestamp: Number(item.timestamp),
+			text: item.text
 		}));
 	}
 
@@ -54,9 +62,9 @@ function CourseView() {
 				>
 					{/* Category + language */}
 					<div className="flex items-center gap-2 flex-wrap">
-						{podcast.category?.name && (
-							<Chip
-								label={podcast.category.name}
+					{podcast.podcast_category?.name && (
+						<Chip
+							label={podcast.podcast_category.name}
 								size="small"
 								sx={(theme) => ({
 									fontSize: '0.68rem',
@@ -193,7 +201,7 @@ function CourseView() {
 									timestamp: podcast.hd_version?.timestamp || 0
 								}
 							]}
-							transcription={podcast.transcription}
+							transcription={podcast.transcription as LessonTranscription}
 						/>
 					) : (
 						<div className="flex flex-1 items-center justify-center py-16">

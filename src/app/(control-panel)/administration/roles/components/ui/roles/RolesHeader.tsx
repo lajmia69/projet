@@ -30,7 +30,7 @@ function RolesHeader() {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0, transition: { delay: 0.2 } }}
                         >
-                            <GradientButton component={NavLinkAdapter} to="/administration/roles/new" startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
+                            <GradientButton component={NavLinkAdapter} href="/administration/roles/new" startIcon={<FuseSvgIcon>lucide:plus</FuseSvgIcon>}>
                                 Add
                             </GradientButton>
                         </motion.div>

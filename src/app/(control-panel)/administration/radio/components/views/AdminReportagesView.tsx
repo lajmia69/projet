@@ -133,36 +133,44 @@ export default function AdminReportagesView() {
 	 * could cause backend validation failures. We now omit the field entirely
 	 * when no episode is chosen — matching the optional typing in the schema.
 	 */
-	const buildPayload = (): CreateReportagePayload => {
-		const payload: CreateReportagePayload = {
-			name: form.name.trim(),
-			// FIX #4
-			language_id: Number(form.language_id),
-			// FIX #2
-			tags: [],
-			transcription: {},
-		};
-
-		if (form.slug.trim())          payload.slug              = form.slug.trim();
-		if (form.description.trim())   payload.description       = form.description.trim();
-		if (form.reportage_type_id)    payload.reportage_type_id = Number(form.reportage_type_id);
-		// FIX: omit episode_id instead of sending 0 when not selected
-		if (form.episode_id)           payload.episode_id        = Number(form.episode_id);
-		if (form.publishing_date)      payload.publishing_date   = form.publishing_date;
-		if (form.online_date)          payload.online_date        = form.online_date;
-
-		return payload;
-	};
+	const buildPayload = (): CreateReportagePayload => ({
+		name: form.name.trim(),
+		slug: form.slug.trim() || form.name.trim().toLowerCase().replace(/\s+/g, '-'),
+		description: form.description.trim() || '',
+		transcription: {},
+		publishing_date: form.publishing_date || new Date().toISOString().split('T')[0],
+		online_date: form.online_date || new Date().toISOString().split('T')[0],
+		language_id: Number(form.language_id),
+		reportage_type_id: Number(form.reportage_type_id) || 0,
+		tags: [],
+		...(form.episode_id ? { episode_id: Number(form.episode_id) } : {}),
+	});
 
 	const handleAdd = () => create(buildPayload(), {
 		onSuccess: () => setAddOpen(false),
 		onError: (err) => logHttpError('Create reportage failed', err),
 	});
 
-	const handleEdit = () => update({ id: editingId!, ...buildPayload() }, {
+	const handleEdit = () => {
+		const base = buildPayload();
+		update({
+			id: editingId!,
+			name: base.name,
+			slug: base.slug,
+			description: base.description,
+			transcription: base.transcription,
+			publishing_date: base.publishing_date,
+			online_date: base.online_date,
+			language_id: base.language_id,
+			reportage_type_id: base.reportage_type_id,
+			episode_id: base.episode_id,
+			remove_tags: null,
+			add_tags: null,
+		}, {
 		onSuccess: () => setEditOpen(false),
 		onError: (err) => logHttpError('Update reportage failed', err),
 	});
+	};
 
 	const columns = useMemo<MRT_ColumnDef<Reportage>[]>(() => [
 		{

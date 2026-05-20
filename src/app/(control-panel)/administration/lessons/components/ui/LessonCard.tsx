@@ -21,11 +21,12 @@ import Link from '@fuse/core/Link';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Chip from '@mui/material/Chip';
 import { useState } from 'react';
-import { Lesson, LessonUpdatePayload } from '../../api/types';
+import { Lesson } from '@/app/(control-panel)/content/(lesson)/api/types';
+import { LessonUpdatePayload } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
 import DurationDisplay from './DurationDisplay';
-import { useDeleteLesson, useUpdateLesson } from '../../api/hooks/lessons/Lessonmutations';
-import { useLanguages } from '../../api/hooks/languages/useLanguages';
-import { useLessonTypes, useModules } from '../../api/hooks/lessons/Lessonmetahooks';
+import { useDeleteLesson, useUpdateLesson } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmutations';
+import { useLanguages } from '@/app/(control-panel)/content/(lesson)/api/hooks/languages/useLanguages';
+import { useLessonTypes, useModules } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/Lessonmetahooks';
 import useUser from '@auth/useUser';
 
 type LessonCardProps = {

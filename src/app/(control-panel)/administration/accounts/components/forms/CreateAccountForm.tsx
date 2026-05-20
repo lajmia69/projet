@@ -194,9 +194,6 @@ function CreateAccountForm(props: ContactFormProps) {
 		options: rolesList,
 		getOptionLabel: (option: Role) => option.name
 	};
-	const flatProps = {
-		options: rolesList.map((option) => option.name)
-	};
 	return (
 		<>
 			<div className="relative flex flex-auto flex-col items-center overflow-y-auto">
@@ -344,7 +341,6 @@ function CreateAccountForm(props: ContactFormProps) {
 										multiple
 										id="roles"
 										{...defaultProps}
-										{...flatProps}
 										getOptionKey={(option) => option.id}
 										disableCloseOnSelect
 										getOptionLabel={(option: Role) => option.name}

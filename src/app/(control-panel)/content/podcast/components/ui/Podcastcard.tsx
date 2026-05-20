@@ -21,7 +21,7 @@ import Chip from '@mui/material/Chip';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Podcast, UpdatePodcastPayload } from '../../api/types';
-import DurationDisplay from '../ui/Durationdisplay';
+import DurationDisplay from '../ui/DurationDisplay';
 import { useDeletePodcast, useUpdatePodcast } from '../../api/hooks/Podcastmutations';
 import { usePodcastCategories } from '../../api/hooks/categories/Podcastcategoryhooks';
 import { podcastApi } from '../../api/services/podcastApiService';

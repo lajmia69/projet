@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { contactsApi } from '../../services/contactsApiService';
-import { contactsListQueryKey } from './useContactsList';
-import { contactQueryKey } from './useContact';
+import { contactsListQueryKey } from '../contacts/useContactsList';
+import { contactQueryKey } from '../contacts/useContact';
 
 export const useUpdateAccount = () => {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: contactsApi.updateAccount,
+		mutationFn: contactsApi.updateContact,
 		onSuccess: (_, contact) => {
 			queryClient.invalidateQueries({ queryKey: contactsListQueryKey });
 			queryClient.invalidateQueries({ queryKey: contactQueryKey(contact.id) });
