@@ -136,7 +136,15 @@ const navigationConfig: FuseNavItemType[] = [
 	{
 		id: 'administration',
 		type: 'group',
-        // color removed to comply with FuseNavItemType definitions
+		//the next line 
+		auth: [
+			...authRoles.superAdminOnly,
+			...authRoles.memberAdmin,
+			...authRoles.radioContentCreator,
+			...authRoles.podcastContentCreator,
+			...authRoles.lessonContentCreator,
+			...authRoles.cultureContentCreator,
+		],
 		title: 'Administration',
 		translate: 'ADMINISTRATION',
 		disabled: true,
@@ -204,10 +212,9 @@ const navigationConfig: FuseNavItemType[] = [
 					children: [
 					{ id: 'administration-lessons-list', title: 'All Lessons', auth: authRoles.contentAdmin, type: 'item', url: '/administration/lessons' }
 				]
-			}
-		]
-	},
-	{
+			},
+			// ✅ FIXED: moved inside administration.children (was incorrectly a top-level array item)
+			{
 				id: 'administration-culture',
 				title: 'Culture',
 				type: 'collapse',
@@ -216,11 +223,13 @@ const navigationConfig: FuseNavItemType[] = [
 				translate: 'CULTURE',
 				children: [
 					{ id: 'cultural-activities',          title: 'Cultural Activities',      auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/activities' },
-					{ id: 'cultural-activities-types',         title: 'Cultural Activity Types',         auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/activities/types' },
-					{ id: 'cultural-projects',   title: 'Cultural Projects',   auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/projects' },
-					{ id: 'cultural-projects-types', title: 'Cultural Project Types', auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/projects/types' }
+					{ id: 'cultural-activities-types',    title: 'Cultural Activity Types',  auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/activities/types' },
+					{ id: 'cultural-projects',            title: 'Cultural Projects',        auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/projects' },
+					{ id: 'cultural-projects-types',      title: 'Cultural Project Types',   auth: authRoles.cultureContentCreator, type: 'item', url: '/administration/culture/projects/types' }
 				]
-			},
+			}
+		]
+	},
 
 	// ── Content ──────────────────────────────────────────────────────────────
 //	{
