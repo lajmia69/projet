@@ -309,7 +309,7 @@ function LessonCard({ lesson }: LessonCardProps) {
 						)}
 						<Button
 							component={Link}
-							to={`/lessons/${lesson.id}`}
+							to={`/content/lessons/${lesson.id}`}
 							size="small"
 							variant="contained"
 							sx={(theme) => ({

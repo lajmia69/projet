@@ -1,4 +1,4 @@
-import NextAuth from 'next-auth';
+import NextAuth, { type NextAuthResult, type Session } from 'next-auth';
 // import { User } from '@auth/user';
 import { createStorage } from 'unstorage';
 import memoryDriver from 'unstorage/drivers/memory';
@@ -257,4 +257,9 @@ export const authJsProviderMap: AuthJsProvider[] = providers
 	})
 	.filter((provider) => provider.id !== 'credentials');
 
-export const { handlers, auth, signIn, signOut } = NextAuth(config);
+const nextAuth = NextAuth(config);
+
+export const handlers = nextAuth.handlers;
+export const auth: (...args: []) => Promise<Session | null> = nextAuth.auth;
+export const signIn = nextAuth.signIn;
+export const signOut = nextAuth.signOut;

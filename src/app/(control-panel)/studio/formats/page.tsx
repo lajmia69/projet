@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -13,7 +14,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import MenuItem from '@mui/material/MenuItem';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { useGetAudioFormats } from '../api/hooks/audio/Usegetaudioformats';
 import { useCurrentAccountId } from '../api/useCurrentAccountId';
 import { useStudioAuth } from '../api/hooks/useStudioauth';
@@ -87,6 +88,7 @@ function FormatRow({
 }
 
 export default function FormatsPage() {
+  const { t } = useTranslation('heroes');
   useStudioAuth();
 
   const accountId = useCurrentAccountId();
@@ -180,7 +182,7 @@ export default function FormatsPage() {
             textShadow: '0 2px 32px rgba(0,0,0,0.55)',
             lineHeight: 1.15,
           }}>
-            Audio Formats
+            {t('AUDIO_FORMATS')}
           </Typography>
           <Typography sx={{
             fontSize: { xs: '0.875rem', sm: '0.95rem' },
@@ -188,7 +190,7 @@ export default function FormatsPage() {
             lineHeight: 1.75,
             mt: 1.5,
           }}>
-            Configure the audio format presets used across your production projects.
+            {t('AUDIO_FORMATS_DESC')}
           </Typography>
 
           {formats.length > 0 && (
@@ -201,7 +203,7 @@ export default function FormatsPage() {
               }}>
                 <FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:file-audio</FuseSvgIcon>
                 <Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.025em' }}>
-                  {formats.length} format{formats.length !== 1 ? 's' : ''} configured
+                  {t('AUDIO_FORMATS_COUNT', { count: formats.length })} {t('AUDIO_FORMATS_CONFIGURED')}
                 </Typography>
               </div>
             </div>
@@ -217,7 +219,7 @@ export default function FormatsPage() {
           startIcon={<FuseSvgIcon size={18}>lucide:plus</FuseSvgIcon>}
           onClick={() => setDialogOpen(true)}
         >
-          New Format
+          {t('AUDIO_FORMATS_NEW')}
         </Button>
       </div>
 
@@ -232,7 +234,7 @@ export default function FormatsPage() {
         ) : formats.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <FuseSvgIcon size={48} color="disabled">lucide:file-audio</FuseSvgIcon>
-            <Typography color="text.secondary">No audio formats configured yet.</Typography>
+            <Typography color="text.secondary">{t('AUDIO_FORMATS_EMPTY')}</Typography>
             <Button
               size="small"
               variant="outlined"
@@ -240,7 +242,7 @@ export default function FormatsPage() {
               startIcon={<FuseSvgIcon size={16}>lucide:plus</FuseSvgIcon>}
               onClick={() => setDialogOpen(true)}
             >
-              Add your first format
+              {t('AUDIO_FORMATS_ADD_FIRST')}
             </Button>
           </div>
         ) : (

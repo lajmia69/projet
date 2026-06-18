@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
 import { ListItemIcon, MenuItem, Paper } from '@mui/material';
 // import _ from 'lodash';
@@ -109,7 +109,7 @@ function RolesTable() {
 				paginateExpandedRows={true}
 				enableSelectAll={false}
 				enableRowSelection={false}
-				autoResetPageIndex={true}
+				autoResetPageIndex={false}
 				paginationDisplayMode={'pages'}
 				// manualPagination={true}
 				// rowCount={30}

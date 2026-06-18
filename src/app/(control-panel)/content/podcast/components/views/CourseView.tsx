@@ -13,7 +13,8 @@ import Divider from '@mui/material/Divider';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import DurationDisplay from '../ui/DurationDisplay';
 import { usePodcast } from '../../api/hooks/usePodcast';
-import { LessonTranscription } from '@/app/(control-panel)/(platform)/(lesson)/api/types';
+
+import { LessonTranscription } from '@/app/(control-panel)/content/(lesson)/api/types';
 
 const Root = styled(FusePageSimple)(({ theme }) => ({
 	'& .FusePageSimple-header': {

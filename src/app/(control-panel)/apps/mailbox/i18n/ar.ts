@@ -1,0 +1,33 @@
+const locale = {
+	INBOX_TITLE: 'صندوق الوارد',
+	INBOX_SUBTITLE: 'إدارة محادثاتك ورسائلك',
+	CONVERSATIONS_COUNT: '{{count}} محادثة',
+	CONVERSATIONS_COUNT_plural: '{{count}} محادثات',
+	SEARCH_PLACEHOLDER: 'البحث في المحادثات...',
+	COMPOSE: 'كتابة',
+	NO_CONVERSATIONS_SEARCH: 'لا توجد محادثات تطابق بحثك',
+	NO_CONVERSATIONS: 'لا توجد محادثات بعد',
+	NO_CONVERSATIONS_HINT: 'انقر على كتابة لبدء محادثة جديدة',
+	TRY_DIFFERENT_SEARCH: 'جرّب مصطلح بحث آخر',
+	NEW_MESSAGE: 'رسالة جديدة',
+	RECEIVER_ID: 'معرف المستلم',
+	SUBJECT: 'الموضوع',
+	MESSAGE: 'الرسالة',
+	CANCEL: 'إلغاء',
+	SEND_MESSAGE: 'إرسال الرسالة',
+	SENDING: 'جاري الإرسال...',
+	FIELDS_REQUIRED: 'جميع الحقول مطلوبة',
+	MESSAGE_SENT: 'تم إرسال الرسالة!',
+	MESSAGE_SEND_FAILED: 'فشل إرسال الرسالة',
+	CONVERSATION_DELETED: 'تم حذف المحادثة!',
+	CONVERSATION_DELETE_FAILED: 'فشل حذف المحادثة',
+	MARK_READ_FAILED: 'فشل التعليم كمقروء',
+	NO_SUBJECT: 'بدون موضوع',
+	NO_MESSAGES: 'لا توجد رسائل بعد',
+	NO_MESSAGES_HINT: 'أرسل أول رسالة لبدء المحادثة',
+	TYPE_MESSAGE: 'اكتب رسالة...',
+	TODAY: 'اليوم',
+	YESTERDAY: 'أمس'
+};
+
+export default locale;

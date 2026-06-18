@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import { motion } from 'motion/react';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 
 function SubscriptionsHeader() {
     return (

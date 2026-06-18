@@ -15,7 +15,7 @@ import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 import {
   useCulturalActivityTypes,
   useCreateCulturalActivityType,

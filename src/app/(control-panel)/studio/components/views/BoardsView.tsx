@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -272,6 +273,7 @@ function StatusColumn({
 
 // ─── Main view ────────────────────────────────────────────────────────────────
 function BoardsView() {
+	const { t } = useTranslation('heroes');
 	useStudioAuth();
 
 	const [dialogOpen, setDialogOpen] = useState(false);
@@ -359,12 +361,12 @@ function BoardsView() {
 							color: '#e8fff5',
 							textShadow: '0 2px 32px rgba(0,0,0,0.55)',
 						}}>
-							Studio Boards
+							{t('STUDIO_BOARDS')}
 						</Typography>
 					</motion.div>
 					<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
 						<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(42,232,142,0.72)', lineHeight: 1.75 }}>
-							Track and manage all your production projects — drag cards across columns to update their status.
+							{t('STUDIO_BOARDS_DESC')}
 						</Typography>
 					</motion.div>
 					{boards.length > 0 && (
@@ -377,7 +379,7 @@ function BoardsView() {
 							}}>
 								<FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:layout-grid</FuseSvgIcon>
 								<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.025em' }}>
-									{boards.length} projet{boards.length !== 1 ? 's' : ''} au total
+									{t('STUDIO_BOARDS_COUNT', { count: boards.length })}
 								</Typography>
 							</div>
 						</motion.div>
@@ -393,7 +395,7 @@ function BoardsView() {
 					startIcon={<FuseSvgIcon size={18}>lucide:plus</FuseSvgIcon>}
 					onClick={() => setDialogOpen(true)}
 				>
-					Nouveau projet
+					{t('STUDIO_BOARDS_NEW')}
 				</Button>
 			</div>
 

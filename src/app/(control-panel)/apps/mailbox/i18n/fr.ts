@@ -1,0 +1,33 @@
+const locale = {
+	INBOX_TITLE: 'Boîte de réception',
+	INBOX_SUBTITLE: 'Gérez vos conversations et messages',
+	CONVERSATIONS_COUNT: '{{count}} conversation',
+	CONVERSATIONS_COUNT_plural: '{{count}} conversations',
+	SEARCH_PLACEHOLDER: 'Rechercher des conversations...',
+	COMPOSE: 'Rédiger',
+	NO_CONVERSATIONS_SEARCH: 'Aucune conversation ne correspond à votre recherche',
+	NO_CONVERSATIONS: 'Aucune conversation pour le moment',
+	NO_CONVERSATIONS_HINT: 'Cliquez sur Rédiger pour démarrer une nouvelle conversation',
+	TRY_DIFFERENT_SEARCH: 'Essayez un autre terme de recherche',
+	NEW_MESSAGE: 'Nouveau message',
+	RECEIVER_ID: 'ID du destinataire',
+	SUBJECT: 'Objet',
+	MESSAGE: 'Message',
+	CANCEL: 'Annuler',
+	SEND_MESSAGE: 'Envoyer le message',
+	SENDING: 'Envoi...',
+	FIELDS_REQUIRED: 'Tous les champs sont requis',
+	MESSAGE_SENT: 'Message envoyé !',
+	MESSAGE_SEND_FAILED: "Échec de l'envoi du message",
+	CONVERSATION_DELETED: 'Conversation supprimée !',
+	CONVERSATION_DELETE_FAILED: 'Échec de la suppression de la conversation',
+	MARK_READ_FAILED: 'Échec de la marque comme lu',
+	NO_SUBJECT: 'Sans objet',
+	NO_MESSAGES: 'Aucun message pour le moment',
+	NO_MESSAGES_HINT: 'Envoyez le premier message pour démarrer la conversation',
+	TYPE_MESSAGE: 'Saisissez un message...',
+	TODAY: "Aujourd'hui",
+	YESTERDAY: 'Hier'
+};
+
+export default locale;

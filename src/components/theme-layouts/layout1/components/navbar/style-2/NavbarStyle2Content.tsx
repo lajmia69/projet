@@ -8,10 +8,11 @@ import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import isUrlInChildren from '@fuse/core/FuseNavigation/isUrlInChildren';
 import { Theme } from '@mui/system';
 import { FuseNavItemType } from '@fuse/core/FuseNavigation/types/FuseNavItemType';
-import UserMenu from 'src/components/theme-layouts/components/UserMenu';
+import UserMenu from '@/components/theme-layouts/components/UserMenu';
 import usePathname from '@fuse/hooks/usePathname';
 import useNavigationItems from '@/components/theme-layouts/components/navigation/hooks/useNavigationItems';
 import { useNavbarContext } from '@/components/theme-layouts/components/navbar/contexts/NavbarContext/useNavbarContext';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Design tokens ─────────────────────────────────────────────── */
 const C = {
@@ -146,6 +147,7 @@ type NavbarStyle2ContentProps = { className?: string };
  */
 function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 	const { className = '' } = props;
+	const { t } = useTranslation('navigation');
 
 	const [logoOpacity, setLogoOpacity] = useState<number>(1);
 	useEffect(() => {
@@ -307,7 +309,7 @@ function NavbarStyle2Content(props: NavbarStyle2ContentProps) {
 							letterSpacing: '0.06em',
 							textAlign: 'center',
 						}}>
-							Your voice is your vision.
+							{t('SLOGAN')}
 						</div>
 					</StyledPanel>
 				)}

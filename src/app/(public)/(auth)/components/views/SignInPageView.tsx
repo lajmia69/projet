@@ -452,20 +452,6 @@ function SignInPageView() {
 						}}
 					>
 						<AuthJsForm formType="signin" />
-						<Box
-							sx={{
-								background: 'rgba(45,139,124,0.1)',
-								border: '0.5px solid rgba(45,139,124,0.3)',
-								borderRadius: '8px',
-								p: '10px 14px',
-								fontSize: 12,
-								color: C.darkTeal,
-								lineHeight: 1.65,
-								fontWeight: 300,
-							}}
-						>
-							You are browsing <strong style={{ fontWeight: 500 }}>EduVoice Demo</strong>. Click on the "Sign in" button to access your audio-learning environment.
-						</Box>
 						<Box sx={{ textAlign: 'center', fontSize: 12, color: C.darkTeal, opacity: 0.55 }}>
 							No account?{' '}
 							<MuiLink component={Link} to="/sign-up" underline="hover" sx={{ color: C.teal, fontWeight: 500, opacity: 1 }}>

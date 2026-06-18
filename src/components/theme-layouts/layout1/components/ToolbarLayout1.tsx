@@ -1,10 +1,10 @@
 import Toolbar from '@mui/material/Toolbar';
 import clsx from 'clsx';
 import { memo } from 'react';
-import NavbarToggleButton from 'src/components/theme-layouts/components/navbar/NavbarToggleButton';
-import themeOptions from 'src/configs/themeOptions';
+import NavbarToggleButton from '@/components/theme-layouts/components/navbar/NavbarToggleButton';
+import themeOptions from '@/configs/themeOptions';
 import _ from 'lodash';
-import LightDarkModeToggle from 'src/components/LightDarkModeToggle';
+import LightDarkModeToggle from '@/components/LightDarkModeToggle';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import AdjustFontSize from '../../components/AdjustFontSize';
 import FullScreenToggle from '../../components/FullScreenToggle';
@@ -14,8 +14,8 @@ import QuickPanelToggleButton from '../../components/quickPanel/QuickPanelToggle
 import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
 import useThemeMediaQuery from '../../../../@fuse/hooks/useThemeMediaQuery';
 import { AppBar, Divider } from '@mui/material';
-import ToolbarTheme from 'src/contexts/ToolbarTheme';
-import PageLogo from 'src/components/PageLogo';
+import ToolbarTheme from '@/contexts/ToolbarTheme';
+import PageLogo from '@/components/PageLogo';
 
 type ToolbarLayout1Props = {
 	className?: string;

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 function MainPage() {
-	redirect(`/dashboard/welcome`);
+	redirect(`/platform/dashboard/welcome`);
 	return null;
 }
 

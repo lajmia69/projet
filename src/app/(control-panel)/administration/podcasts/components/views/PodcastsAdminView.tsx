@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import GradientButton from 'src/app/(control-panel)/components/ui/GradientButton';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
 	DialogActions, Button, Typography, FormControl, FormLabel,
@@ -12,11 +12,11 @@ import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 import { useQuery } from '@tanstack/react-query';
 
 import { useSearchPodcasts } from '@/app/(control-panel)/content/podcast/api/hooks/Usesearchpodcasts';

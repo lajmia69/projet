@@ -24,6 +24,7 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Link from '@fuse/core/Link';
 import { styled } from '@mui/material/styles';
 import useUser from '@auth/useUser';
+import { useTranslation } from 'react-i18next';
 import { useSearchEpisodes, useEmissionTypes, useSeasons, useDeleteEpisode } from '../../api/hooks/Radiohooks';
 import { Episode, SearchEpisodes } from '../../api/types';
 import DurationDisplay from '../ui/DurationDisplay';
@@ -196,6 +197,7 @@ function EpisodeCard({ episode, onDelete }: { episode: Episode; onDelete: (id: n
 }
 
 function EpisodesView() {
+	const { t } = useTranslation('heroes');
 	const { data: account } = useUser();
 	const searchParams: SearchEpisodes = { limit: 50, offset: 0 };
 
@@ -247,12 +249,12 @@ function EpisodesView() {
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
 							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#E8E4DA', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
-								Radio Episodes
+								{t('RADIO_EPISODES')}
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
 							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(232,228,218,0.72)', lineHeight: 1.75 }}>
-								Browse all radio episodes — one story at a time.
+								{t('RADIO_EPISODES_DESC')}
 							</Typography>
 						</motion.div>
 						{episodes?.count != null && (
@@ -260,7 +262,7 @@ function EpisodesView() {
 								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(45,139,124,0.35)', backgroundColor: 'rgba(45,139,124,0.12)' }}>
 									<FuseSvgIcon size={13} sx={{ color: 'rgba(45,139,124,0.75)' }}>lucide:mic-2</FuseSvgIcon>
 									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(45,139,124,0.85)' }}>
-										{episodes.count} episode{episodes.count !== 1 ? 's' : ''}
+										{t('RADIO_EPISODES_COUNT', { count: episodes.count })}
 									</Typography>
 								</div>
 							</motion.div>

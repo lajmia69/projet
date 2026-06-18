@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
@@ -16,7 +17,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Collapse from '@mui/material/Collapse';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import clsx from 'clsx';
 import { useQuery } from '@tanstack/react-query';
 import { useGetProjectAudios } from '../api/hooks/audio/useGetProjectAudios';
@@ -471,6 +472,7 @@ function AudioListRow({ audio, onDelete }: { audio: AudioFile; onDelete: (a: Aud
 }
 
 export default function AudioPage() {
+	const { t } = useTranslation('heroes');
 	useStudioAuth();
 
 	const [search, setSearch] = useState('');
@@ -553,7 +555,7 @@ export default function AudioPage() {
 						textShadow: '0 2px 32px rgba(0,0,0,0.55)',
 						lineHeight: 1.15,
 					}}>
-						Audio Library
+						{t('AUDIO_LIBRARY')}
 					</Typography>
 					<Typography sx={{
 						fontSize: { xs: '0.875rem', sm: '0.95rem' },
@@ -561,7 +563,7 @@ export default function AudioPage() {
 						lineHeight: 1.75,
 						mt: 1.5,
 					}}>
-						Manage and upload audio files linked to your production tasks.
+						{t('AUDIO_LIBRARY_DESC')}
 					</Typography>
 
 					{audios.length > 0 && (
@@ -574,7 +576,7 @@ export default function AudioPage() {
 							}}>
 								<FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:music</FuseSvgIcon>
 								<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.025em' }}>
-									{audios.length} file{audios.length !== 1 ? 's' : ''}
+									{t('AUDIO_FILE_COUNT', { count: audios.length })}
 								</Typography>
 							</div>
 							<div style={{
@@ -585,7 +587,7 @@ export default function AudioPage() {
 							}}>
 								<FuseSvgIcon size={13} sx={{ color: 'rgba(42,232,142,0.75)' }}>lucide:clock</FuseSvgIcon>
 								<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(42,232,142,0.85)', letterSpacing: '0.025em' }}>
-									{formatIsoDuration(secondsToIsoDuration(totalSec))} total
+									{formatIsoDuration(secondsToIsoDuration(totalSec))} {t('AUDIO_TOTAL')}
 								</Typography>
 							</div>
 						</div>

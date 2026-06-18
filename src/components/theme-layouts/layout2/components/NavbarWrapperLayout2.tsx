@@ -1,7 +1,7 @@
 import { styled } from '@mui/material/styles';
 import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import { useEffect } from 'react';
-import NavbarToggleFabLayout2 from 'src/components/theme-layouts/layout2/components/NavbarToggleFabLayout2';
+import NavbarToggleFabLayout2 from '@/components/theme-layouts/layout2/components/NavbarToggleFabLayout2';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
 import usePathname from '@fuse/hooks/usePathname';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';

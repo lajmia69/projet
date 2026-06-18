@@ -128,6 +128,7 @@
   "scripts": {
     "dev": "next dev ",
     "build": "next build",
+    "postbuild": "node fix-standalone.js",
     "start": "next start",
     "test": "vitest",
     "test:run": "vitest run",

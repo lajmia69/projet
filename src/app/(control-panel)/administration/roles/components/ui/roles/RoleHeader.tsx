@@ -5,7 +5,7 @@ import { useFormContext } from 'react-hook-form';
 import useParams from '@fuse/hooks/useParams';
 import _ from 'lodash';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import useNavigate from '@fuse/hooks/useNavigate';
 import { Role } from '@/app/(control-panel)/administration/roles/api/types';
 import { useCreateRole } from '@/app/(control-panel)/administration/roles/api/hooks/useCreateRole';

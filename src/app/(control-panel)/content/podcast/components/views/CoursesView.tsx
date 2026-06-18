@@ -7,7 +7,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import InputAdornment from '@mui/material/InputAdornment';
 import Button from '@mui/material/Button';
-import GradientButton from 'src/app/(control-panel)/components/ui/GradientButton';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -15,6 +15,7 @@ import DialogActions from '@mui/material/DialogActions';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import { motion } from 'motion/react';
+
 import { ChangeEvent, useEffect, useState } from 'react';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import { styled } from '@mui/material/styles';
@@ -23,6 +24,7 @@ import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { InputLabel } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { Podcast, SearchPodcasts, CreatePodcastPayload } from '../../api/types';
+import { useTranslation } from 'react-i18next';
 import { useSearchPodcasts } from '../../api/hooks/Usesearchpodcasts';
 import { usePodcastCategories } from '../../api/hooks/categories/Podcastcategoryhooks';
 import { useCreatePodcast } from '../../api/hooks/Podcastmutations';
@@ -59,6 +61,7 @@ function toSlug(name: string): string {
 }
 
 function CoursesView() {
+	const { t } = useTranslation('heroes');
 	const { data: account } = useUser();
 	const searchParams: SearchPodcasts = { limit: 20, offset: 0 };
 
@@ -175,12 +178,12 @@ function CoursesView() {
 									color: '#e8fff5',
 									textShadow: '0 2px 32px rgba(0,0,0,0.55)',
 								}}>
-									What do you want to listen today?
+									{t('PODCAST_TITLE')}
 								</Typography>
 							</motion.div>
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
 								<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(42,232,142,0.72)', lineHeight: 1.75 }}>
-									Explore our podcast episodes — discover new ideas, one episode at a time.
+									{t('PODCAST_DESC')}
 								</Typography>
 							</motion.div>
 							{podcasts?.count != null && (
@@ -193,7 +196,7 @@ function CoursesView() {
 									}}>
 										<FuseSvgIcon size={13} sx={{ color: 'rgba(14,168,176,0.75)' }}>lucide:mic</FuseSvgIcon>
 										<Typography sx={{ fontSize: '0.74rem', fontWeight: 600, color: 'rgba(14,168,176,0.85)', letterSpacing: '0.025em' }}>
-											{podcasts.count} episodes available
+											{t('PODCAST_COUNT', { count: podcasts.count })}
 										</Typography>
 									</div>
 								</motion.div>

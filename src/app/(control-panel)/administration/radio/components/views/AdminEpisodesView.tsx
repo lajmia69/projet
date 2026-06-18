@@ -12,12 +12,12 @@ import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
 import useUser from '@auth/useUser';
 import { useSnackbar } from 'notistack';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 import {
 	useRadioAdminEpisodes,
 	useCreateEpisode,

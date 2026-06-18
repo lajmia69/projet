@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import mockApi from 'src/@mock-utils/mockApi';
+import mockApi from '@/@mock-utils/mockApi';
 
 export async function POST(req: NextRequest) {
 	try {

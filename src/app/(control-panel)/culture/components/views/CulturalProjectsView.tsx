@@ -11,6 +11,7 @@ import {
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { useTranslation } from 'react-i18next';
 import FusePageSimple from '@fuse/core/FusePageSimple';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
@@ -243,6 +244,7 @@ const cardContainer = { show: { transition: { staggerChildren: 0.05 } } };
 const cardItem = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0 } };
 
 export default function CulturalProjectsView() {
+	const { t } = useTranslation('heroes');
 	const { data: projects = [], isLoading } = useCulturalProjects();
 	const { mutate: deleteProject } = useDeleteCulturalProject();
 
@@ -323,13 +325,13 @@ export default function CulturalProjectsView() {
 										textShadow: '0 2px 32px rgba(0,0,0,0.45)',
 									}}
 								>
-									Cultural Projects
+									{t('CULTURAL_PROJECTS')}
 								</Typography>
 							</motion.div>
 
 							<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
 								<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(148,163,184,0.7)', lineHeight: 1.75 }}>
-									Manage and track all cultural projects for your organisation.
+									{t('CULTURAL_PROJECTS_DESC')}
 								</Typography>
 							</motion.div>
 

@@ -2,9 +2,10 @@ import FuseScrollbars from '@fuse/core/FuseScrollbars';
 import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo } from 'react';
-import Navigation from 'src/components/theme-layouts/components/navigation/Navigation';
-import UserMenu from 'src/components/theme-layouts/components/UserMenu';
+import Navigation from '@/components/theme-layouts/components/navigation/Navigation';
+import UserMenu from '@/components/theme-layouts/components/UserMenu';
 import Logo from '../../../../components/Logo';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Design tokens ─────────────────────────────────────────────── */
 const C = {
@@ -164,6 +165,7 @@ type NavbarStyle1ContentProps = { className?: string };
  */
 function NavbarStyle1Content(props: NavbarStyle1ContentProps) {
 	const { className = '' } = props;
+	const { t } = useTranslation('navigation');
 
 	return (
 		<Root className={clsx('flex h-full flex-auto flex-col overflow-hidden', className)}>
@@ -227,7 +229,7 @@ function NavbarStyle1Content(props: NavbarStyle1ContentProps) {
 					letterSpacing: '0.06em',
 					padding: '4px 0',
 				}}>
-					Your voice is your vision.
+					{t('SLOGAN')}
 				</div>
 				<UserMenu className="w-full" />
 			</div>

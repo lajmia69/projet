@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
 import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { motion } from 'motion/react';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
 
 const Root = styled(FusePageCarded)(() => ({

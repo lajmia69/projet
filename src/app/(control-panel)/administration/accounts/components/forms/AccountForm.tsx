@@ -311,15 +311,18 @@ function AccountForm(props: ContactFormProps) {
 										options={tags || []}
 										disableCloseOnSelect
 										getOptionLabel={(option) => option?.title}
-										renderOption={(_props, option, { selected }) => (
-											<li {..._props}>
+									renderOption={(_props, option, { selected }) => {
+										const { key, ...rest } = _props;
+										return (
+											<li key={key} {...rest}>
 												<Checkbox
 													style={{ marginRight: 8 }}
 													checked={selected}
 												/>
 												{option?.title}
 											</li>
-										)}
+										);
+									}}
 										value={value ? value?.map((id) => _.find(tags, { id })) : ([] as Tag[])}
 										onChange={(_event, newValue) => {
 											onChange(newValue?.map((item) => item?.id));

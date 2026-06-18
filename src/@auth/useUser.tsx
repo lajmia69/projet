@@ -4,6 +4,7 @@ import { User } from '@auth/user';
 import { authUpdateDbUser } from '@auth/authApi';
 import _ from 'lodash';
 import setIn from '@/utils/setIn';
+import { resetSessionRedirectUrl } from '@fuse/core/FuseAuthorization/sessionRedirectUrl';
 
 type useUser = {
 	data: User | null;
@@ -49,6 +50,7 @@ function useUser(): useUser {
 	}
 
 	async function handleSignOut() {
+		resetSessionRedirectUrl();
 		return signOut();
 	}
 

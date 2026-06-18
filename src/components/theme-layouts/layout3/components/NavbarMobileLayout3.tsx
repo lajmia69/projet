@@ -3,10 +3,11 @@ import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo } from 'react';
 import { Divider } from '@mui/material';
-import UserMenu from 'src/components/theme-layouts/components/UserMenu';
+import UserMenu from '@/components/theme-layouts/components/UserMenu';
 import Navigation from '../../components/navigation/Navigation';
 import Logo from '../../components/Logo';
 import GoToDocBox from '../../components/GoToDocBox';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Design tokens ─────────────────────────────────────────────── */
 const C = {
@@ -127,6 +128,7 @@ type NavbarMobileLayout3Props = { className?: string };
  */
 function NavbarMobileLayout3(props: NavbarMobileLayout3Props) {
 	const { className = '' } = props;
+	const { t } = useTranslation('navigation');
 
 	return (
 		<Root className={clsx('flex h-full flex-col overflow-hidden', className)}>
@@ -192,7 +194,7 @@ function NavbarMobileLayout3(props: NavbarMobileLayout3Props) {
 					letterSpacing: '0.06em',
 					paddingBottom: 6,
 				}}>
-					Your voice is your vision.
+					{t('SLOGAN')}
 				</div>
 				<UserMenu className="w-full" />
 			</div>

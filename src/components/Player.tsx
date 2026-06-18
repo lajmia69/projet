@@ -20,7 +20,7 @@ import MobileStepper from '@mui/material/MobileStepper';
 import Button from '@mui/material/Button';
 import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
-import { LessonTranscription } from '@/app/(control-panel)/(platform)/(lesson)/api/types';
+import { LessonTranscription } from '@/app/(control-panel)/platform/lesson/api/types';
 import clsx from 'clsx';
 // #endregion ------------ ICONS ---------
 

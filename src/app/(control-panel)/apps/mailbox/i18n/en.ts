@@ -1,0 +1,33 @@
+const locale = {
+	INBOX_TITLE: 'Inbox',
+	INBOX_SUBTITLE: 'Manage your conversations and messages',
+	CONVERSATIONS_COUNT: '{{count}} conversation',
+	CONVERSATIONS_COUNT_plural: '{{count}} conversations',
+	SEARCH_PLACEHOLDER: 'Search conversations...',
+	COMPOSE: 'Compose',
+	NO_CONVERSATIONS_SEARCH: 'No conversations match your search',
+	NO_CONVERSATIONS: 'No conversations yet',
+	NO_CONVERSATIONS_HINT: 'Click Compose to start a new conversation',
+	TRY_DIFFERENT_SEARCH: 'Try a different search term',
+	NEW_MESSAGE: 'New Message',
+	RECEIVER_ID: 'Receiver ID',
+	SUBJECT: 'Subject',
+	MESSAGE: 'Message',
+	CANCEL: 'Cancel',
+	SEND_MESSAGE: 'Send Message',
+	SENDING: 'Sending...',
+	FIELDS_REQUIRED: 'All fields are required',
+	MESSAGE_SENT: 'Message sent!',
+	MESSAGE_SEND_FAILED: 'Failed to send message',
+	CONVERSATION_DELETED: 'Conversation deleted!',
+	CONVERSATION_DELETE_FAILED: 'Failed to delete conversation',
+	MARK_READ_FAILED: 'Failed to mark as read',
+	NO_SUBJECT: 'No subject',
+	NO_MESSAGES: 'No messages yet',
+	NO_MESSAGES_HINT: 'Send the first message to start the conversation',
+	TYPE_MESSAGE: 'Type a message...',
+	TODAY: 'Today',
+	YESTERDAY: 'Yesterday'
+};
+
+export default locale;

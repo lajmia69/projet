@@ -1,6 +1,6 @@
 import clsx from 'clsx';
-import 'src/styles/splash-screen.css';
-import 'src/styles/index.css';
+import '@/styles/splash-screen.css';
+import '@/styles/index.css';
 import '../../public/assets/fonts/material-design-icons/MaterialIconsOutlined.css';
 import '../../public/assets/fonts/Geist/geist.css';
 import '../../public/assets/fonts/meteocons/style.css';
@@ -12,11 +12,11 @@ import App from './App';
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const metadata = await generateMetadata({
-	title: 'Fuse React - NextJS',
-	description: 'Fuse React - NextJS by FuseTech',
+	title: 'EduVoice',
+	description: 'EduVoice - Radio Web Platform',
 	cardImage: '/card.png',
 	robots: 'follow, index',
-	favicon: '/favicon.ico',
+	favicon: '/logo.png',
 	url: 'https://react-material.fusetheme.com'
 });
 
@@ -28,7 +28,7 @@ export default async function RootLayout({
 	const session = await auth();
 
 	return (
-		<html lang="en">
+		<html lang="en" suppressHydrationWarning>
 			<head>
 				<meta charSet="utf-8" />
 				<meta
@@ -50,7 +50,7 @@ export default async function RootLayout({
 				/>
 				<link
 					rel="shortcut icon"
-					href="/favicon.ico"
+					href="/logo.png"
 				/>
 				<noscript id="emotion-insertion-point" />
 			</head>

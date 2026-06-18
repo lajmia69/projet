@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import { Grid } from '@mui/material';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import FusePageCarded from '@fuse/core/FusePageCarded';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import { styled } from '@mui/material/styles';
@@ -274,6 +275,7 @@ function ViewAll({ to }: { to: string }) {
 // ─── Dashboard header ─────────────────────────────────────────────────────────
 
 function DashboardHeader() {
+	const { t } = useTranslation('heroes');
 	const [scrollY, setScrollY] = useState(0);
 
 	useEffect(() => {
@@ -321,10 +323,10 @@ function DashboardHeader() {
 						variant="h3"
 						sx={{ color: 'white', fontWeight: 900, lineHeight: 1.15, letterSpacing: '-0.02em', position: 'relative' }}
 					>
-						Administration Dashboard
+						{t('ADMIN_DASHBOARD')}
 					</Typography>
 					<Typography sx={{ mt: 1, fontSize: '0.95rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.75, position: 'relative' }}>
-						Manage accounts, subscriptions, roles, and radio content all in one place.
+						{t('ADMIN_DASHBOARD_DESC')}
 					</Typography>
 				</motion.div>
 			</Box>

@@ -1,4 +1,4 @@
-import mockApi from 'src/@mock-utils/mockApi';
+import mockApi from '@/@mock-utils/mockApi';
 
 /**
  * GET api/mock/ui-icons/lucide

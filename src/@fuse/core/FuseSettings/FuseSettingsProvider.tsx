@@ -1,8 +1,8 @@
 import { useState, ReactNode, useMemo, useEffect, useCallback } from 'react';
 import _ from 'lodash';
 import { defaultSettings, getParsedQuerySettings } from '@fuse/default-settings';
-import settingsConfig from 'src/configs/settingsConfig';
-import themeLayoutConfigs from 'src/components/theme-layouts/themeLayoutConfigs';
+import settingsConfig from '@/configs/settingsConfig';
+import themeLayoutConfigs from '@/components/theme-layouts/themeLayoutConfigs';
 import { FuseSettingsConfigType, FuseThemesType } from '@fuse/core/FuseSettings/FuseSettings';
 import useUser from '@auth/useUser';
 import { PartialDeep } from 'type-fest';

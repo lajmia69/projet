@@ -1,7 +1,7 @@
 import { styled } from '@mui/material/styles';
 import clsx from 'clsx';
 import { memo, ReactNode } from 'react';
-import Configurator from 'src/components/theme-layouts/components/configurator/Configurator';
+import Configurator from '@/components/theme-layouts/components/configurator/Configurator';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import LeftSideLayout3 from './components/LeftSideLayout3';
 import NavbarWrapperLayout3 from './components/NavbarWrapperLayout3';

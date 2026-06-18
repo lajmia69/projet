@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import Input from '@mui/material/Input';
 import Typography from '@mui/material/Typography';
 import { motion } from 'motion/react';
@@ -5,7 +6,7 @@ import Button from '@mui/material/Button';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
 import Box from '@mui/material/Box';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import { useSearch } from '../../hooks/useSearch';
 import { useFilteredAccounts } from '../../hooks/useFilteredAccounts';
@@ -15,6 +16,7 @@ import useUser from '@auth/useUser';
  * The account header.
  */
 function AccountsHeader() {
+	const { t } = useTranslation('heroes');
 	const { searchText, setSearchText } = useSearch();
 	const { data: account } = useUser();
 	const { data: filteredData } = useFilteredAccounts(account.token);
@@ -66,7 +68,7 @@ function AccountsHeader() {
                                 className="text-3xl font-extrabold leading-tight tracking-tight text-white"
                                 variant="h4"
                             >
-                                Accounts
+                                {t('ACCOUNTS')}
                             </Typography>
                         </motion.div>
 						<motion.div
@@ -77,7 +79,7 @@ function AccountsHeader() {
 								className="text-sm font-medium"
 								sx={{ color: 'rgba(255,255,255,0.7)' }}
 							>
-								{`${filteredData?.length ?? 0} accounts`}
+								{t('ACCOUNTS_COUNT', { count: filteredData?.length ?? 0 })}
 							</Typography>
 						</motion.div>
 					</div>
@@ -104,7 +106,7 @@ function AccountsHeader() {
 								lucide:search
 							</FuseSvgIcon>
 							<Input
-								placeholder="Search accounts..."
+								placeholder={t('ACCOUNTS_SEARCH')}
 								className="flex flex-1 text-white placeholder-white/60"
 								disableUnderline
 								fullWidth
@@ -132,7 +134,7 @@ function AccountsHeader() {
                         animate={{ y: 0, opacity: 1, transition: { delay: 0.25 } }}
                     >
                         <GradientButton component={NavLinkAdapter} href="/administration/accounts/new" startIcon={<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>}>
-                            Add
+                            {t('ACCOUNTS_ADD')}
                         </GradientButton>
                     </motion.div>
 				</div>

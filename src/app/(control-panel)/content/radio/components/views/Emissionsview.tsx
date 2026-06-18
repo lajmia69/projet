@@ -12,6 +12,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Chip from '@mui/material/Chip';
 import Card from '@mui/material/Card';
 import Button from '@mui/material/Button';
+
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -24,6 +25,7 @@ import Link from '@fuse/core/Link';
 import { styled } from '@mui/material/styles';
 import { TOP_BAR_GRADIENT, CARD_BG_LIGHT, CTA_GRADIENT, CHIP_TEAL_BG, CHIP_TEAL_COLOR, ON_AIR_BG } from '@/app/(control-panel)/design/palette';
 import useUser from '@auth/useUser';
+import { useTranslation } from 'react-i18next';
 import { useSearchEmissions, useEmissionTypes, useSeasons, useDeleteEmission } from '../../api/hooks/Radiohooks';
 import { Emission, SearchEmissions } from '../../api/types';
 import DurationDisplay from '../ui/DurationDisplay';
@@ -180,6 +182,7 @@ function EmissionCard({ emission, onDelete }: { emission: Emission; onDelete: (i
 }
 
 function EmissionsView() {
+	const { t } = useTranslation('heroes');
 	const { data: account } = useUser();
 	const searchParams: SearchEmissions = { limit: 50, offset: 0 };
 
@@ -234,12 +237,12 @@ function EmissionsView() {
 					<div className="relative flex flex-col items-center justify-center px-6 text-center" style={{ zIndex: 1 }}>
 						<motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.06, duration: 0.5 } }}>
 							<Typography component="h1" sx={{ fontSize: { xs: '1.85rem', sm: '2.5rem', md: '3.1rem' }, fontWeight: 800, color: '#E8E4DA', textShadow: '0 2px 32px rgba(0,0,0,0.55)' }}>
-								Radio Emissions
+								{t('RADIO_EMISSIONS')}
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
 							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(232,228,218,0.72)', lineHeight: 1.75 }}>
-								Browse all radio emissions — one broadcast at a time.
+								{t('RADIO_EMISSIONS_DESC')}
 							</Typography>
 						</motion.div>
 						{emissions?.count != null && (
@@ -247,7 +250,7 @@ function EmissionsView() {
 								<div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '4px 14px', borderRadius: '999px', border: '1px solid rgba(45,139,124,0.35)', backgroundColor: 'rgba(45,139,124,0.12)' }}>
 									<FuseSvgIcon size={13} sx={{ color: 'rgba(45,139,124,0.75)' }}>lucide:radio</FuseSvgIcon>
 									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(45,139,124,0.85)' }}>
-										{emissions.count} emission{emissions.count !== 1 ? 's' : ''}
+										{t('RADIO_EMISSIONS_COUNT', { count: emissions.count })}
 									</Typography>
 								</div>
 							</motion.div>

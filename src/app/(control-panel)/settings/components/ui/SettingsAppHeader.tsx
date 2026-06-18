@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography';
 import clsx from 'clsx';
 import IconButton from '@mui/material/IconButton';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import usePathname from '@fuse/hooks/usePathname';
 import SettingsAppNavigation from '../../lib/constants/SettingsAppNavigation';
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';

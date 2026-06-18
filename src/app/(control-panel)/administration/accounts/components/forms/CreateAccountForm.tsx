@@ -113,7 +113,12 @@ function CreateAccountForm(props: ContactFormProps) {
 
 	// const { data: contact, isError } = useContact(contactId);
 	const { data: currentAccount } = useUser();
-	const { data: rolesList } = useRolesList(currentAccount.token);
+	const { data: rolesList = [], isLoading: rolesLoading, isError: rolesError } = useRolesList(currentAccount.token);
+
+	if (rolesError) {
+		console.error('[CreateAccountForm] Failed to load roles:', rolesError);
+	}
+
 	const { mutate: createContact } = useCreateContact();
 	// const { mutate: updateContact } = useUpdateContact();
 	// const { mutate: deleteContact } = useDeleteContact();
@@ -344,16 +349,24 @@ function CreateAccountForm(props: ContactFormProps) {
 										getOptionKey={(option) => option.id}
 										disableCloseOnSelect
 										getOptionLabel={(option: Role) => option.name}
-
-										renderOption={(_props, option, { selected }) => (
-											<li {..._props}>
-												<Checkbox
-													style={{ marginRight: 8 }}
-													checked={selected}
-												/>
-												{option?.name}
-											</li>
-										)}
+										loading={rolesLoading}
+										loadingText="Loading roles..."
+										noOptionsText={rolesError ? 'Error loading roles' : 'No roles found'}
+										renderOption={(_props, option, { selected }) => {
+											const { key, ...rest } = _props;
+											return (
+												<li
+													key={key}
+													{...rest}
+												>
+													<Checkbox
+														style={{ marginRight: 8 }}
+														checked={selected}
+													/>
+													{option?.name}
+												</li>
+											);
+										}}
 										value={value ? value?.map((id) => _.find(rolesList, { id })) : ([] as Role[])}
 										onChange={(_event, newValue) => {
 											onChange(newValue?.map((item) => item?.id));
@@ -363,10 +376,13 @@ function CreateAccountForm(props: ContactFormProps) {
 											<TextField
 												{...params}
 												placeholder="Roles"
+												inputProps={{
+													...params.inputProps,
+													value: params.inputProps.value ?? ''
+												}}
 											/>
 										)}
 									/>
-
 								</FormControl>
 							)}
 						/>

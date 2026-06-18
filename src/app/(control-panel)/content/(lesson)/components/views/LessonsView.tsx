@@ -15,6 +15,7 @@ import { SearchLessons } from '../../api/types';
 import { useLanguages } from '../../api/hooks/languages/useLanguages';
 import { useModules } from '../../api/hooks/lessons/Lessonmetahooks';
 import useUser from '@auth/useUser';
+import { useTranslation } from 'react-i18next';
 import { useSearchLessons } from '../../api/hooks/lessons/useSearchLessons';
 
 const Root = styled(FusePageSimple)(() => ({
@@ -39,6 +40,7 @@ const FADE_START = 20;
 const FADE_END = 180;
 
 function LessonsView() {
+	const { t } = useTranslation('heroes');
 	const { data: account } = useUser();
 
 	const { data: languages } = useLanguages(account?.id, account?.token?.access);
@@ -123,12 +125,12 @@ function LessonsView() {
 								fontWeight: 800, color: '#E8E4DA',
 								textShadow: '0 2px 32px rgba(0,0,0,0.55)',
 							}}>
-								Explore Lessons
+								{t('EXPLORE_LESSONS')}
 							</Typography>
 						</motion.div>
 						<motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.45 } }} className="mt-4 max-w-lg">
 							<Typography sx={{ fontSize: { xs: '0.875rem', sm: '0.975rem' }, color: 'rgba(232,228,218,0.72)', lineHeight: 1.75 }}>
-								Browse our lessons — explore content, one session at a time.
+								{t('EXPLORE_LESSONS_DESC')}
 							</Typography>
 						</motion.div>
 						{lessons?.count != null && (
@@ -141,7 +143,7 @@ function LessonsView() {
 								}}>
 									<FuseSvgIcon size={13} sx={{ color: 'rgba(45,139,124,0.75)' }}>lucide:book-open</FuseSvgIcon>
 									<Typography sx={{ fontSize: '0.78rem', fontWeight: 600, color: 'rgba(45,139,124,0.85)' }}>
-										{lessons.count} lesson{lessons.count !== 1 ? 's' : ''} available
+										{t('LESSONS_COUNT', { count: lessons.count })} {t('LESSONS_AVAILABLE')}
 									</Typography>
 								</div>
 							</motion.div>

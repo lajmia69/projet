@@ -3,7 +3,7 @@ import FusePageSimple from '@fuse/core/FusePageSimple';
 // import { useTranslation } from 'react-i18next';
 import { styled } from '@mui/material/styles';
 import useParams from '@fuse/hooks/useParams';
-import { useLesson } from '@/app/(control-panel)/(platform)/(lesson)/api/hooks/lessons/useLesson';
+import { useLesson } from '@/app/(control-panel)/platform/lesson/api/hooks/lessons/useLesson';
 import useUser from '@auth/useUser';
 import FuseLoading from '@fuse/core/FuseLoading';
 import Player from '@/components/Player';

@@ -1,5 +1,5 @@
 import useThemeMediaQuery from '@fuse/hooks/useThemeMediaQuery';
-import NavbarToggleFab from 'src/components/theme-layouts/components/navbar/NavbarToggleFab';
+import NavbarToggleFab from '@/components/theme-layouts/components/navbar/NavbarToggleFab';
 import useFuseLayoutSettings from '@fuse/core/FuseLayout/useFuseLayoutSettings';
 import { Layout1ConfigDefaultsType } from '@/components/theme-layouts/layout1/Layout1Config';
 import { useNavbarContext } from '../../components/navbar/contexts/NavbarContext/useNavbarContext';

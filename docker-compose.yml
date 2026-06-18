@@ -2,37 +2,39 @@ services:
   radio-web-frontend:
     build:
       context: .
-      target: runner  # Runtime stage
-    container_name: radio-web-frontend
+      dockerfile: Dockerfile
+      args:
+        - APP_PORT=${APP_PORT}
+        - NODE_ENV=${NODE_ENV}
+        - NEXT_PUBLIC_BASE_URL=${NEXT_PUBLIC_BASE_URL}
+        - AUTH_SECRET=${AUTH_SECRET}
+        - AUTH_URL=${AUTH_URL}
+    container_name: radio-web-platform-frontend
+    image: radio_web_platform_frontend:latest
     ports:
-      - "3000:3000"
-    environment:
-      NODE_ENV: "production" #or development / production
-      NEXT_PUBLIC_BASE_URL: "https://radio.backend.ecocloud.tn"
-      AUTH_SECRET: "s55T4WnE0XHfkljb+Hqvib2M4QR4uETFP/R9vv0QwMo"
-      AUTH_URL: "https://radio.frontend.ecocloud.tn"
+      - ${APP_PORT}:${APP_PORT}
     restart: unless-stopped
     networks:
       - traefik_proxy_traefik-network
     labels:
       - "traefik.enable=true"
       # Service
-      - "traefik.http.services.radio-web-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.services.radio-web-platform-frontend.loadbalancer.server.port=${APP_PORT}"
 
       # Router
-      - "traefik.http.routers.radio-web-frontend.rule=Host(`radio.frontend.ecocloud.tn`)"
-      - "traefik.http.routers.radio-web-frontend.entrypoints=websecure"
-      - "traefik.http.routers.radio-web-frontend.tls=true"
-      - "traefik.http.routers.radio-web-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.radio-web-platform-frontend.rule=Host(`radio.frontend.ecocloud.tn`)"
+      - "traefik.http.routers.radio-web-platform-frontend.entrypoints=websecure"
+      - "traefik.http.routers.radio-web-platform-frontend.tls=true"
+      - "traefik.http.routers.radio-web-platform-frontend.tls.certresolver=letsencrypt"
 
       # Link router to service
-      - "traefik.http.routers.radio-web-frontend.service=radio-web-frontend"
+      - "traefik.http.routers.radio-web-platform-frontend.service=radio-web-platform-frontend"
 
       # Middleware for HTTPS redirect (recommandé)
       - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.radio-web-frontend-http.rule=Host(`radio.frontend.ecocloud.tn`)"
-      - "traefik.http.routers.radio-web-frontend-http.entrypoints=web"
-      - "traefik.http.routers.radio-web-frontend-http.middlewares=redirect-to-https"
+      - "traefik.http.routers.radio-web-platform-frontend-http.rule=Host(`radio.frontend.ecocloud.tn`)"
+      - "traefik.http.routers.radio-web-platform-frontend-http.entrypoints=web"
+      - "traefik.http.routers.radio-web-platform-frontend-http.middlewares=redirect-to-https"
 
 
 networks:

@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 import { FuseSettingsConfigType } from '@fuse/core/FuseSettings/FuseSettings';
-import { themeLayoutsType } from 'src/components/theme-layouts/themeLayouts';
+import { themeLayoutsType } from '@/components/theme-layouts/themeLayouts';
 import usePathname from '@fuse/hooks/usePathname';
 import useFuseSettings from '@fuse/core/FuseSettings/hooks/useFuseSettings';
 import FuseLayoutSettingsContext from './FuseLayoutSettingsContext';

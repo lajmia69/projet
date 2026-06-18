@@ -13,7 +13,7 @@
  */
 
 import { useMemo, useState } from 'react';
-import GradientButton from 'src/app/(control-panel)/components/ui/GradientButton';
+import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
 import { type MRT_ColumnDef } from 'material-react-table';
 import {
 	Paper, ListItemIcon, MenuItem, Dialog, DialogTitle, DialogContent,
@@ -24,11 +24,11 @@ import { motion } from 'motion/react';
 import FuseLoading from '@fuse/core/FuseLoading';
 import FusePageCarded from '@fuse/core/FusePageCarded';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { styled } from '@mui/material/styles';
 import { format, parseISO, isValid } from 'date-fns';
 import useUser from '@auth/useUser';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 
 import { useSearchLessons } from '@/app/(control-panel)/content/(lesson)/api/hooks/lessons/useSearchLessons';
 import {

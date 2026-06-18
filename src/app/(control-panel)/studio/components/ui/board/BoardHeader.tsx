@@ -5,7 +5,7 @@ import Button from '@mui/material/Button';
 import Badge from '@mui/material/Badge';
 import NavLinkAdapter from '@fuse/core/NavLinkAdapter';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
-import PageBreadcrumb from 'src/components/PageBreadcrumb';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import BoardTitle from './BoardTitle';
 import BoardSettingsPopover from './popovers/settings/BoardSettingsPopover';
 import useParams from '@fuse/hooks/useParams';

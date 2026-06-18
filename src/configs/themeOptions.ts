@@ -1,4 +1,4 @@
-import themesConfig from 'src/configs/themesConfig';
+import themesConfig from '@/configs/themesConfig';
 
 const themeOptions = [
 	{

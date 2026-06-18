@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { lessonApi } from '../../services/lessonApiService';
-import { SearchLessons } from '@/app/(control-panel)/(platform)/(lesson)/api/types';
+import { SearchLessons } from '@/app/(control-panel)/content/(lesson)/api/types';
 
 export const searchLessonsQueryKey = (
 	current_account_id: string,

@@ -3,6 +3,7 @@ import { styled } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import clsx from 'clsx';
 import FuseSvgIcon from '@fuse/core/FuseSvgIcon';
+import { useTranslation } from 'react-i18next';
 
 /* ─── Design tokens ─────────────────────────────────────────────── */
 const C = {
@@ -99,10 +100,11 @@ type NavbarToggleFabProps = {
  */
 function NavbarToggleFab(props: NavbarToggleFabProps) {
 	const { className = '', position = 'left', onClick } = props;
+	const { t } = useTranslation('navigation');
 
 	return (
 		<Root
-			title="Show Navigation"
+			title={t('SHOW_NAVIGATION')}
 			placement={position === 'left' ? 'right' : 'left'}
 			position={position as 'left' | 'right'}
 		>

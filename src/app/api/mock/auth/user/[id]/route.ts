@@ -1,4 +1,4 @@
-import mockApi from 'src/@mock-utils/mockApi';
+import mockApi from '@/@mock-utils/mockApi';
 import { NextRequest, NextResponse } from 'next/server';
 import { User } from '@auth/user';
 

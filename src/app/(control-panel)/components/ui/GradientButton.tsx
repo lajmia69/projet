@@ -1,7 +1,7 @@
 import React from 'react';
 import Button, { ButtonProps } from '@mui/material/Button';
 import { styled } from '@mui/material/styles';
-import { palette } from 'src/app/(control-panel)/design/palette';
+import { palette } from '@/app/(control-panel)/design/palette';
 
 const GradientButtonRoot = styled(Button)(({ theme }) => ({
   background: palette.gradient.primary,

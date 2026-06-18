@@ -12,6 +12,7 @@ import Tooltip from '@mui/material/Tooltip';
 import clsx from 'clsx';
 import Popover, { PopoverProps } from '@mui/material/Popover';
 import useUser from '@auth/useUser';
+import { useTranslation } from 'react-i18next';
 
 type UserMenuProps = {
 	className?: string;
@@ -27,6 +28,7 @@ type UserMenuProps = {
 function UserMenu(props: UserMenuProps) {
 	const { className, popoverProps, arrowIcon = 'lucide:chevron-up', dense = false, onlyAvatar = false } = props;
 	const { data: user, signOut, isGuest } = useUser();
+	const { t } = useTranslation('navigation');
 	const [userMenu, setUserMenu] = useState<HTMLElement | null>(null);
 	const userMenuClick = (event: React.MouseEvent<HTMLElement>) => {
 		setUserMenu(event.currentTarget);
@@ -101,7 +103,7 @@ function UserMenu(props: UserMenuProps) {
 									<>
 										{user.role?.toString()}
 										{(!user.role || (Array.isArray(user.role) && user.role.length === 0)) &&
-											'Guest'}
+											t('GUEST')}
 									</>
 								}
 							>
@@ -145,7 +147,7 @@ function UserMenu(props: UserMenuProps) {
 							<ListItemIcon>
 								<FuseSvgIcon>lucide:lock</FuseSvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Sign In" />
+							<ListItemText primary={t('SIGN_IN')} />
 						</MenuItem>
 						<MenuItem
 							component={Link}
@@ -155,7 +157,7 @@ function UserMenu(props: UserMenuProps) {
 							<ListItemIcon>
 								<FuseSvgIcon>lucide:user-plus</FuseSvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Sign up" />
+							<ListItemText primary={t('SIGN_UP')} />
 						</MenuItem>
 					</>
 				) : (
@@ -169,18 +171,18 @@ function UserMenu(props: UserMenuProps) {
 							<ListItemIcon>
 								<FuseSvgIcon>lucide:circle-user</FuseSvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="My Profile" />
+							<ListItemText primary={t('MY_PROFILE')} />
 						</MenuItem>
 						<MenuItem
 							component={Link}
-							to="/apps/mailbox"
+							to="/apps/mailbox/inbox"
 							onClick={userMenuClose}
 							role="button"
 						>
 							<ListItemIcon>
 								<FuseSvgIcon>lucide:mail</FuseSvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Inbox" />
+							<ListItemText primary={t('INBOX')} />
 						</MenuItem>
 						<MenuItem
 							onClick={() => {
@@ -190,7 +192,7 @@ function UserMenu(props: UserMenuProps) {
 							<ListItemIcon>
 								<FuseSvgIcon>lucide:square-arrow-right</FuseSvgIcon>
 							</ListItemIcon>
-							<ListItemText primary="Sign out" />
+							<ListItemText primary={t('SIGN_OUT')} />
 						</MenuItem>
 					</>
 				)}

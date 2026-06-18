@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { type MRT_ColumnDef } from 'material-react-table';
-import DataTable from 'src/components/data-table/DataTable';
+import DataTable from '@/components/data-table/DataTable';
 import FuseLoading from '@fuse/core/FuseLoading';
 import { Box, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Divider, MenuItem, ListItemIcon, Typography } from '@mui/material';
 import GradientButton from '@/app/(control-panel)/components/ui/GradientButton';
